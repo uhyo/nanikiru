@@ -21,18 +21,22 @@ var Cloth = (function () {
             colors: this.colors
         };
     };
-    Cloth.prototype.getSVG = function () {
+    Cloth.prototype.getSVG = function (width, height) {
+        if (typeof width === "undefined") { width = "256px"; }
+        if (typeof height === "undefined") { height = "256px"; }
+        var svg;
         if(this.svg) {
-            return this.svg;
+            svg = this.svg.cloneNode();
+        } else {
+            svg = this.svg = document.createElementNS(Cloth.svgNS, "svg");
+            svg.viewBox.baseVal.x = 0 , svg.viewBox.baseVal.y = 0 , svg.viewBox.baseVal.width = 256 , svg.viewBox.baseVal.height = 256;
+            this.makeCloth(svg, this.clothType);
         }
-        var svg = this.svg = document.createElementNS(Cloth.svgNS, "svg");
-        svg.width.baseVal.valueAsString = "256px";
-        svg.height.baseVal.valueAsString = "256px";
-        svg.viewBox.baseVal.x = 0 , svg.viewBox.baseVal.y = 0 , svg.viewBox.baseVal.width = 256 , svg.viewBox.baseVal.height = 256;
+        svg.width.baseVal.valueAsString = width;
+        svg.height.baseVal.valueAsString = height;
         svg.setAttribute("version", "1.1");
-        this.makeCloth(svg, this.clothType);
         this.setStyle(svg, this.colors);
-        return this.svg;
+        return svg;
     };
     Cloth.prototype.makeCloth = function (el, type) {
         var d;

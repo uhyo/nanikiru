@@ -20,6 +20,7 @@ var AppHost = (function () {
 })();
 document.addEventListener("DOMContentLoaded", function () {
     var host = new AppHost();
-    var tp = new Panels.TopPanel();
+    var db = new DB();
+    var tp = new Panels.TopPanel(db);
     host.setPanel(tp);
 }, false);

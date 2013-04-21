@@ -32,10 +32,14 @@ var Panels;
     Panels.Panel = Panel;    
     var TopPanel = (function (_super) {
         __extends(TopPanel, _super);
-        function TopPanel() {
+        function TopPanel(db) {
                 _super.call(this);
+            this.db = db;
             this.setTitle("何着る? トップ");
-            this.initContainer();
+            var c = this.initContainer();
+            this.calender = new UI.Calender(db);
+            this.calender.render(new Date());
+            c.appendChild(this.calender.getContent());
         }
         return TopPanel;
     })(Panel);

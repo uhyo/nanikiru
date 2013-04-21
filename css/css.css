@@ -1,0 +1,27 @@
+/* カレンダー */
+table.calender{
+	border-collapse:collapse;
+}
+table.calender td{
+	border:1px #dddddd solid;
+	width:5rem;
+	height:4rem;
+	vertical-align:top;
+	padding:0;
+}
+table.calender td div.date{
+	background-color:#eeeeee;
+	text-align:center;
+}
+table.calender td.Sunday div.date{
+	background-color:#ffdddd;
+}
+table.calender td.Saturday div.date{
+	background-color:#ddeeff;
+}
+table.calender td.past{
+	background-color:#f6f6f6;
+}
+table.calender td.today div.date{
+	font-weight:bold;
+}

@@ -1,4 +1,5 @@
 ///<reference path="panel.ts"/>
+///<reference path="db.ts"/>
 
 //マネージャ
 class AppHost{
@@ -26,6 +27,7 @@ class AppHost{
 //イニシャライズする
 document.addEventListener("DOMContentLoaded",function(){
 	var host=new AppHost();
-	var tp=new Panels.TopPanel();
+	var db=new DB();
+	var tp=new Panels.TopPanel(db);
 	host.setPanel(tp);
 },false);

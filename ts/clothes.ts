@@ -36,19 +36,23 @@ class Cloth{
 		};
 	}
 	//SVG要素を出力
-	getSVG():SVGSVGElement{
-		if(this.svg)return this.svg;
-		//svgを作る
-		var svg=this.svg=<SVGSVGElement>document.createElementNS(Cloth.svgNS,"svg");
+	getSVG(width?:string="256px",height?:string="256px"):SVGSVGElement{
+		var svg:SVGSVGElement;
+		if(this.svg){
+			svg=<SVGSVGElement>this.svg.cloneNode();
+		}else{
+			//svgを作る
+			svg=this.svg=<SVGSVGElement>document.createElementNS(Cloth.svgNS,"svg");
+			svg.setAttribute("version","1.1");
+			svg.viewBox.baseVal.x=0, svg.viewBox.baseVal.y=0, svg.viewBox.baseVal.width=256, svg.viewBox.baseVal.height=256;
+			this.makeCloth(svg,this.clothType);
+		}
 		//幅設定
-		svg.width.baseVal.valueAsString="256px";
-		svg.height.baseVal.valueAsString="256px";
-		svg.viewBox.baseVal.x=0, svg.viewBox.baseVal.y=0, svg.viewBox.baseVal.width=256, svg.viewBox.baseVal.height=256;
-		svg.setAttribute("version","1.1");
+		svg.width.baseVal.valueAsString=width;
+		svg.height.baseVal.valueAsString=height;
 
-		this.makeCloth(svg,this.clothType);
 		this.setStyle(svg,this.colors);
-		return this.svg;
+		return svg;
 	}
 	//服をつくる
 	private makeCloth(el:SVGSVGElement,type:string):void{
