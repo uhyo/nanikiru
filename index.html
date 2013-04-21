@@ -5,14 +5,23 @@
     <title>何着る?  &#x2013; ぼくの服装管理サービス</title>
     <script src="ts/panel.js"></script>
     <script src="ts/main.js"></script>
+    <script src="ts/clothes.js"></script>
     <link rel="stylesheet" href="css/css.css">
   </head>
   <body role="application">
     <header>
       <h1>何着る?</h1>
-      <div id="main">
-      </div>
     </header>
+    <main id="main">
+      <!-- test -->
+      <script>
+        var c=Cloth.importCloth({
+          clothType:"T-shirt",
+          colors:["#666666","#222222"],
+        });
+        document.body.appendChild(c.getSVG());
+      </script>
+    </main>
   </body>
 </html>
 

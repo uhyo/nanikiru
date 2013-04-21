@@ -1,3 +1,4 @@
+///<reference path="ui.ts"/>
 //パネル
 module Panels{
 	//パネル
@@ -28,10 +29,14 @@ module Panels{
 	}
 	//トップページ
 	export class TopPanel extends Panel{
+		private calender:UI.Calender;
 		constructor(){
 			super();
 			this.setTitle("何着る? トップ");
-			this.initContainer();
+			var c=this.initContainer();
+			//カレンダー
+			this.calender=new UI.Calender;
+			c.appendChild(this.calender.getContent());
 		}
 	}
 	function el(name:string,callback?:(e:HTMLElement)=>void):HTMLElement{
