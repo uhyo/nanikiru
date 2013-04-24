@@ -7,7 +7,7 @@ var UI;
 (function (UI) {
     var UIObject = (function () {
         function UIObject() {
-            this.container = document.createElement("div");
+            this.container = document.createElement("section");
         }
         UIObject.prototype.getContent = function () {
             return this.container;
@@ -27,17 +27,35 @@ var UI;
         };
         Scheduler.prototype.render = function (d) {
         };
+        Scheduler.getScheduler = function getScheduler(db, id, callback) {
+            db.getScheduler(id, function (doc) {
+                if(!doc) {
+                    return null;
+                }
+                var result = null;
+                switch(doc.type) {
+                    case "calender":
+                        console.log(doc);
+                        result = new Calender(db, doc);
+                        break;
+                }
+                callback(result);
+            });
+        };
         return Scheduler;
     })(UIObject);
     UI.Scheduler = Scheduler;    
     var Calender = (function (_super) {
         __extends(Calender, _super);
-        function Calender(db) {
+        function Calender(db, doc) {
                 _super.call(this);
             this.db = db;
+            this.doc = doc;
         }
         Calender.prototype.render = function (d) {
+            var _this = this;
             var c = this.getContent();
+            c.classList.add("calender");
             var currentMonth = d.getMonth(), currentDate = d.getDate();
             var mv = new Date(d.toJSON());
             mv.setDate(1);
@@ -73,6 +91,9 @@ var UI;
             while(c.firstChild) {
                 c.removeChild(c.firstChild);
             }
+            c.appendChild(el("h1", function (h1) {
+                h1.textContent = _this.doc.name;
+            }));
             c.appendChild(t);
         };
         return Calender;

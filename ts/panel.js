@@ -12,9 +12,12 @@ var Panels;
             var _this = this;
             this.container = el("article", function (article) {
                 article.classList.add("panel");
-                article.appendChild(el("h1", function (h1) {
-                    h1.textContent = _this.getTitle();
-                }));
+                var title = _this.getTitle();
+                if(title) {
+                    article.appendChild(el("h1", function (h1) {
+                        h1.textContent = _this.getTitle();
+                    }));
+                }
             });
             return this.container;
         };
@@ -35,11 +38,21 @@ var Panels;
         function TopPanel(db) {
                 _super.call(this);
             this.db = db;
-            this.setTitle("何着る? トップ");
             var c = this.initContainer();
-            this.calender = new UI.Calender(db);
-            this.calender.render(new Date());
-            c.appendChild(this.calender.getContent());
+            var schid = Number(localStorage.getItem("lastScheduler"));
+            if(!isNaN(schid)) {
+                schid = (IDBKeyRange).lowerBound(-Infinity, false);
+            }
+            UI.Scheduler.getScheduler(db, schid, function (result) {
+                if(result) {
+                    result.render(new Date());
+                    c.appendChild(result.getContent());
+                } else {
+                    c.appendChild(el("p", function (p) {
+                        p.textContent = "カレンダーがありません。";
+                    }));
+                }
+            });
         }
         return TopPanel;
     })(Panel);

@@ -28,6 +28,10 @@ class AppHost{
 document.addEventListener("DOMContentLoaded",function(){
 	var host=new AppHost();
 	var db=new DB();
-	var tp=new Panels.TopPanel(db);
-	host.setPanel(tp);
+	db.open((result:bool)=>{
+		if(result){
+			var tp=new Panels.TopPanel(db);
+			host.setPanel(tp);
+		}
+	});
 },false);

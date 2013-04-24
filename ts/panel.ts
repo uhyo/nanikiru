@@ -12,9 +12,12 @@ module Panels{
 			this.container=el("article",(article)=>{
 				article.classList.add("panel");
 				//タイトル
-				article.appendChild(el("h1",(h1)=>{
-					h1.textContent=this.getTitle();
-				}));
+				var title=this.getTitle();
+				if(title){
+					article.appendChild(el("h1",(h1)=>{
+						h1.textContent=this.getTitle();
+					}));
+				}
 			});
 			return this.container;
 		}
@@ -30,15 +33,24 @@ module Panels{
 	}
 	//トップページ
 	export class TopPanel extends Panel{
-		private calender:UI.Calender;
 		constructor(private db:DB){
 			super();
-			this.setTitle("何着る? トップ");
 			var c=this.initContainer();
-			//カレンダー
-			this.calender=new UI.Calender(db);
-			this.calender.render(new Date);
-			c.appendChild(this.calender.getContent());
+			//優先スケジューラを探す
+			var schid=Number(localStorage.getItem("lastScheduler"));
+			if(!isNaN(schid)){
+				schid=(<any>IDBKeyRange).lowerBound(-Infinity,false);
+			}
+			UI.Scheduler.getScheduler(db,schid,(result:UI.Scheduler)=>{
+				if(result){
+					result.render(new Date);
+					c.appendChild(result.getContent());
+				}else{
+					c.appendChild(el("p",(p)=>{
+						p.textContent="カレンダーがありません。";
+					}));
+				}
+			});
 		}
 	}
 	function el(name:string,callback?:(e:HTMLElement)=>void):HTMLElement{

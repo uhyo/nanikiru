@@ -8,7 +8,7 @@ module UI{
 	export class UIObject{
 		private container:HTMLElement;
 		constructor(){
-			this.container=document.createElement("div");
+			this.container=document.createElement("section");
 		}
 		getContent():HTMLElement{
 			return this.container;
@@ -25,15 +25,32 @@ module UI{
 		//描画する
 		render(d:Date):void{
 		}
+		//得るやつ
+		static getScheduler(db:DB,id:number,callback:(result:Scheduler)=>void):void{
+			db.getScheduler(id,(doc:SchedulerDoc)=>{
+				//わーいスケジュールあったー
+				if(!doc)return null;
+				var result:Scheduler=null;
+				switch(doc.type){
+					case "calender":
+						console.log(doc);
+						result=new Calender(db,doc);
+						break;
+				}
+				callback(result);
+			});
+		}
 	}
 	//カレンダー
 	export class Calender extends Scheduler{
-		constructor(private db:DB){
+		constructor(private db:DB,private doc:SchedulerDoc){
 			super();
 		}
 		//この日付でカレンダーを描画
 		render(d:Date):void{
 			var c=this.getContent();
+			c.classList.add("calender");
+
 			var currentMonth=d.getMonth(), currentDate=d.getDate();
 			var mv=new Date(d.toJSON());	//clone
 			mv.setDate(1);	//とりあえず今月のついたちにする
@@ -73,6 +90,10 @@ module UI{
 			}
 			//書き換える
 			while(c.firstChild)c.removeChild(c.firstChild);
+			//まず題
+			c.appendChild(el("h1",(h1)=>{
+				h1.textContent=this.doc.name;
+			}));
 			c.appendChild(t);
 		}
 	}
