@@ -124,4 +124,21 @@ class DB{
 		});
 		delete req;
 	}
+	//DB setter
+	setScheduler(doc:SchedulerDoc,callback:(result:bool)=>void):void{
+		var tr=this.db.transaction("scheduler","readwrite");
+		var scheduler=tr.objectStore("scheduler");
+		var req:IDBRequest=scheduler.put(doc);
+		req.addEventListener("success",(e)=>{
+			//トランザクションを終了させてからコールバック
+			setTimeout(()=>{
+				callback(true);
+			},0);
+		});
+		req.addEventListener("error",(e)=>{
+			console.error("getScheduler error:",req.error);
+			callback(false);
+		});
+		delete req;
+	}
 }

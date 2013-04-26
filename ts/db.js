@@ -93,5 +93,20 @@ var DB = (function () {
         });
         delete req;
     };
+    DB.prototype.setScheduler = function (doc, callback) {
+        var tr = this.db.transaction("scheduler", "readwrite");
+        var scheduler = tr.objectStore("scheduler");
+        var req = scheduler.put(doc);
+        req.addEventListener("success", function (e) {
+            setTimeout(function () {
+                callback(true);
+            }, 0);
+        });
+        req.addEventListener("error", function (e) {
+            console.error("getScheduler error:", req.error);
+            callback(false);
+        });
+        delete req;
+    };
     return DB;
 })();

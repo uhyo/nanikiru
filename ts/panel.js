@@ -43,16 +43,9 @@ var Panels;
             if(!isNaN(schid)) {
                 schid = (IDBKeyRange).lowerBound(-Infinity, false);
             }
-            UI.Scheduler.getScheduler(db, schid, function (result) {
-                if(result) {
-                    result.render(new Date());
-                    c.appendChild(result.getContent());
-                } else {
-                    c.appendChild(el("p", function (p) {
-                        p.textContent = "カレンダーがありません。";
-                    }));
-                }
-            });
+            var container = new UI.SchedulerContainer(schid, db);
+            container.open();
+            c.appendChild(container.getContent());
         }
         return TopPanel;
     })(Panel);

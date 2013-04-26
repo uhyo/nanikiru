@@ -25,3 +25,19 @@ table.calender td.past{
 table.calender td.today div.date{
 	font-weight:bold;
 }
+/* UIs */
+button {
+	outline:none;
+	padding:0;
+	border:1px solid #aaaaaa;
+	background-color:#eeeeee;
+}
+button svg{
+	padding:0;
+}
+button:focus {
+	box-shadow:0 0 4px 3px #cccccc;
+}
+button:active{
+	background-color:#dddddd;
+}
