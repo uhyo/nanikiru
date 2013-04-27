@@ -1,4 +1,5 @@
 ///<reference path="db.ts"/>
+///<reference path="clothes.ts"/>
 //additional definition
 interface HTMLTimeElement extends HTMLElement{
 	dateTime:string;
@@ -50,7 +51,7 @@ module UI{
 
 	//スケジューラ
 	export class Scheduler extends UISection{
-		private date:Date;
+		public date:Date;
 		constructor(public doc:SchedulerDoc){
 			super();
 		}
@@ -140,6 +141,7 @@ module UI{
 			c.appendChild(el("div",(div)=>{
 				div.appendChild(el("button",(b)=>{
 					var button=<HTMLButtonElement>b;
+					button.title="設定";
 					button.appendChild(icons.gear({
 						radius1:90,
 						radius2:35,
@@ -161,6 +163,19 @@ module UI{
 								this.close("reload");
 							}
 						});
+					},false);
+				}));
+				div.appendChild(el("button",(b)=>{
+					var button=<HTMLButtonElement>b;
+					button.title="服グループ";
+					button.appendChild(Cloth.importCloth({
+						clothType:"T-shirt",
+						colors:["#999999","#999999"],
+					}).getSVG("24px","24px"));
+					button.addEventListener("click",(e)=>{
+						//あれー
+						//服グループ管理画面に移行する
+						this.close("clothGroupEdit");
 					},false);
 				}));
 			}));
@@ -223,16 +238,8 @@ module UI{
 				form.appendChild(el("p",(p)=>{
 					p.appendChild(el("input",(i)=>{
 						var input=<HTMLInputElement>i;
-						input.type="button";
+						input.type="submit";
 						input.value="変更を保存";
-						input.addEventListener("click",(e)=>{
-							//変更をセーブしたい
-							var form=input.form;
-							doc.type=(<HTMLInputElement>form.elements["type"]).value;
-							doc.name=(<HTMLInputElement>form.elements["name"]).value;
-							//save & close
-							this.save(doc);
-						},false);
 					}));
 					p.appendChild(el("input",(i)=>{
 						var input=<HTMLInputElement>i;
@@ -244,6 +251,14 @@ module UI{
 						},false);
 					}));
 				}));
+				form.addEventListener("submit",(e)=>{
+					//変更をセーブしたい
+					e.preventDefault();
+					doc.type=(<HTMLInputElement>(<HTMLFormElement>form).elements["type"]).value;
+					doc.name=(<HTMLInputElement>(<HTMLFormElement>form).elements["name"]).value;
+					//save & close
+					this.save(doc);
+				},false);
 			}));
 		}
 		save(doc:SchedulerDoc):void{
@@ -254,20 +269,39 @@ module UI{
 			});
 		}
 	}
+	//日付表示
+	export class DateIndicator extends UISection{
+		constructor(private scheduler:Scheduler){
+			super();
+			var date=scheduler.date;
+			var c=this.getContent();
+			c.classList.add("dateindicator");
+			c.appendChild(el("h1",(h1)=>{
+				h1.appendChild(el("time",(t)=>{
+					var time=<HTMLTimeElement>t;
+					
+					time.dateTime=date.toJSON();
+					time.textContent=(date.getMonth()+1)+"/"+date.getDate();
+				}));
+			}));
+		}
+	}
 	//スケジューラコンテナ
 	export class SchedulerContainer extends UIObject{
-		constructor(private id:any,private db:DB){
+		private date:Date;
+		constructor(public id:any,private db:DB){
 			//id:スケジューラのID
 			super();
 		}
 		open():void{
 			UI.Scheduler.getScheduler(this.db,this.id,(result:Scheduler)=>{
 				var c=this.getContent();
+				c.classList.add("scheduler-container");
 				while(c.firstChild)c.removeChild(c.firstChild);
 				if(result){
 					//hard!
 					this.id=result.doc.id;	//id保存
-					result.render(new Date);
+					result.setDate(new Date);
 					c.appendChild(result.getContent());
 					result.onclose((returnValue:any)=>{
 
@@ -276,15 +310,90 @@ module UI{
 							this.open();
 						}else{
 							//それ以外だったら道連れ終了
-							this.close();
+							this.close(returnValue);
 						}
 					});
+					//日付部分
+					var datewin=new DateIndicator(result);
+					c.appendChild(datewin.getContent());
 				}else{
 					c.appendChild(el("p",(p)=>{
 						p.textContent="スケジューラがありません。";
 					}));
 				}
 			});
+		}
+	}
+	//服グループのリスト
+	export class ClothGroupList extends UISection{
+		constructor(private db:DB,schedulerid?:number){
+			super();
+			var c=this.getContent();
+			c.classList.add("clothgroup-list");
+			var count:number=0;	//表示済みのやつを数える
+			if(schedulerid!=null){
+				db.getScheduler(schedulerid,(schedulerdoc:SchedulerDoc)=>{
+					if(schedulerdoc==null){
+						//あれれーーーーーーー
+						c.appendChild(el("p",(p)=>{
+							p.textContent="エラー:そのスケジューラの情報は取得できません。"
+						}));
+						return;
+					}
+					//タイトル
+					c.appendChild(el("h1",(h1)=>{
+						h1.textContent=schedulerdoc.name+"に属する服グループ";
+					}));
+					schedulerdoc.groups.forEach((id:number,i:number)=>{
+						db.getClothGroup(id,(result:ClothGroupDoc)=>{
+							if(result)addlist(result);
+							if(i+1===schedulerdoc.groups.length){
+								//これで最後だ
+								addlist(null);
+							}
+						});
+					});
+					if(!schedulerdoc.groups.length){
+						//ひとつもない
+						addlist(null);
+					}
+				});
+			}else{
+				//タイトル
+				c.appendChild(el("h1",(h1)=>{
+					h1.textContent="全ての服グループ";
+				}));
+				//全部列挙だー
+				db.eachClothGroup(null,addlist);
+			}
+
+			function addlist(doc:ClothGroupDoc):void{
+				if(doc){
+					count++;
+					//ある!つくる
+					var div=el("div",(div)=>{
+						//アイコン
+						div.appendChild(icons.clothgroup({
+							colors:["#aaaaaa","#888888","#666666"],
+							width:"32px",
+							height:"32px",
+						}));
+						div.appendChild(document.createTextNode(doc.name));
+					});
+				}else{
+					//終了だ!
+					fin();
+				}
+			}
+			function fin():void{
+				//全部終了の処理
+				if(count===0){
+					//ひとつもないじゃないか・・・
+					c.appendChild(el("p",(p)=>{
+						p.textContent="服グループはまだありません。";
+					}));
+				}
+			}
 		}
 	}
 	//割り込みUI
@@ -417,6 +526,45 @@ module UI{
 						}));
 					}
 				}));
+			});
+		}
+		export function clothgroup(option:{
+			colors:string[];	//色1〜3
+			width:string;
+			height:string;
+		}):SVGSVGElement{
+			return <SVGSVGElement>svg("svg",(r)=>{
+				var result=<SVGSVGElement>r;
+				result.width.baseVal.valueAsString=option.width;
+				result.height.baseVal.valueAsString=option.height;
+				for(var i=0;i<3;i++){
+					var g=onecloth(option.colors[i]);
+					var trtr=(i-1)*30;
+					g.setAttribute("transform","transform("+trtr+") scale(0.9");
+					result.appendChild(g);
+				}
+				//ひとつの服
+				function onecloth(color:string):SVGGElement{
+					return <SVGGElement>svg("g",(g)=>{
+						var d=[
+						"M10,90",	//袖の端からスタート
+						"L90,40",	//襟のところへ
+						"A80,70 0 0,0 166,40",//襟の上
+						"L246,90",	//逆の袖の端へ
+						"L216,138",	//袖口
+						"L184,118",	//脇
+						"L184,246",	//下へ
+						"L72,246",	//反対側へ
+						"L72,118",	//上へ
+						"L40,138",	//袖口
+						"Z",	//袖口
+						].join(" ");
+						g.appendChild(svg("path",(path)=>{
+							path.setAttribute("d",d);
+							path.setAttribute("fill",color);
+						}));
+					});
+				}
 			});
 		}
 		var svgNS="http://www.w3.org/2000/svg";

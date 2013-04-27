@@ -3,7 +3,6 @@
 
 //マネージャ
 class AppHost{
-	private panels:Panels.Panel[]=[];
 	private now:Panels.Panel=null;
 	private container:HTMLElement;
 	constructor(){
@@ -11,7 +10,6 @@ class AppHost{
 	}
 	//パネルを
 	setPanel(p:Panels.Panel):void{
-		this.panels.push(p);
 		this.now=p;
 		//HTMLかきかえ
 		this.setContent(p.getContent());
@@ -19,7 +17,7 @@ class AppHost{
 	setContent(n:Node):void{
 		//コンテンツ
 		var c=this.container;
-		if(c.firstChild)c.removeChild(c.firstChild);
+		while(c.firstChild)c.removeChild(c.firstChild);
 
 		c.appendChild(n);
 	}
@@ -30,7 +28,7 @@ document.addEventListener("DOMContentLoaded",function(){
 	var db=new DB();
 	db.open((result:bool)=>{
 		if(result){
-			var tp=new Panels.TopPanel(db);
+			var tp=new Panels.TopPanel(host,db);
 			host.setPanel(tp);
 		}
 	});

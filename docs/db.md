@@ -26,6 +26,7 @@
     "type":string("calender")
     "name":string
     "made":Date
+    "groups":number[](clothgroup.id)
   }
 
 ## Daily cloth log (objectstore log)

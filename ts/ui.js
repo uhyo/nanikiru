@@ -125,6 +125,7 @@ var UI;
             c.appendChild(el("div", function (div) {
                 div.appendChild(el("button", function (b) {
                     var button = b;
+                    button.title = "設定";
                     button.appendChild(icons.gear({
                         radius1: 90,
                         radius2: 35,
@@ -144,6 +145,20 @@ var UI;
                                 _this.close("reload");
                             }
                         });
+                    }, false);
+                }));
+                div.appendChild(el("button", function (b) {
+                    var button = b;
+                    button.title = "服グループ";
+                    button.appendChild(Cloth.importCloth({
+                        clothType: "T-shirt",
+                        colors: [
+                            "#999999", 
+                            "#999999"
+                        ]
+                    }).getSVG("24px", "24px"));
+                    button.addEventListener("click", function (e) {
+                        _this.close("clothGroupEdit");
                     }, false);
                 }));
             }));
@@ -209,14 +224,8 @@ var UI;
                 form.appendChild(el("p", function (p) {
                     p.appendChild(el("input", function (i) {
                         var input = i;
-                        input.type = "button";
+                        input.type = "submit";
                         input.value = "変更を保存";
-                        input.addEventListener("click", function (e) {
-                            var form = input.form;
-                            doc.type = (form.elements["type"]).value;
-                            doc.name = (form.elements["name"]).value;
-                            _this.save(doc);
-                        }, false);
                     }));
                     p.appendChild(el("input", function (i) {
                         var input = i;
@@ -227,6 +236,12 @@ var UI;
                         }, false);
                     }));
                 }));
+                form.addEventListener("submit", function (e) {
+                    e.preventDefault();
+                    doc.type = ((form).elements["type"]).value;
+                    doc.name = ((form).elements["name"]).value;
+                    _this.save(doc);
+                }, false);
             }));
         }
         SchedulerConfig.prototype.save = function (doc) {
@@ -239,6 +254,25 @@ var UI;
         return SchedulerConfig;
     })(UISection);
     UI.SchedulerConfig = SchedulerConfig;    
+    var DateIndicator = (function (_super) {
+        __extends(DateIndicator, _super);
+        function DateIndicator(scheduler) {
+                _super.call(this);
+            this.scheduler = scheduler;
+            var date = scheduler.date;
+            var c = this.getContent();
+            c.classList.add("dateindicator");
+            c.appendChild(el("h1", function (h1) {
+                h1.appendChild(el("time", function (t) {
+                    var time = t;
+                    time.dateTime = date.toJSON();
+                    time.textContent = (date.getMonth() + 1) + "/" + date.getDate();
+                }));
+            }));
+        }
+        return DateIndicator;
+    })(UISection);
+    UI.DateIndicator = DateIndicator;    
     var SchedulerContainer = (function (_super) {
         __extends(SchedulerContainer, _super);
         function SchedulerContainer(id, db) {
@@ -250,20 +284,23 @@ var UI;
             var _this = this;
             UI.Scheduler.getScheduler(this.db, this.id, function (result) {
                 var c = _this.getContent();
+                c.classList.add("scheduler-container");
                 while(c.firstChild) {
                     c.removeChild(c.firstChild);
                 }
                 if(result) {
                     _this.id = result.doc.id;
-                    result.render(new Date());
+                    result.setDate(new Date());
                     c.appendChild(result.getContent());
                     result.onclose(function (returnValue) {
                         if(returnValue === "reload") {
                             _this.open();
                         } else {
-                            _this.close();
+                            _this.close(returnValue);
                         }
                     });
+                    var datewin = new DateIndicator(result);
+                    c.appendChild(datewin.getContent());
                 } else {
                     c.appendChild(el("p", function (p) {
                         p.textContent = "スケジューラがありません。";
@@ -274,6 +311,75 @@ var UI;
         return SchedulerContainer;
     })(UIObject);
     UI.SchedulerContainer = SchedulerContainer;    
+    var ClothGroupList = (function (_super) {
+        __extends(ClothGroupList, _super);
+        function ClothGroupList(db, schedulerid) {
+                _super.call(this);
+            this.db = db;
+            var c = this.getContent();
+            c.classList.add("clothgroup-list");
+            var count = 0;
+            if(schedulerid != null) {
+                db.getScheduler(schedulerid, function (schedulerdoc) {
+                    if(schedulerdoc == null) {
+                        c.appendChild(el("p", function (p) {
+                            p.textContent = "エラー:そのスケジューラの情報は取得できません。";
+                        }));
+                        return;
+                    }
+                    c.appendChild(el("h1", function (h1) {
+                        h1.textContent = schedulerdoc.name + "に属する服グループ";
+                    }));
+                    schedulerdoc.groups.forEach(function (id, i) {
+                        db.getClothGroup(id, function (result) {
+                            if(result) {
+                                addlist(result);
+                            }
+                            if(i + 1 === schedulerdoc.groups.length) {
+                                addlist(null);
+                            }
+                        });
+                    });
+                    if(!schedulerdoc.groups.length) {
+                        addlist(null);
+                    }
+                });
+            } else {
+                c.appendChild(el("h1", function (h1) {
+                    h1.textContent = "全ての服グループ";
+                }));
+                db.eachClothGroup(null, addlist);
+            }
+function addlist(doc) {
+                if(doc) {
+                    count++;
+                    var div = el("div", function (div) {
+                        div.appendChild(icons.clothgroup({
+                            colors: [
+                                "#aaaaaa", 
+                                "#888888", 
+                                "#666666"
+                            ],
+                            width: "32px",
+                            height: "32px"
+                        }));
+                        div.appendChild(document.createTextNode(doc.name));
+                    });
+                } else {
+                    fin();
+                }
+            }
+function fin() {
+                if(count === 0) {
+                    c.appendChild(el("p", function (p) {
+                        p.textContent = "服グループはまだありません。";
+                    }));
+                }
+            }
+        }
+        return ClothGroupList;
+    })(UISection);
+    UI.ClothGroupList = ClothGroupList;    
     var ModalUI = (function () {
         function ModalUI(ui) {
             this.ui = ui;
@@ -394,6 +500,42 @@ var UI;
             });
         }
         icons.gear = gear;
+        function clothgroup(option) {
+            return svg("svg", function (r) {
+                var result = r;
+                result.width.baseVal.valueAsString = option.width;
+                result.height.baseVal.valueAsString = option.height;
+                for(var i = 0; i < 3; i++) {
+                    var g = onecloth(option.colors[i]);
+                    var trtr = (i - 1) * 30;
+                    g.setAttribute("transform", "transform(" + trtr + ") scale(0.9");
+                    result.appendChild(g);
+                }
+                function onecloth(color) {
+                    return svg("g", function (g) {
+                        var d = [
+                            "M10,90", 
+                            "L90,40", 
+                            "A80,70 0 0,0 166,40", 
+                            "L246,90", 
+                            "L216,138", 
+                            "L184,118", 
+                            "L184,246", 
+                            "L72,246", 
+                            "L72,118", 
+                            "L40,138", 
+                            "Z", 
+                            
+                        ].join(" ");
+                        g.appendChild(svg("path", function (path) {
+                            path.setAttribute("d", d);
+                            path.setAttribute("fill", color);
+                        }));
+                    });
+                }
+            });
+        }
+        icons.clothgroup = clothgroup;
         var svgNS = "http://www.w3.org/2000/svg";
         function svg(name, callback) {
             var result = document.createElementNS(svgNS, name);

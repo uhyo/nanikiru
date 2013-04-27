@@ -29,12 +29,12 @@ var Cloth = (function () {
             svg = this.svg.cloneNode();
         } else {
             svg = this.svg = document.createElementNS(Cloth.svgNS, "svg");
+            svg.setAttribute("version", "1.1");
             svg.viewBox.baseVal.x = 0 , svg.viewBox.baseVal.y = 0 , svg.viewBox.baseVal.width = 256 , svg.viewBox.baseVal.height = 256;
             this.makeCloth(svg, this.clothType);
         }
         svg.width.baseVal.valueAsString = width;
         svg.height.baseVal.valueAsString = height;
-        svg.setAttribute("version", "1.1");
         this.setStyle(svg, this.colors);
         return svg;
     };

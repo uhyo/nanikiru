@@ -19,6 +19,7 @@ interface SchedulerDoc{
 	type:string;
 	name:string;
 	made:Date;
+	groups:number[];
 }
 interface LogDoc{
 	id:number;
@@ -138,6 +139,48 @@ class DB{
 		req.addEventListener("error",(e)=>{
 			console.error("getScheduler error:",req.error);
 			callback(false);
+		});
+		delete req;
+	}
+	//cloth group
+	getClothGroup(id:number,callback:(result:ClothGroupDoc)=>void):void{
+		var tr=this.db.transaction("clothgroup","readonly");
+		var clothgroup=tr.objectStore("clothgroup");
+		var req:IDBRequest=clothgroup.get(id);
+		req.addEventListener("success",(e)=>{
+			callback(<ClothGroupDoc>req.result);
+		});
+		req.addEventListener("error",(e)=>{
+			console.error("getClothGroup error:",req.error);
+			callback(null);
+		});
+		delete req;
+	}
+	eachClothGroup(keyrange:any,callback:(result:ClothGroupDoc)=>void):void{
+		//keyrange: null is ok
+		var tr=this.db.transaction("clothgroup","readonly");
+		var clothgroup=tr.objectStore("clothgroup");
+		var req:IDBRequest=clothgroup.openCursor(keyrange,"next");
+		if(req==null){
+			callback(null);	//ひとつもない
+			return;
+		}
+		req.addEventListener("success",(e)=>{
+			//nullかも
+			var cursor=req.result;
+			if(!cursor){
+				//もうない
+				callback(null);
+				return;
+			}else{
+				//まだある!続行
+				callback(<ClothGroupDoc>cursor.value);
+				cursor.advance(1);
+			}
+		});
+		req.addEventListener("error",(e)=>{
+			console.error("eachClothGroup error:",req.error);
+			callback(null);
 		});
 		delete req;
 	}

@@ -108,5 +108,42 @@ var DB = (function () {
         });
         delete req;
     };
+    DB.prototype.getClothGroup = function (id, callback) {
+        var tr = this.db.transaction("clothgroup", "readonly");
+        var clothgroup = tr.objectStore("clothgroup");
+        var req = clothgroup.get(id);
+        req.addEventListener("success", function (e) {
+            callback(req.result);
+        });
+        req.addEventListener("error", function (e) {
+            console.error("getClothGroup error:", req.error);
+            callback(null);
+        });
+        delete req;
+    };
+    DB.prototype.eachClothGroup = function (keyrange, callback) {
+        var tr = this.db.transaction("clothgroup", "readonly");
+        var clothgroup = tr.objectStore("clothgroup");
+        var req = clothgroup.openCursor(keyrange, "next");
+        if(req == null) {
+            callback(null);
+            return;
+        }
+        req.addEventListener("success", function (e) {
+            var cursor = req.result;
+            if(!cursor) {
+                callback(null);
+                return;
+            } else {
+                callback(cursor.value);
+                cursor.advance(1);
+            }
+        });
+        req.addEventListener("error", function (e) {
+            console.error("eachClothGroup error:", req.error);
+            callback(null);
+        });
+        delete req;
+    };
     return DB;
 })();

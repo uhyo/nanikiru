@@ -25,6 +25,13 @@ table.calender td.past{
 table.calender td.today div.date{
 	font-weight:bold;
 }
+/* sccon */
+.scheduler-container{
+	/* dirty prefix */
+	display:-webkit-box;
+	display:-moz-box;
+	display:box;
+}
 /* UIs */
 button {
 	outline:none;
