@@ -3,12 +3,12 @@
 ## Cloth (objectstore cloth)
   {
     "id": number(key path)
-    "type":string(clothType)
+    "type":string(clothType) index
     "colors":string[]
-    "group": number[](clothgroup.id)
+    "group": number[](clothgroup.id) indexM
     //used times
     "used":number
-    "status":string("active","washer")
+    "status":string("active","washer") indexM
     //time info
     "made":Date,
     "lastuse":Date,
@@ -23,17 +23,17 @@
 ## Scheduler (objectstore scheduler)
   {
     "id":number(key path)
-    "type":string("calender")
+    "type":string("calender") index
     "name":string
     "made":Date
-    "groups":number[](clothgroup.id)
+    "groups":number[](clothgroup.id) indexM
   }
 
 ## Daily cloth log (objectstore log)
   {
     "id":number(key path)
-    "scheduler":number(scheduler.id)
-    "cloth":number[](cloth.id)
+    "scheduler":number(scheduler.id) index
+    "cloth":number[](cloth.id) index indexM
     "date":Date
   }
 

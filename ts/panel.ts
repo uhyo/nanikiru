@@ -45,18 +45,32 @@ module Panels{
 						this.host.setPanel(clothgroup);
 					}
 				});
+			}else if(ui instanceof UI.ClothGroupList){
 			}
+			//共通
+			ui.onclose((returnValue:any)=>{
+				var result;
+				result=returnValue.match(/^scheduler::(\d+)$/);
+				if(result){
+					//スケジューラを開きたい
+					var sc=new SchedulerPanel(this.host,this.db,Number(result[1]));
+					this.host.setPanel(sc);
+				}
+			});
 		}
 	}
-	//トップページ
-	export class TopPanel extends Panel{
-		constructor(private host:AppHost,private db:DB){
+	//スケジューラ画面
+	export class SchedulerPanel extends Panel{
+		constructor(private host:AppHost,private db:DB,schedulerid?:number){
 			super(host,db);
 			var c=this.initContainer();
-			//優先スケジューラを探す
-			var schid=Number(localStorage.getItem("lastScheduler"));
-			if(!isNaN(schid)){
-				schid=(<any>IDBKeyRange).lowerBound(-Infinity,false);
+			var schid:any=schedulerid;
+			if(schid==null){
+				//優先スケジューラを探す
+				schid=Number(localStorage.getItem("lastScheduler"));
+				if(!isNaN(schid)){
+					schid=(<any>IDBKeyRange).lowerBound(-Infinity,false);
+				}
 			}
 			var container=new UI.SchedulerContainer(schid,db);
 			container.open();

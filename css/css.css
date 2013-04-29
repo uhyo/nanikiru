@@ -32,6 +32,37 @@ table.calender td.today div.date{
 	display:-moz-box;
 	display:box;
 }
+/* cloth */
+.cloth-container{
+	/* dirty prefix */
+	display:-webkit-box;
+	display:-moz-box;
+	display:box;
+}
+/* scheduler */
+.schedulerbox{
+	border:3px double #999999;
+	width:12rem;
+	padding:0.3ex;
+}
+.schedulerbox.selection{
+	cursor:pointer;
+}
+.schedulerbox.selection:hover{
+	background-color:#eeeeee;
+}
+/* clotghgroup */
+.clothgroupbox{
+	border:3px double #999999;
+	width:12rem;
+	padding:0.3ex;
+}
+.clothgroupbox.selection{
+	cursor:pointer;
+}
+.clothgroupbox.selection:hover{
+	background-color:#eeeeee;
+}
 /* UIs */
 button {
 	outline:none;
@@ -41,6 +72,7 @@ button {
 }
 button svg{
 	padding:0;
+	vertical-align:middle;
 }
 button:focus {
 	box-shadow:0 0 4px 3px #cccccc;

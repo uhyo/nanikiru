@@ -316,6 +316,8 @@ var UI;
         function ClothGroupList(db, schedulerid) {
                 _super.call(this);
             this.db = db;
+            this.schedulerid = schedulerid;
+            var _self = this;
             var c = this.getContent();
             c.classList.add("clothgroup-list");
             var count = 0;
@@ -353,18 +355,15 @@ var UI;
 function addlist(doc) {
                 if(doc) {
                     count++;
-                    var div = el("div", function (div) {
-                        div.appendChild(icons.clothgroup({
-                            colors: [
-                                "#aaaaaa", 
-                                "#888888", 
-                                "#666666"
-                            ],
-                            width: "32px",
-                            height: "32px"
-                        }));
-                        div.appendChild(document.createTextNode(doc.name));
-                    });
+                    c.appendChild(selectbox.clothgroup(doc, function (e) {
+                        var info = new ClothGroupInfo(db, doc.id);
+                        var modal = new ModalUI(_self);
+                        modal.slide("simple", info, function (mode) {
+                            if(mode != null) {
+                                _self.close(mode);
+                            }
+                        });
+                    }));
                 } else {
                     fin();
                 }
@@ -375,11 +374,171 @@ function fin() {
                         p.textContent = "服グループはまだありません。";
                     }));
                 }
+                c.appendChild(el("p", function (p) {
+                    p.appendChild(el("button", function (b) {
+                        var button = b;
+                        button.appendChild(icons.plus({
+                            color: "#666666",
+                            width: "24px",
+                            height: "24px"
+                        }));
+                        button.appendChild(document.createTextNode("新しい服グループを追加"));
+                        button.addEventListener("click", function (e) {
+                            var info = new ClothGroupInfo(db, null, schedulerid);
+                            var modal = new ModalUI(_self);
+                            modal.slide("simple", info, function (returnValue) {
+                                if(returnValue != null) {
+                                    _self.close(returnValue);
+                                }
+                            });
+                        }, false);
+                    }));
+                }));
             }
         }
         return ClothGroupList;
     })(UISection);
     UI.ClothGroupList = ClothGroupList;    
+    var ClothGroupInfo = (function (_super) {
+        __extends(ClothGroupInfo, _super);
+        function ClothGroupInfo(db, clothgroupid, schedulerid) {
+                _super.call(this);
+            this.db = db;
+            this.clothgroupid = clothgroupid;
+            this.open(schedulerid);
+        }
+        ClothGroupInfo.prototype.open = function (schedulerid) {
+            var _self = this;
+            var db = this.db, clothgroupid = this.clothgroupid;
+            var c = this.getContent();
+            c.classList.add("clothgroup-info");
+            empty(c);
+            var doc = null;
+            if(clothgroupid != null) {
+                db.getClothGroup(clothgroupid, function (doc) {
+                    if(doc == null) {
+                        c.appendChild(el("p", function (p) {
+                            p.textContent = "この服グループの情報は取得できません。";
+                        }));
+                    } else {
+                        useInfo(doc);
+                    }
+                });
+            } else {
+                doc = {
+                    id: -Infinity,
+                    name: "新しい服グループ",
+                    made: new Date()
+                };
+                useInfo(doc);
+            }
+            function useInfo(doc) {
+                c.appendChild(el("h1", function (h1) {
+                    h1.appendChild(icons.clothgroup({
+                        width: "32px",
+                        height: "32px"
+                    }));
+                    h1.appendChild(document.createTextNode(doc.name));
+                }));
+                c.appendChild(el("section", function (section) {
+                    section.appendChild(el("h1", function (h1) {
+                        h1.appendChild(icons.gear({
+                            width: "28px",
+                            height: "28px",
+                            anime: "always"
+                        }));
+                        h1.appendChild(document.createTextNode("設定"));
+                    }));
+                    section.appendChild(el("form", function (f) {
+                        var form = f;
+                        form.appendChild(el("p", function (p) {
+                            p.textContent = "名前:";
+                            p.appendChild(el("input", function (i) {
+                                var input = i;
+                                input.name = "name";
+                                input.size = 30;
+                                input.placeholder = "名前";
+                                input.value = doc.name;
+                            }));
+                        }));
+                        form.appendChild(el("p", function (p) {
+                            p.appendChild(el("input", function (i) {
+                                var input = i;
+                                input.type = "submit";
+                                input.value = "決定";
+                            }));
+                        }));
+                        form.addEventListener("submit", function (e) {
+                            e.preventDefault();
+                            var name = (form.elements["name"]).value;
+                            if(clothgroupid == null) {
+                                delete doc.id;
+                            }
+                            doc.name = name;
+                            db.setClothGroup(doc, function (id) {
+                                console.log(doc, id);
+                                if(id != null) {
+                                    doc.id = id;
+                                    _self.clothgroupid = id;
+                                    if(schedulerid != null) {
+                                        db.getScheduler(schedulerid, function (schedulerdoc) {
+                                            console.log(schedulerdoc);
+                                            if(schedulerdoc) {
+                                                if(schedulerdoc.groups.indexOf(id) < 0) {
+                                                    schedulerdoc.groups.push(id);
+                                                    db.setScheduler(schedulerdoc, function (result) {
+                                                        _self.open();
+                                                    });
+                                                }
+                                            }
+                                        });
+                                    } else {
+                                        _self.open();
+                                    }
+                                }
+                            });
+                        }, false);
+                    }));
+                }));
+                c.appendChild(el("section", function (section) {
+                    if(schedulerid != null) {
+                        section.hidden = true;
+                    }
+                    section.appendChild(el("h1", function (h1) {
+                        h1.textContent = "所属スケジューラ";
+                    }));
+                    var count = 0;
+                    db.eachScheduler({
+                        group: doc.id
+                    }, function (sdoc) {
+                        if(sdoc == null) {
+                            if(count === 0) {
+                                section.appendChild(el("p", function (p) {
+                                    p.textContent = "所属スケジューラはありません。";
+                                }));
+                            }
+                            return;
+                        }
+                        section.appendChild(selectbox.scheduler(sdoc, function (mode) {
+                            _self.close("scheduler::" + sdoc.id);
+                        }));
+                        count++;
+                    });
+                }));
+                c.appendChild(el("p", function (p) {
+                    p.appendChild(el("button", function (b) {
+                        var button = b;
+                        button.textContent = "戻る";
+                        button.addEventListener("click", function (e) {
+                            _self.close();
+                        }, false);
+                    }));
+                }));
+            }
+        };
+        return ClothGroupInfo;
+    })(UISection);
+    UI.ClothGroupInfo = ClothGroupInfo;    
     var ModalUI = (function () {
         function ModalUI(ui) {
             this.ui = ui;
@@ -399,13 +558,16 @@ function fin() {
                 tc.appendChild(nc);
             }
             dia.onclose(function (returnValue) {
-                if(callback) {
-                    callback(returnValue);
-                }
                 if(nc.parentNode === tc) {
                     tc.removeChild(nc);
                 }
+                if(tc.parentNode) {
+                    tc.parentNode.replaceChild(bc, tc);
+                }
                 bc.style.display = null;
+                if(callback) {
+                    callback(returnValue);
+                }
             });
         };
         return ModalUI;
@@ -446,6 +608,13 @@ function fin() {
     var icons;
     (function (icons) {
         function gear(option) {
+            setDefault(option, {
+                radius1: 90,
+                radius2: 35,
+                z: 10,
+                length: 24,
+                color: "#666666"
+            });
             return svg("svg", function (s) {
                 var result = s;
                 result.setAttribute("version", "1.1");
@@ -501,14 +670,22 @@ function fin() {
         }
         icons.gear = gear;
         function clothgroup(option) {
+            setDefault(option, {
+                colors: [
+                    "#aaaaaa", 
+                    "#888888", 
+                    "#666666"
+                ]
+            });
             return svg("svg", function (r) {
                 var result = r;
                 result.width.baseVal.valueAsString = option.width;
                 result.height.baseVal.valueAsString = option.height;
+                result.viewBox.baseVal.x = 0 , result.viewBox.baseVal.y = 0 , result.viewBox.baseVal.width = 256 , result.viewBox.baseVal.height = 256;
                 for(var i = 0; i < 3; i++) {
                     var g = onecloth(option.colors[i]);
                     var trtr = (i - 1) * 30;
-                    g.setAttribute("transform", "transform(" + trtr + ") scale(0.9");
+                    g.setAttribute("transform", "translate(" + trtr + " " + trtr + ") scale(0.9)");
                     result.appendChild(g);
                 }
                 function onecloth(color) {
@@ -536,6 +713,82 @@ function fin() {
             });
         }
         icons.clothgroup = clothgroup;
+        function plus(option) {
+            setDefault(option, {
+                color: "#666666"
+            });
+            return svg("svg", function (r) {
+                var result = r;
+                result.width.baseVal.valueAsString = option.width;
+                result.height.baseVal.valueAsString = option.height;
+                result.viewBox.baseVal.x = 0 , result.viewBox.baseVal.y = 0 , result.viewBox.baseVal.width = 256 , result.viewBox.baseVal.height = 256;
+                result.appendChild(svg("g", function (g) {
+                    g.appendChild(svg("line", function (l) {
+                        var line = l;
+                        line.x1.baseVal.valueAsString = "48px";
+                        line.y1.baseVal.valueAsString = "128px";
+                        line.x2.baseVal.valueAsString = "208px";
+                        line.y2.baseVal.valueAsString = "128px";
+                        line.setAttribute("stroke-width", "48px");
+                        line.setAttribute("stroke", option.color);
+                    }));
+                    g.appendChild(svg("line", function (l) {
+                        var line = l;
+                        line.x1.baseVal.valueAsString = "128px";
+                        line.y1.baseVal.valueAsString = "48px";
+                        line.x2.baseVal.valueAsString = "128px";
+                        line.y2.baseVal.valueAsString = "208px";
+                        line.setAttribute("stroke-width", "48px");
+                        line.setAttribute("stroke", option.color);
+                    }));
+                }));
+            });
+        }
+        icons.plus = plus;
+        function calender(option) {
+            setDefault(option, {
+                color: "#777777"
+            });
+            return svg("svg", function (r) {
+                var result = r;
+                result.width.baseVal.valueAsString = option.width;
+                result.height.baseVal.valueAsString = option.height;
+                result.viewBox.baseVal.x = 0 , result.viewBox.baseVal.y = 0 , result.viewBox.baseVal.width = 256 , result.viewBox.baseVal.height = 256;
+                result.appendChild(svg("rect", function (r) {
+                    var rect = r;
+                    rect.x.baseVal.valueAsString = "30px";
+                    rect.y.baseVal.valueAsString = "30px";
+                    rect.width.baseVal.valueAsString = "196px";
+                    rect.height.baseVal.valueAsString = "30px";
+                    rect.setAttribute("fill", option.color);
+                }));
+                for(var x = 0; x < 5; x++) {
+                    var xi = 30 + (196 / 4 * x) + "px";
+                    result.appendChild(svg("line", function (l) {
+                        var line = l;
+                        line.x1.baseVal.valueAsString = xi;
+                        line.y1.baseVal.valueAsString = "30px";
+                        line.x2.baseVal.valueAsString = xi;
+                        line.y2.baseVal.valueAsString = "226px";
+                        line.setAttribute("stroke", option.color);
+                        line.setAttribute("stroke-width", "8px");
+                    }));
+                }
+                for(var y = 1; y < 4; y++) {
+                    var yi = 60 + (166 / 3 * y) + "px";
+                    result.appendChild(svg("line", function (l) {
+                        var line = l;
+                        line.x1.baseVal.valueAsString = "30px";
+                        line.y1.baseVal.valueAsString = yi;
+                        line.x2.baseVal.valueAsString = "226px";
+                        line.y2.baseVal.valueAsString = yi;
+                        line.setAttribute("stroke", option.color);
+                        line.setAttribute("stroke-width", "8px");
+                    }));
+                }
+            });
+        }
+        icons.calender = calender;
         var svgNS = "http://www.w3.org/2000/svg";
         function svg(name, callback) {
             var result = document.createElementNS(svgNS, name);
@@ -565,5 +818,58 @@ function fin() {
                 }
             }, false);
         }
+        function setDefault(obj, def) {
+            for(var key in def) {
+                if(!(key in obj)) {
+                    obj[key] = def[key];
+                }
+            }
+        }
     })(icons || (icons = {}));
+    var selectbox;
+    (function (selectbox) {
+        function scheduler(doc, clickhandler) {
+            return el("div", function (div) {
+                div.classList.add("schedulerbox");
+                div.classList.add("selection");
+                switch(doc.type) {
+                    case "calender":
+                        div.appendChild(icons.calender({
+                            width: "32px",
+                            height: "32px"
+                        }));
+                        break;
+                }
+                div.appendChild(document.createTextNode(doc.name));
+                if(clickhandler) {
+                    div.addEventListener("click", function (e) {
+                        clickhandler("normal");
+                    }, false);
+                }
+            });
+        }
+        selectbox.scheduler = scheduler;
+        function clothgroup(doc, clickhandler) {
+            return el("div", function (div) {
+                div.classList.add("clothgroupbox");
+                div.classList.add("selection");
+                div.appendChild(icons.clothgroup({
+                    width: "32px",
+                    height: "32px"
+                }));
+                div.appendChild(document.createTextNode(doc.name));
+                if(clickhandler) {
+                    div.addEventListener("click", function (e) {
+                        clickhandler("normal");
+                    }, false);
+                }
+            });
+        }
+        selectbox.clothgroup = clothgroup;
+    })(selectbox || (selectbox = {}));
+    function empty(el) {
+        while(el.firstChild) {
+            el.removeChild(el.firstChild);
+        }
+    }
 })(UI || (UI = {}));

@@ -69,13 +69,16 @@ class DB{
 				scheduler.createIndex("type","type",{
 					unique:false, multiEntry:false,
 				});
+				scheduler.createIndex("groups","groups",{
+					unique:false, multiEntry:true,
+				});
 				
 				var log=db.createObjectStore("log",{
 					keyPath:"id",
 					autoIncrement:true,
 				});
 				log.createIndex("scheduler","scheduler",{
-					unique:false, multiEntry:true,
+					unique:false, multiEntry:false,
 				});
 				//まとめて検索用
 				log.createIndex("cloth_complex","cloth",{
@@ -91,6 +94,7 @@ class DB{
 					"type":"calender",
 					"name":"カレンダー",
 					"made":new Date(),
+					"groups":[],
 				});
 				req.addEventListener("success",(e)=>{
 					console.log("新しいカレンダーが作成されました。");
@@ -142,6 +146,45 @@ class DB{
 		});
 		delete req;
 	}
+	eachScheduler(cond:{
+		keyrange?:any;
+		type?:string;
+		group?:number;
+	},callback:(result:ClothGroupDoc)=>void):void{
+		var tr=this.db.transaction("scheduler","readonly");
+		var scheduler=tr.objectStore("scheduler");
+		var req:IDBRequest;
+		if(cond.type!=null){
+			req=scheduler.index("type").openCursor(<any>cond.type,"next");
+		}else if(cond.group!=null){
+			req=scheduler.index("groups").openCursor(<any>cond.group,"next");
+		}else{
+			//keyrange: nullable
+			req=scheduler.openCursor(cond.keyrange||null,"next");
+		}
+		if(req==null){
+			callback(null);	//ひとつもない
+			return;
+		}
+		req.addEventListener("success",(e)=>{
+			//nullかも
+			var cursor=req.result;
+			if(!cursor){
+				//もうない
+				callback(null);
+				return;
+			}else{
+				//まだある!続行
+				callback(<ClothGroupDoc>cursor.value);
+				cursor.advance(1);
+			}
+		});
+		req.addEventListener("error",(e)=>{
+			console.error("eachClothGroup error:",req.error);
+			callback(null);
+		});
+		delete req;
+	}
 	//cloth group
 	getClothGroup(id:number,callback:(result:ClothGroupDoc)=>void):void{
 		var tr=this.db.transaction("clothgroup","readonly");
@@ -149,6 +192,21 @@ class DB{
 		var req:IDBRequest=clothgroup.get(id);
 		req.addEventListener("success",(e)=>{
 			callback(<ClothGroupDoc>req.result);
+		});
+		req.addEventListener("error",(e)=>{
+			console.error("getClothGroup error:",req.error);
+			callback(null);
+		});
+		delete req;
+	}
+	setClothGroup(doc:ClothGroupDoc,callback:(result:number)=>void):void{
+		var tr=this.db.transaction("clothgroup","readwrite");
+		var clothgroup=tr.objectStore("clothgroup");
+		var req:IDBRequest=clothgroup.put(doc);
+		req.addEventListener("success",(e)=>{
+			setTimeout(()=>{
+				callback(req.result);
+			},0);
 		});
 		req.addEventListener("error",(e)=>{
 			console.error("getClothGroup error:",req.error);

@@ -44,30 +44,42 @@ var Panels;
                         _this.host.setPanel(clothgroup);
                     }
                 });
+            } else if(ui instanceof UI.ClothGroupList) {
             }
+            ui.onclose(function (returnValue) {
+                var result;
+                result = returnValue.match(/^scheduler::(\d+)$/);
+                if(result) {
+                    var sc = new SchedulerPanel(_this.host, _this.db, Number(result[1]));
+                    _this.host.setPanel(sc);
+                }
+            });
         };
         return Panel;
     })();
     Panels.Panel = Panel;    
-    var TopPanel = (function (_super) {
-        __extends(TopPanel, _super);
-        function TopPanel(host, db) {
+    var SchedulerPanel = (function (_super) {
+        __extends(SchedulerPanel, _super);
+        function SchedulerPanel(host, db, schedulerid) {
                 _super.call(this, host, db);
             this.host = host;
             this.db = db;
             var c = this.initContainer();
-            var schid = Number(localStorage.getItem("lastScheduler"));
-            if(!isNaN(schid)) {
-                schid = (IDBKeyRange).lowerBound(-Infinity, false);
+            var schid = schedulerid;
+            if(schid == null) {
+                schid = Number(localStorage.getItem("lastScheduler"));
+                if(!isNaN(schid)) {
+                    schid = (IDBKeyRange).lowerBound(-Infinity, false);
+                }
             }
             var container = new UI.SchedulerContainer(schid, db);
             container.open();
             c.appendChild(container.getContent());
             this.closeManage(container);
         }
-        return TopPanel;
+        return SchedulerPanel;
     })(Panel);
-    Panels.TopPanel = TopPanel;    
+    Panels.SchedulerPanel = SchedulerPanel;    
     var ClothGroupPanel = (function (_super) {
         __extends(ClothGroupPanel, _super);
         function ClothGroupPanel(host, db, option) {

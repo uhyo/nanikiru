@@ -1,6 +1,9 @@
 ///<reference path="db.ts"/>
 ///<reference path="clothes.ts"/>
 //additional definition
+interface HTMLElement{
+	hidden:bool;
+}
 interface HTMLTimeElement extends HTMLElement{
 	dateTime:string;
 }
@@ -326,8 +329,9 @@ module UI{
 	}
 	//服グループのリスト
 	export class ClothGroupList extends UISection{
-		constructor(private db:DB,schedulerid?:number){
+		constructor(private db:DB,private schedulerid?:number){
 			super();
+			var _self=this;
 			var c=this.getContent();
 			c.classList.add("clothgroup-list");
 			var count:number=0;	//表示済みのやつを数える
@@ -371,15 +375,16 @@ module UI{
 				if(doc){
 					count++;
 					//ある!つくる
-					var div=el("div",(div)=>{
-						//アイコン
-						div.appendChild(icons.clothgroup({
-							colors:["#aaaaaa","#888888","#666666"],
-							width:"32px",
-							height:"32px",
-						}));
-						div.appendChild(document.createTextNode(doc.name));
-					});
+					c.appendChild(selectbox.clothgroup(doc,(e)=>{
+						//個別の設定画面へ!
+						var info=new ClothGroupInfo(db,doc.id);
+						var modal=new ModalUI(_self);
+						modal.slide("simple",info,(mode?:string)=>{
+							if(mode!=null){
+								_self.close(mode);
+							}
+						});
+					}));
 				}else{
 					//終了だ!
 					fin();
@@ -393,6 +398,181 @@ module UI{
 						p.textContent="服グループはまだありません。";
 					}));
 				}
+				//追加ボタン
+				c.appendChild(el("p",(p)=>{
+					p.appendChild(el("button",(b)=>{
+						var button=<HTMLButtonElement>b;
+						button.appendChild(icons.plus({
+							color:"#666666",
+							width:"24px",
+							height:"24px",
+						}));
+						button.appendChild(document.createTextNode("新しい服グループを追加"));
+						button.addEventListener("click",(e)=>{
+							//新しいやつを追加したいなあ・・・
+							var info=new ClothGroupInfo(db,null,schedulerid);
+							var modal=new ModalUI(_self);
+							modal.slide("simple",info,(returnValue?:any)=>{
+								if(returnValue!=null){
+									//伝えたいことがあるんだ
+									_self.close(returnValue);
+								}
+							});
+						},false);
+					}));
+				}));
+			}
+		}
+	}
+	export class ClothGroupInfo extends UISection{
+		constructor(private db:DB,public clothgroupid:number,schedulerid?:number){
+			super();
+			this.open(schedulerid);
+		}
+		private open(schedulerid?:number):void{
+			var _self=this;
+			//schedulerid: 新規登録（スケジューラへ）
+			var db=this.db, clothgroupid=this.clothgroupid;
+			var c=this.getContent();
+			c.classList.add("clothgroup-info");
+			//けす
+			empty(c);
+			var doc:ClothGroupDoc=null;
+			//まず情報を取得
+			if(clothgroupid!=null){
+				db.getClothGroup(clothgroupid,(doc:ClothGroupDoc)=>{
+					if(doc==null){
+						//あれれーーーーーー
+						c.appendChild(el("p",(p)=>{
+							p.textContent="この服グループの情報は取得できません。";
+						}));
+					}else{
+						useInfo(doc);
+					}
+				});
+			}else{
+				//新規じゃないかこれは?
+				doc={
+					id:-Infinity,	//暫定
+					name:"新しい服グループ",
+					made:new Date,
+				};
+				useInfo(doc);
+			}
+
+			//ClothGroupDocに近いもの・・・idがないかも
+			function useInfo(doc:ClothGroupDoc):void{
+				c.appendChild(el("h1",(h1)=>{
+					h1.appendChild(icons.clothgroup({
+						width:"32px",
+						height:"32px",
+					}));
+					h1.appendChild(document.createTextNode(doc.name));
+				}));
+					//設定
+				c.appendChild(el("section",(section)=>{
+					section.appendChild(el("h1",(h1)=>{
+						h1.appendChild(icons.gear({
+							width:"28px",
+							height:"28px",
+							anime:"always",
+						}));
+						h1.appendChild(document.createTextNode("設定"));
+					}));
+					section.appendChild(el("form",(f)=>{
+						var form=<HTMLFormElement>f;
+						form.appendChild(el("p",(p)=>{
+							p.textContent="名前:";
+							p.appendChild(el("input",(i)=>{
+								var input=<HTMLInputElement>i;
+								input.name="name";
+								input.size=30;
+								input.placeholder="名前";
+								input.value=doc.name;
+							}));
+						}));
+						form.appendChild(el("p",(p)=>{
+							p.appendChild(el("input",(i)=>{
+								var input=<HTMLInputElement>i;
+								input.type="submit";
+								input.value="決定";
+							}));
+						}));
+						form.addEventListener("submit",(e)=>{
+							e.preventDefault();
+							var name=(<HTMLInputElement>form.elements["name"]).value;
+							//情報更新したいなあ
+							if(clothgroupid==null){
+								delete doc.id;	//idは向こうでつけてもらう
+							}
+							doc.name=name;
+							db.setClothGroup(doc,(id:number)=>{
+								console.log(doc,id);
+								if(id!=null){
+									//idをゲットした!
+									doc.id=id;
+									_self.clothgroupid=id;
+									if(schedulerid!=null){
+										//新規で登録したい
+										db.getScheduler(schedulerid,(schedulerdoc:SchedulerDoc)=>{
+											console.log(schedulerdoc);
+											if(schedulerdoc){
+												if(schedulerdoc.groups.indexOf(id)<0){
+													schedulerdoc.groups.push(id);
+													db.setScheduler(schedulerdoc,(result:bool)=>{
+														//設定した
+														_self.open();
+													});
+												}
+											}
+										});
+									}else{
+										_self.open();
+									}
+								}
+							});
+						},false);
+					}));
+				}));
+				//所属するスケジューラの情報
+				c.appendChild(el("section",(section)=>{
+					if(schedulerid!=null){
+						//新規だ!まだ
+						section.hidden=true;
+					}
+					section.appendChild(el("h1",(h1)=>{
+						h1.textContent="所属スケジューラ";
+					}));
+					var count=0;
+					db.eachScheduler({
+						group:doc.id,
+					},(sdoc:SchedulerDoc)=>{
+						if(sdoc==null){
+							//もうない
+							if(count===0){
+								section.appendChild(el("p",(p)=>{
+									p.textContent="所属スケジューラはありません。";
+								}));
+							}
+							return;
+						}
+						section.appendChild(selectbox.scheduler(sdoc,(mode:string)=>{
+							//スケジューラを開く
+							_self.close("scheduler::"+sdoc.id);
+						}));
+						count++;
+					});
+				}));
+				//戻る
+				c.appendChild(el("p",(p)=>{
+					p.appendChild(el("button",(b)=>{
+						var button=<HTMLButtonElement>b;
+						button.textContent="戻る";
+						button.addEventListener("click",(e)=>{
+							_self.close();
+						},false);
+					}));
+				}));
 			}
 		}
 	}
@@ -420,11 +600,12 @@ module UI{
 				tc.appendChild(nc);
 			}
 			dia.onclose((returnValue:any)=>{
-				//クローズ時は?
-				if(callback)callback(returnValue);
 				//後始末
 				if(nc.parentNode===tc)tc.removeChild(nc);
+				if(tc.parentNode)tc.parentNode.replaceChild(bc,tc);
 				bc.style.display=null;
+				//クローズ時は?
+				if(callback)callback(returnValue);
 			});
 		}
 	}
@@ -455,16 +636,23 @@ module UI{
 	//アイコン生成
 	module icons{
 		export function gear(option:{
-			radius1:number;	//歯車の半径
-			radius2:number;	//内側の空洞の半径
-			z:number;	//歯の数
-			length:number;	//歯の長さ
-			color:string;
+			radius1?:number;	//歯車の半径
+			radius2?:number;	//内側の空洞の半径
+			z?:number;	//歯の数
+			length?:number;	//歯の長さ
+			color?:string;
 			//画像の設定
 			width:string;
 			height:string;
 			anime?:string;	//アニメの種類
 		}):SVGSVGElement{
+			setDefault(option,{
+				radius1:90,
+				radius2:35,
+				z:10,
+				length:24,
+				color:"#666666",
+			});
 			return <SVGSVGElement>svg("svg",(s:SVGElement)=>{
 				var result=<SVGSVGElement>s;
 				result.setAttribute("version","1.1");
@@ -529,18 +717,22 @@ module UI{
 			});
 		}
 		export function clothgroup(option:{
-			colors:string[];	//色1〜3
+			colors?:string[];	//色1〜3
 			width:string;
 			height:string;
 		}):SVGSVGElement{
+			setDefault(option,{
+				colors:["#aaaaaa","#888888","#666666"],
+			});
 			return <SVGSVGElement>svg("svg",(r)=>{
 				var result=<SVGSVGElement>r;
 				result.width.baseVal.valueAsString=option.width;
 				result.height.baseVal.valueAsString=option.height;
+				result.viewBox.baseVal.x=0, result.viewBox.baseVal.y=0, result.viewBox.baseVal.width=256, result.viewBox.baseVal.height=256;
 				for(var i=0;i<3;i++){
 					var g=onecloth(option.colors[i]);
 					var trtr=(i-1)*30;
-					g.setAttribute("transform","transform("+trtr+") scale(0.9");
+					g.setAttribute("transform","translate("+trtr+" "+trtr+") scale(0.9)");
 					result.appendChild(g);
 				}
 				//ひとつの服
@@ -564,6 +756,90 @@ module UI{
 							path.setAttribute("fill",color);
 						}));
 					});
+				}
+			});
+		}
+		export function plus(option:{
+			color?:string;	//色
+			width:string;
+			height:string;
+		}):SVGSVGElement{
+			setDefault(option,{
+				color:"#666666",
+			});
+			return <SVGSVGElement>svg("svg",(r)=>{
+				var result=<SVGSVGElement>r;
+				result.width.baseVal.valueAsString=option.width;
+				result.height.baseVal.valueAsString=option.height;
+				result.viewBox.baseVal.x=0, result.viewBox.baseVal.y=0, result.viewBox.baseVal.width=256, result.viewBox.baseVal.height=256;
+				result.appendChild(svg("g",(g)=>{
+					//縦と横
+					g.appendChild(svg("line",(l)=>{
+						var line=<SVGLineElement>l;
+						line.x1.baseVal.valueAsString="48px";
+						line.y1.baseVal.valueAsString="128px";
+						line.x2.baseVal.valueAsString="208px";
+						line.y2.baseVal.valueAsString="128px";
+						line.setAttribute("stroke-width","48px");
+						line.setAttribute("stroke",option.color);
+					}));
+					g.appendChild(svg("line",(l)=>{
+						var line=<SVGLineElement>l;
+						line.x1.baseVal.valueAsString="128px";
+						line.y1.baseVal.valueAsString="48px";
+						line.x2.baseVal.valueAsString="128px";
+						line.y2.baseVal.valueAsString="208px";
+						line.setAttribute("stroke-width","48px");
+						line.setAttribute("stroke",option.color);
+					}));
+				}));
+			});
+		}
+		export function calender(option:{
+			color?:string;	//色
+			width:string;
+			height:string;
+		}):SVGSVGElement{
+			setDefault(option,{
+				color:"#777777",
+			});
+			return <SVGSVGElement>svg("svg",(r)=>{
+				var result=<SVGSVGElement>r;
+				result.width.baseVal.valueAsString=option.width;
+				result.height.baseVal.valueAsString=option.height;
+				result.viewBox.baseVal.x=0, result.viewBox.baseVal.y=0, result.viewBox.baseVal.width=256, result.viewBox.baseVal.height=256;
+				result.appendChild(svg("rect",(r)=>{
+					var rect=<SVGRectElement>r;
+					rect.x.baseVal.valueAsString="30px";
+					rect.y.baseVal.valueAsString="30px";
+					rect.width.baseVal.valueAsString="196px";
+					rect.height.baseVal.valueAsString="30px";
+					rect.setAttribute("fill",option.color);
+				}));
+				//線をひく
+				for(var x=0;x<5;x++){
+					var xi=30+(196/4*x)+"px";
+					result.appendChild(svg("line",(l)=>{
+						var line=<SVGLineElement>l;
+						line.x1.baseVal.valueAsString=xi;
+						line.y1.baseVal.valueAsString="30px";
+						line.x2.baseVal.valueAsString=xi;
+						line.y2.baseVal.valueAsString="226px";
+						line.setAttribute("stroke",option.color);
+						line.setAttribute("stroke-width","8px");
+					}));
+				}
+				for(var y=1;y<4;y++){
+					var yi=60+(166/3*y)+"px";
+					result.appendChild(svg("line",(l)=>{
+						var line=<SVGLineElement>l;
+						line.x1.baseVal.valueAsString="30px";
+						line.y1.baseVal.valueAsString=yi;
+						line.x2.baseVal.valueAsString="226px";
+						line.y2.baseVal.valueAsString=yi;
+						line.setAttribute("stroke",option.color);
+						line.setAttribute("stroke-width","8px");
+					}));
 				}
 			});
 		}
@@ -594,5 +870,58 @@ module UI{
 				}
 			},false);
 		}
+		//デフォルト設定を書き込む ネスト非対応
+		function setDefault(obj:any,def:any):void{
+			for(var key in def){
+				if(!(key in obj)){
+					obj[key]=def[key];
+				}
+			}
+		}
+	}
+	//領域
+	module selectbox{
+		export function scheduler(doc:SchedulerDoc,clickhandler?:(mode:string)=>void):HTMLElement{
+			return el("div",(div)=>{
+				div.classList.add("schedulerbox");
+				div.classList.add("selection");
+				//アイコン
+				switch(doc.type){
+					case "calender":
+						div.appendChild(icons.calender({
+							width:"32px",
+							height:"32px",
+						}));
+						break;
+				}
+				div.appendChild(document.createTextNode(doc.name));
+				if(clickhandler){
+					div.addEventListener("click",(e)=>{
+						clickhandler("normal");
+					},false);
+				}
+			});
+		}
+		export function clothgroup(doc:ClothGroupDoc,clickhandler?:(mode:string)=>void):HTMLElement{
+			return el("div",(div)=>{
+				div.classList.add("clothgroupbox");
+				div.classList.add("selection");
+				//アイコン
+				div.appendChild(icons.clothgroup({
+					width:"32px",
+					height:"32px",
+				}));
+				div.appendChild(document.createTextNode(doc.name));
+				if(clickhandler){
+					div.addEventListener("click",(e)=>{
+						clickhandler("normal");
+					},false);
+				}
+			});
+		}
+	}
+	//util
+	function empty(el:Element):void{
+		while(el.firstChild)el.removeChild(el.firstChild);
 	}
 }

@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded",function(){
 	var db=new DB();
 	db.open((result:bool)=>{
 		if(result){
-			var tp=new Panels.TopPanel(host,db);
+			var tp=new Panels.SchedulerPanel(host,db);
 			host.setPanel(tp);
 		}
 	});

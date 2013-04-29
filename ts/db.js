@@ -37,13 +37,17 @@ var DB = (function () {
                     unique: false,
                     multiEntry: false
                 });
+                scheduler.createIndex("groups", "groups", {
+                    unique: false,
+                    multiEntry: true
+                });
                 var log = db.createObjectStore("log", {
                     keyPath: "id",
                     autoIncrement: true
                 });
                 log.createIndex("scheduler", "scheduler", {
                     unique: false,
-                    multiEntry: true
+                    multiEntry: false
                 });
                 log.createIndex("cloth_complex", "cloth", {
                     unique: false,
@@ -56,7 +60,8 @@ var DB = (function () {
                 var req = scheduler.add({
                     "type": "calender",
                     "name": "カレンダー",
-                    "made": new Date()
+                    "made": new Date(),
+                    "groups": []
                 });
                 req.addEventListener("success", function (e) {
                     console.log("新しいカレンダーが作成されました。");
@@ -108,12 +113,58 @@ var DB = (function () {
         });
         delete req;
     };
+    DB.prototype.eachScheduler = function (cond, callback) {
+        var tr = this.db.transaction("scheduler", "readonly");
+        var scheduler = tr.objectStore("scheduler");
+        var req;
+        if(cond.type != null) {
+            req = scheduler.index("type").openCursor(cond.type, "next");
+        } else if(cond.group != null) {
+            req = scheduler.index("groups").openCursor(cond.group, "next");
+        } else {
+            req = scheduler.openCursor(cond.keyrange || null, "next");
+        }
+        if(req == null) {
+            callback(null);
+            return;
+        }
+        req.addEventListener("success", function (e) {
+            var cursor = req.result;
+            if(!cursor) {
+                callback(null);
+                return;
+            } else {
+                callback(cursor.value);
+                cursor.advance(1);
+            }
+        });
+        req.addEventListener("error", function (e) {
+            console.error("eachClothGroup error:", req.error);
+            callback(null);
+        });
+        delete req;
+    };
     DB.prototype.getClothGroup = function (id, callback) {
         var tr = this.db.transaction("clothgroup", "readonly");
         var clothgroup = tr.objectStore("clothgroup");
         var req = clothgroup.get(id);
         req.addEventListener("success", function (e) {
             callback(req.result);
+        });
+        req.addEventListener("error", function (e) {
+            console.error("getClothGroup error:", req.error);
+            callback(null);
+        });
+        delete req;
+    };
+    DB.prototype.setClothGroup = function (doc, callback) {
+        var tr = this.db.transaction("clothgroup", "readwrite");
+        var clothgroup = tr.objectStore("clothgroup");
+        var req = clothgroup.put(doc);
+        req.addEventListener("success", function (e) {
+            setTimeout(function () {
+                callback(req.result);
+            }, 0);
         });
         req.addEventListener("error", function (e) {
             console.error("getClothGroup error:", req.error);
