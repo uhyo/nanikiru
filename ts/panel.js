@@ -53,6 +53,9 @@ var Panels;
                     var sc = new SchedulerPanel(_this.host, _this.db, Number(result[1]));
                     _this.host.setPanel(sc);
                 }
+                result = returnValue.match(/^cloth::(\d+)$/);
+                if(result) {
+                }
             });
         };
         return Panel;
