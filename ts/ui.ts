@@ -563,6 +563,50 @@ module UI{
 						count++;
 					});
 				}));
+				//服の一覧
+				c.appendChild(el("section",(section)=>{
+					if(schedulerid!=null){
+						section.hidden=true;
+					}
+					section.appendChild(el("h1",(h1)=>{
+						h1.textContent="服の一覧";
+					}));
+					var count=0;
+					db.eachCloth({
+						group:doc.id,
+					},(cdoc:ClothDoc)=>{
+						if(cdoc==null){
+							//もうない
+							if(count===0){
+								section.appendChild(el("p",(p)=>{
+									p.textContent="服は登録されていません。";
+								}));
+							}
+							//追加ボタン
+							section.appendChild(el("p",(p)=>{
+								p.appendChild(el("button",(b)=>{
+									var button=<HTMLButtonElement>b;
+									button.appendChild(icons.plus({
+										color:"#666666",
+										width:"24px",
+										height:"24px",
+									}));
+									button.appendChild(document.createTextNode("新しい服を作成して登録"));
+									button.addEventListener("click",(e)=>{
+										//新しいやつを追加したいなあ・・・
+										//服のデザイン選択UI
+									},false);
+								}));
+							}));
+							return;
+						}
+						section.appendChild(selectbox.cloth(cdoc,(mode:string)=>{
+							//スケジューラを開く
+							_self.close("cloth::"+cdoc.id);
+						}));
+						count++;
+					});
+				}));
 				//戻る
 				c.appendChild(el("p",(p)=>{
 					p.appendChild(el("button",(b)=>{
@@ -912,6 +956,20 @@ module UI{
 					height:"32px",
 				}));
 				div.appendChild(document.createTextNode(doc.name));
+				if(clickhandler){
+					div.addEventListener("click",(e)=>{
+						clickhandler("normal");
+					},false);
+				}
+			});
+		}
+		export function cloth(doc:ClothDoc,clickhandler?:(mode:string)=>void):HTMLElement{
+			return el("div",(div)=>{
+				div.classList.add("clothbox");
+				div.classList.add("selection");
+				//アイコン
+				var cloth=Cloth.importCloth(doc);
+				div.appendChild(cloth.getSVG("32px","32px"));
 				if(clickhandler){
 					div.addEventListener("click",(e)=>{
 						clickhandler("normal");

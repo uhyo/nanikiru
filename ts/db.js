@@ -196,5 +196,38 @@ var DB = (function () {
         });
         delete req;
     };
+    DB.prototype.eachCloth = function (cond, callback) {
+        var tr = this.db.transaction("cloth", "readonly");
+        var cloth = tr.objectStore("cloth");
+        var req;
+        if(cond.type != null) {
+            req = cloth.index("type").openCursor(cond.type, "next");
+        } else if(cond.group != null) {
+            req = cloth.index("group").openCursor(cond.group, "next");
+        } else if(cond.status != null) {
+            req = cloth.index("status").openCursor(cond.status, "next");
+        } else {
+            req = cloth.openCursor(cond.keyrange || null, "next");
+        }
+        if(req == null) {
+            callback(null);
+            return;
+        }
+        req.addEventListener("success", function (e) {
+            var cursor = req.result;
+            if(!cursor) {
+                callback(null);
+                return;
+            } else {
+                callback(cursor.value);
+                cursor.advance(1);
+            }
+        });
+        req.addEventListener("error", function (e) {
+            console.error("eachCloth error:", req.error);
+            callback(null);
+        });
+        delete req;
+    };
     return DB;
 })();

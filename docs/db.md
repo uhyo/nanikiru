@@ -3,8 +3,9 @@
 ## Cloth (objectstore cloth)
   {
     "id": number(key path)
+    "name":string
     "type":string(clothType) index
-    "colors":string[]
+    "patterns":{"type":string;"colors":[]}[]
     "group": number[](clothgroup.id) indexM
     //used times
     "used":number

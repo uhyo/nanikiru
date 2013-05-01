@@ -525,6 +525,44 @@ function fin() {
                         count++;
                     });
                 }));
+                c.appendChild(el("section", function (section) {
+                    if(schedulerid != null) {
+                        section.hidden = true;
+                    }
+                    section.appendChild(el("h1", function (h1) {
+                        h1.textContent = "服の一覧";
+                    }));
+                    var count = 0;
+                    db.eachCloth({
+                        group: doc.id
+                    }, function (cdoc) {
+                        if(cdoc == null) {
+                            if(count === 0) {
+                                section.appendChild(el("p", function (p) {
+                                    p.textContent = "服は登録されていません。";
+                                }));
+                            }
+                            section.appendChild(el("p", function (p) {
+                                p.appendChild(el("button", function (b) {
+                                    var button = b;
+                                    button.appendChild(icons.plus({
+                                        color: "#666666",
+                                        width: "24px",
+                                        height: "24px"
+                                    }));
+                                    button.appendChild(document.createTextNode("新しい服を作成して登録"));
+                                    button.addEventListener("click", function (e) {
+                                    }, false);
+                                }));
+                            }));
+                            return;
+                        }
+                        section.appendChild(selectbox.cloth(cdoc, function (mode) {
+                            _self.close("cloth::" + cdoc.id);
+                        }));
+                        count++;
+                    });
+                }));
                 c.appendChild(el("p", function (p) {
                     p.appendChild(el("button", function (b) {
                         var button = b;
@@ -866,6 +904,20 @@ function fin() {
             });
         }
         selectbox.clothgroup = clothgroup;
+        function cloth(doc, clickhandler) {
+            return el("div", function (div) {
+                div.classList.add("clothbox");
+                div.classList.add("selection");
+                var cloth = Cloth.importCloth(doc);
+                div.appendChild(cloth.getSVG("32px", "32px"));
+                if(clickhandler) {
+                    div.addEventListener("click", function (e) {
+                        clickhandler("normal");
+                    }, false);
+                }
+            });
+        }
+        selectbox.cloth = cloth;
     })(selectbox || (selectbox = {}));
     function empty(el) {
         while(el.firstChild) {

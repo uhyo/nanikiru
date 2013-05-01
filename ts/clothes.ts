@@ -13,7 +13,10 @@ interface Document extends XPathEvaluator{
 }
 class Cloth{
 	private clothType:string=null;	//服の形
-	private colors:string[]=[];		//色たち（どの色番号がどの部分にあたるかは服による）
+	private patterns:{
+		type:string;
+		colors:string[];
+	}[]=[];		//パターンたち（どのパターン番号がどの部分にあたるかは服による）
 	private svg:SVGSVGElement=null;
 
 	static svgNS="http://www.w3.org/2000/svg";
@@ -21,7 +24,7 @@ class Cloth{
 	//JSON的なobjから作る
 	importCloth(obj:any):void{
 		this.clothType = obj.clothType || null;
-		this.colors = Array.isArray(obj.colors) ? obj.colors : [];
+		this.patterns = Array.isArray(obj.pattenrs) ? obj.patterns : [];
 	}
 	static importCloth(obj:any):Cloth{
 		var c=new Cloth();
@@ -32,7 +35,7 @@ class Cloth{
 	exportCloth():any{
 		return {
 			clothType:this.clothType,
-			colors:this.colors,
+			patterns:this.patterns,
 		};
 	}
 	//SVG要素を出力
@@ -45,17 +48,18 @@ class Cloth{
 			svg=this.svg=<SVGSVGElement>document.createElementNS(Cloth.svgNS,"svg");
 			svg.setAttribute("version","1.1");
 			svg.viewBox.baseVal.x=0, svg.viewBox.baseVal.y=0, svg.viewBox.baseVal.width=256, svg.viewBox.baseVal.height=256;
-			this.makeCloth(svg,this.clothType);
+			this.makeCloth(svg);
 		}
 		//幅設定
 		svg.width.baseVal.valueAsString=width;
 		svg.height.baseVal.valueAsString=height;
 
-		this.setStyle(svg,this.colors);
+		this.setStyle(svg);
 		return svg;
 	}
 	//服をつくる
-	private makeCloth(el:SVGSVGElement,type:string):void{
+	private makeCloth(el:SVGSVGElement):void{
+		var type=this.clothType;
 		//服の種類ごとに
 		var d:string;
 		switch(type){
@@ -126,8 +130,9 @@ class Cloth{
 			return p;
 		}
 	}
-	private setStyle(el:SVGSVGElement,colors:string[]):void{
+	private setStyle(el:SVGSVGElement):void{
 		//まずstyleを作る
+		/*
 		var result:any=null;
 		var d=<XPathEvaluator>document;
 		var nsr=d.createNSResolver(el);
@@ -137,7 +142,7 @@ class Cloth{
 			for(var j=0,m=result.snapshotLength;j<m;j++){
 				result.snapshotItem(j).setAttribute("fill",colors[i]);
 			}
-		}
+		}*/
 	}
 }
 

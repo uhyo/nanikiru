@@ -2,13 +2,13 @@
 var Cloth = (function () {
     function Cloth() {
         this.clothType = null;
-        this.colors = [];
+        this.patterns = [];
         this.svg = null;
     }
     Cloth.svgNS = "http://www.w3.org/2000/svg";
     Cloth.prototype.importCloth = function (obj) {
         this.clothType = obj.clothType || null;
-        this.colors = Array.isArray(obj.colors) ? obj.colors : [];
+        this.patterns = Array.isArray(obj.pattenrs) ? obj.patterns : [];
     };
     Cloth.importCloth = function importCloth(obj) {
         var c = new Cloth();
@@ -18,7 +18,7 @@ var Cloth = (function () {
     Cloth.prototype.exportCloth = function () {
         return {
             clothType: this.clothType,
-            colors: this.colors
+            patterns: this.patterns
         };
     };
     Cloth.prototype.getSVG = function (width, height) {
@@ -31,14 +31,15 @@ var Cloth = (function () {
             svg = this.svg = document.createElementNS(Cloth.svgNS, "svg");
             svg.setAttribute("version", "1.1");
             svg.viewBox.baseVal.x = 0 , svg.viewBox.baseVal.y = 0 , svg.viewBox.baseVal.width = 256 , svg.viewBox.baseVal.height = 256;
-            this.makeCloth(svg, this.clothType);
+            this.makeCloth(svg);
         }
         svg.width.baseVal.valueAsString = width;
         svg.height.baseVal.valueAsString = height;
-        this.setStyle(svg, this.colors);
+        this.setStyle(svg);
         return svg;
     };
-    Cloth.prototype.makeCloth = function (el, type) {
+    Cloth.prototype.makeCloth = function (el) {
+        var type = this.clothType;
         var d;
         switch(type) {
             case "T-shirt":
@@ -100,16 +101,7 @@ var Cloth = (function () {
             return p;
         }
     };
-    Cloth.prototype.setStyle = function (el, colors) {
-        var result = null;
-        var d = document;
-        var nsr = d.createNSResolver(el);
-        for(var i = 0, l = colors.length; i < l; i++) {
-            result = d.evaluate("/descendant-or-self::*[@class='color" + i + "']", el, nsr, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, result);
-            for(var j = 0, m = result.snapshotLength; j < m; j++) {
-                result.snapshotItem(j).setAttribute("fill", colors[i]);
-            }
-        }
+    Cloth.prototype.setStyle = function (el) {
     };
     return Cloth;
 })();

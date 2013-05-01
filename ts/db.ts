@@ -1,8 +1,12 @@
 //DB-Object
 interface ClothDoc{
 	id:number;
+	name:string;
 	type:string;
-	colors:string[];
+	patterns:{
+		type:string;
+		colors:string[];
+	}[];
 	group:number[];
 	used:number;
 	status:string;
@@ -238,6 +242,49 @@ class DB{
 		});
 		req.addEventListener("error",(e)=>{
 			console.error("eachClothGroup error:",req.error);
+			callback(null);
+		});
+		delete req;
+	}
+	//cloth
+	eachCloth(cond:{
+		keyrange?:any;
+		type?:string;
+		group?:number;
+		status?:string;
+	},callback:(result:ClothDoc)=>void):void{
+		var tr=this.db.transaction("cloth","readonly");
+		var cloth=tr.objectStore("cloth");
+		var req:IDBRequest;
+		if(cond.type!=null){
+			req=cloth.index("type").openCursor(<any>cond.type,"next");
+		}else if(cond.group!=null){
+			req=cloth.index("group").openCursor(<any>cond.group,"next");
+		}else if(cond.status!=null){
+			req=cloth.index("status").openCursor(<any>cond.status,"next");
+		}else{
+			//keyrange: nullable
+			req=cloth.openCursor(cond.keyrange||null,"next");
+		}
+		if(req==null){
+			callback(null);	//ひとつもない
+			return;
+		}
+		req.addEventListener("success",(e)=>{
+			//nullかも
+			var cursor=req.result;
+			if(!cursor){
+				//もうない
+				callback(null);
+				return;
+			}else{
+				//まだある!続行
+				callback(<ClothDoc>cursor.value);
+				cursor.advance(1);
+			}
+		});
+		req.addEventListener("error",(e)=>{
+			console.error("eachCloth error:",req.error);
 			callback(null);
 		});
 		delete req;

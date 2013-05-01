@@ -44,6 +44,7 @@ table.calender td.today div.date{
 	border:3px double #999999;
 	width:12rem;
 	padding:0.3ex;
+	margin:0.2ex;
 }
 .schedulerbox.selection{
 	cursor:pointer;
@@ -56,6 +57,7 @@ table.calender td.today div.date{
 	border:3px double #999999;
 	width:12rem;
 	padding:0.3ex;
+	margin:0.2ex;
 }
 .clothgroupbox.selection{
 	cursor:pointer;

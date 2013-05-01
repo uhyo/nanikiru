@@ -56,6 +56,12 @@ module Panels{
 					var sc=new SchedulerPanel(this.host,this.db,Number(result[1]));
 					this.host.setPanel(sc);
 				}
+
+				result=returnValue.match(/^cloth::(\d+)$/);
+				if(result){
+					//服を開きたい
+					//ここ書いてないよ!!
+				}
 			});
 		}
 	}
