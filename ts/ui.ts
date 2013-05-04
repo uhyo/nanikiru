@@ -2,6 +2,7 @@
 //additional definition
 interface HTMLElement{
 	hidden:bool;
+	dataset:any;
 }
 interface HTMLTimeElement extends HTMLElement{
 	dateTime:string;
@@ -29,6 +30,14 @@ interface XPathNSResolver{
 	loopupNamespaceURI:(prefix:string)=>string;
 }
 interface Document extends XPathEvaluator{
+}
+/* 便宜的にあってほしいやつ ダックタイピング最高 */
+interface _SVGSomeBox extends SVGElement{
+	x:SVGAnimatedLength;
+	y:SVGAnimatedLength;
+	width:SVGAnimatedLength;
+	height:SVGAnimatedLength;
+	
 }
 
 module UI{
@@ -157,6 +166,7 @@ module UI{
 				div.appendChild(el("button",(b)=>{
 					var button=<HTMLButtonElement>b;
 					button.title="設定";
+					button.classList.add("iconbutton");
 					button.appendChild(icons.gear({
 						radius1:90,
 						radius2:35,
@@ -183,6 +193,7 @@ module UI{
 				div.appendChild(el("button",(b)=>{
 					var button=<HTMLButtonElement>b;
 					button.title="服グループ";
+					button.classList.add("iconbutton");
 					button.appendChild(Cloth.importCloth({
 						clothType:"T-shirt",
 						colors:["#999999","#999999"],
@@ -607,6 +618,35 @@ module UI{
 									button.addEventListener("click",(e)=>{
 										//新しいやつを追加したいなあ・・・
 										//服のデザイン選択UI
+										var sel=new ClothSelect(null);
+										var modal=new ModalUI(_self);
+										modal.slide("simple",sel,(returnValue?:any)=>{
+											if(returnValue!=null){
+												if(returnValue.mode==="save"){
+													//保存
+													var clothd:ClothDoc={
+														id:null,
+														name:"",
+														type:returnValue.doc.clothType,
+														patterns:returnValue.doc.patterns,
+														group:[doc.id],
+														used:0,
+														status:"active",
+														made:new Date(),
+														lastuse:null,
+													};
+													delete clothd.id;
+													db.setCloth(clothd,(result:number)=>{
+														//DBに服のデータを保存
+														if(result!=null){
+															clothd.id=result;
+															//詳細設定画面へ
+														}
+													});
+												}
+												_self.close(returnValue);
+											}
+										});
 									},false);
 								}));
 							}));
@@ -628,6 +668,187 @@ module UI{
 							_self.close();
 						},false);
 					}));
+				}));
+			}
+		}
+	}
+	//服のデザイン選択UI
+	export class ClothSelect extends UISection{
+		private previewArea:HTMLElement;
+		private mainArea:HTMLElement;
+		private cloth:Cloth;	//現在編集中のやつ
+		constructor(private doc:{
+			clothType:string;
+			patterns:PatternObj[];
+		}){
+			super();
+			var c=this.getContent();
+			c.appendChild(el("h1",(h1)=>{
+				h1.textContent="服エディタ";
+			}));
+			c.appendChild(el("div",(div)=>{
+				div.classList.add("clothselect-container");
+				div.appendChild(el("div",(div)=>{
+					div.classList.add("clothselect-typeselect");
+					//服を入れていく
+					Cloth.clothTypes.forEach((obj)=>{
+						var sample=Cloth.importCloth({
+							clothType:obj.type,
+							patterns:[],
+						});
+						div.appendChild(el("div",(div)=>{
+							div.classList.add("clothselect-typebox");
+							div.dataset.type=obj.type;
+							div.appendChild(sample.getSVG("32px","32px"));
+						}));
+					});
+				}));
+				div.appendChild(el("div",(div)=>{
+					this.previewArea=div;
+					div.classList.add("clothselect-previewbox");
+					div.addEventListener("click",(e)=>{
+						//服を選択するんだ・・・
+						var t=e.target;
+						var node:Node=<any>t;
+						var patternIndex:number=null;
+						do{
+							var el=<Element>node;
+							var fi=el.getAttribute("fill");
+							if(fi){
+								var result=fi.match(/^url\(#cloth(\d+)-pattern(\d+)\)$/);
+								if(result){
+									patternIndex=parseInt(result[2]);
+									break;
+								}
+							}
+						}while(node=node.parentNode);
+						if(patternIndex!=null){
+							//パターン発見!これをいじる
+							this.editPattern(patternIndex);
+						}
+					},false);
+				}));
+				div.appendChild(el("div",(div)=>{
+					//服ごとのやつ
+					this.mainArea=div;
+					//初期値
+					div.textContent="服をクリック/タップして服の模様を編集して下さい。";
+				}));
+			}));
+			//登録ボタン
+			c.appendChild(el("p",(p)=>{
+				p.appendChild(el("button",(b)=>{
+					var button=<HTMLButtonElement>b;
+					button.textContent="服を保存";
+					button.addEventListener("click",(e)=>{
+						this.close({
+							mode:"save",
+							doc:this.doc,
+						});
+					},false);
+				}));
+				p.appendChild(el("button",(b)=>{
+					var button=<HTMLButtonElement>b;
+					button.textContent="キャンセル";
+					button.addEventListener("click",(e)=>{
+						this.close({
+							mode:"cancel",
+						});
+					},false);
+				}));
+			}));
+			//docがない!?
+			if(!doc){
+				doc=this.doc={
+					clothType:"T-shirt",
+					patterns:[],
+				};
+			}
+			this.setType();
+		}
+		private setType():void{
+			empty(this.previewArea);
+			this.cloth=Cloth.importCloth(this.doc);
+			var pats=this.doc.patterns;
+			//数たりてるかチェック
+			var tytyty=Cloth.clothTypes.filter((x)=>x.type===this.doc.clothType)[0];
+			while(pats.length<tytyty.patternNumber){
+				pats[pats.length]={
+					type:"simple",
+					size:0,
+					colors:[Cloth.defaultColors[pats.length]],
+				};
+			}
+			this.previewArea.appendChild(this.cloth.getSVG("128px","128px"));
+			this.editPattern(0);
+		}
+		private changePattern(index:number,pat:PatternObj):void{
+			if(!this.cloth)return;
+			//パターンだけ変わった
+			var vg=<SVGSVGElement>this.previewArea.getElementsByTagNameNS(Cloth.svgNS,"svg")[0];
+			Cloth.changePattern(index,pat,vg);
+			//プレビューも変える
+			vg=<SVGSVGElement>this.mainArea.getElementsByTagNameNS(Cloth.svgNS,"svg")[0];
+			var patt=<SVGPatternElement>vg.getElementById("preview-pattern");
+			var newpatt=Cloth.makePattern(pat);
+			newpatt.id="preview-pattern";
+			patt.parentNode.replaceChild(newpatt,patt);
+		}
+		private editPattern(index:number):void{
+			//このパターンをeditする
+			var main=this.mainArea;
+			empty(main);
+			var pat=this.doc.patterns[index];
+			//足りない色があれば補う
+			var tytyty=Cloth.patternTypes.filter((x)=>x.type===pat.type)[0];
+			while(pat.colors.length<tytyty.colorNumber){
+				pat.colors[pat.colors.length]=Cloth.defaultColors[pat.colors.length];
+			}
+			var preview=svg("svg",(v)=>{
+				var vg=<SVGSVGElement>v;
+				vg.setAttribute("version","1.1");
+				vg.width.baseVal.valueAsString="96px";
+				vg.height.baseVal.valueAsString="96px";
+				vg.viewBox.baseVal.x=0, vg.viewBox.baseVal.y=0, vg.viewBox.baseVal.width=256, vg.viewBox.baseVal.height=256;
+				//パターン
+				var pattern=Cloth.makePattern(pat);
+				pattern.id="preview-pattern";
+				vg.appendChild(pattern);
+				vg.appendChild(svg("rect",(r)=>{
+					var rect=<SVGRectElement>r;
+					rect.setAttribute("stroke","#000000");
+					rect.setAttribute("stroke-width","2px");
+					rect.x.baseVal.valueAsString="0px";
+					rect.y.baseVal.valueAsString="0px";
+					rect.width.baseVal.valueAsString="256px";
+					rect.height.baseVal.valueAsString="256px";
+					rect.setAttribute("fill","url(#preview-pattern)");
+				}));
+			});
+			main.appendChild(el("div",(div)=>{
+				div.appendChild(preview);
+			}));
+			//各色を設定する
+			for(var i=0;i<tytyty.colorNumber;i++){
+				main.appendChild(el("div",(div)=>{
+					//色プレビュー
+					var input;
+					div.textContent="色"+(i+1)+":";
+					//変更フォーム
+					div.appendChild(input=<HTMLInputElement>el("input",(inp)=>{
+						var input=<HTMLInputElement>inp;
+						input.type="color";
+						input.value=pat.colors[i];
+					}));
+					//change!
+					((i,input)=>{
+						input.addEventListener("input",(e)=>{
+							//色変更された
+							pat.colors[i]=input.value;
+							//変更反映
+							this.changePattern(index,pat);
+						},false);
+					})(i,input);
 				}));
 			}
 		}
@@ -899,14 +1120,6 @@ module UI{
 				}
 			});
 		}
-		var svgNS="http://www.w3.org/2000/svg";
-		function svg(name:string,callback?:(g:SVGElement)=>void):SVGElement{
-			var result=<SVGElement>document.createElementNS(svgNS,name);
-			if(callback){
-				callback(result);
-			}
-			return result;
-		}
 		//アニメーション登録（メモリリーク避け）
 		function registerHoverAnimation(el:SVGSVGElement):void{
 			var flag:bool=false;
@@ -997,14 +1210,37 @@ module UI{
 }
 class Cloth{
 	private clothType:string=null;	//服の形
-	private patterns:{
-		type:string;
-		colors:string[];
-	}[]=[];		//パターンたち（どのパターン番号がどの部分にあたるかは服による）
-	private svg:SVGSVGElement=null;
+	private patterns:PatternObj[]=[];		//パターンたち（どのパターン番号がどの部分にあたるかは服による）
 
 	static svgNS="http://www.w3.org/2000/svg";
-
+	//服の通し番号
+	static clothId:number=0;
+	//服の種類一覧
+	static clothTypes:{
+		type:string;
+		patternNumber:number;
+	}[]=[
+		{
+			type:"T-shirt",
+			patternNumber:2,
+		}
+	];
+	//服のデフォルト色
+	static defaultColors:string[]=["#666666","#cccccc","#eeeeee","#999999","#333333"];
+	//パターンの種類と要求色数
+	static patternTypes:{
+		type:string;	//パターン名
+		requiresSize:bool;
+		defaultSize:number;
+		colorNumber:number;
+	}[]=[
+		{
+			type:"simple",
+			requiresSize:false,
+			defaultSize:0,
+			colorNumber:1,
+		}
+	];
 	//JSON的なobjから作る
 	importCloth(obj:any):void{
 		this.clothType = obj.clothType || null;
@@ -1025,25 +1261,24 @@ class Cloth{
 	//SVG要素を出力
 	getSVG(width?:string="256px",height?:string="256px"):SVGSVGElement{
 		var svg:SVGSVGElement;
-		if(this.svg){
-			svg=<SVGSVGElement>this.svg.cloneNode();
-		}else{
-			//svgを作る
-			svg=this.svg=<SVGSVGElement>document.createElementNS(Cloth.svgNS,"svg");
-			svg.setAttribute("version","1.1");
-			svg.viewBox.baseVal.x=0, svg.viewBox.baseVal.y=0, svg.viewBox.baseVal.width=256, svg.viewBox.baseVal.height=256;
-			this.makeCloth(svg);
-		}
+		//svgを作る
+		svg=<SVGSVGElement>document.createElementNS(Cloth.svgNS,"svg");
+		svg.setAttribute("version","1.1");
+		svg.viewBox.baseVal.x=0, svg.viewBox.baseVal.y=0, svg.viewBox.baseVal.width=256, svg.viewBox.baseVal.height=256;
+		svg.id="cloth"+(Cloth.clothId++);
+		this.makeCloth(svg);
 		//幅設定
 		svg.width.baseVal.valueAsString=width;
 		svg.height.baseVal.valueAsString=height;
 
-		this.setStyle(svg);
 		return svg;
 	}
 	//服をつくる
 	private makeCloth(el:SVGSVGElement):void{
-		var type=this.clothType;
+		var type=this.clothType, patterns=this.patterns;
+		//パターンを入れるとこ
+		var defs=svg("defs");
+		el.appendChild(defs);
 		//服の種類ごとに
 		var d:string;
 		switch(type){
@@ -1067,7 +1302,7 @@ class Cloth{
 					stroke:"#000000",
 					sw:5,
 				},(path)=>{
-					path.className.baseVal="color0";
+					path.setAttribute("fill","url(#"+makePattern(0)+")");
 				}));
 				//Uネックの部分
 				d=[
@@ -1081,18 +1316,11 @@ class Cloth{
 					sw:5,
 					slj:"bevel",
 				},(path)=>{
-					path.className.baseVal="color1";
+					path.setAttribute("fill","url(#"+makePattern(1)+")");
 				}));
 				break;
 		}
 
-		function svg(name:string,callback?:(g:SVGElement)=>void):SVGElement{
-			var result=<SVGElement>document.createElementNS(Cloth.svgNS,name);
-			if(callback){
-				callback(result);
-			}
-			return result;
-		}
 		function path(d:string,v:{
 			fill?:string;
 			stroke?:string;
@@ -1113,20 +1341,80 @@ class Cloth{
 			}
 			return p;
 		}
-	}
-	private setStyle(el:SVGSVGElement):void{
-		//まずstyleを作る
-		/*
-		var result:any=null;
-		var d=<XPathEvaluator>document;
-		var nsr=d.createNSResolver(el);
-		for(var i=0,l=colors.length;i<l;i++){
-			//該当するやつを探す
-			result=<any>d.evaluate("/descendant-or-self::*[@class='color"+i+"']",el,nsr,XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,result);
-			for(var j=0,m=result.snapshotLength;j<m;j++){
-				result.snapshotItem(j).setAttribute("fill",colors[i]);
+		function makePattern(index:number):string{
+			//パターンを作ってあげる idを返す
+			var pat:{
+				type:string;
+				size:number;
+				colors:string[];
+			}=patterns[index];
+			if(!pat){
+				//足りない!!!!!!!!
+				pat={
+					type:"simple",
+					size:0,
+					colors:[Cloth.defaultColors[index]],
+				};
 			}
-		}*/
+			var pattern=Cloth.makePattern(pat);
+			pattern.id=el.id+"-pattern"+index;
+			defs.appendChild(pattern);
+			return el.id+"-pattern"+index;
+		}
 	}
+	static makePattern(pat:PatternObj):SVGPatternElement{
+		var pattern=<SVGPatternElement>document.createElementNS(Cloth.svgNS,"pattern");
+		//タイプごと
+		switch(pat.type){
+			case "simple":
+				//単色
+				setwh(pattern,0,0,256,256);
+				setvb(pattern.viewBox,0,0,256,256);
+				//その色でうめる
+				pattern.setAttribute("patternUnits","userSpaceOnUse");
+				pattern.appendChild(svg("rect",(r)=>{
+					var rect=<SVGRectElement>r;
+					setwh(rect,0,0,256,256);
+					rect.setAttribute("fill",pat.colors[0]);
+				}));
+				break;
+		}
+		return pattern;
+		function setwh(pattern:_SVGSomeBox,x:number,y:number,width:number,height:number):void{
+			pattern.x.baseVal.valueAsString=x+"px";
+			pattern.y.baseVal.valueAsString=y+"px";
+			pattern.width.baseVal.valueAsString=width+"px";
+			pattern.height.baseVal.valueAsString=height+"px";
+		}
+		function setvb(pattern:SVGAnimatedRect,x:number,y:number,width:number,height:number):void{
+			pattern.baseVal.x=x;
+			pattern.baseVal.y=y;
+			pattern.baseVal.width=width;
+			pattern.baseVal.height=height;
+		}
+	}
+	static changePattern(index:number,pat:PatternObj,vg:SVGSVGElement):void{
+		//すでにあるやつのパターンを変更してほしい
+		var defs=<Element>vg.getElementsByTagNameNS(Cloth.svgNS,"defs")[0];
+		var pats=defs.getElementsByTagNameNS(Cloth.svgNS,"pattern");
+		for(var i=0,l=pats.length;i<l;i++){
+			if((<SVGElement>pats[i]).id===vg.id+"-pattern"+index){
+				console.log(i,index);
+				//これだ!
+				var newpatt=Cloth.makePattern(pat);
+				newpatt.id=vg.id+"-pattern"+index;
+				defs.replaceChild(newpatt,pats[i]);
+				break;
+			}
+		}
+	}
+}
+//What a global!
+function svg(name:string,callback?:(g:SVGElement)=>void):SVGElement{
+	var result=<SVGElement>document.createElementNS(Cloth.svgNS,name);
+	if(callback){
+		callback(result);
+	}
+	return result;
 }
 

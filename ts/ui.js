@@ -127,6 +127,7 @@ var UI;
                 div.appendChild(el("button", function (b) {
                     var button = b;
                     button.title = "設定";
+                    button.classList.add("iconbutton");
                     button.appendChild(icons.gear({
                         radius1: 90,
                         radius2: 35,
@@ -151,6 +152,7 @@ var UI;
                 div.appendChild(el("button", function (b) {
                     var button = b;
                     button.title = "服グループ";
+                    button.classList.add("iconbutton");
                     button.appendChild(Cloth.importCloth({
                         clothType: "T-shirt",
                         colors: [
@@ -553,6 +555,13 @@ function fin() {
                                     }));
                                     button.appendChild(document.createTextNode("新しい服を作成して登録"));
                                     button.addEventListener("click", function (e) {
+                                        var sel = new ClothSelect(null);
+                                        var modal = new ModalUI(_self);
+                                        modal.slide("simple", sel, function (returnValue) {
+                                            if(returnValue != null) {
+                                                _self.close(returnValue);
+                                            }
+                                        });
                                     }, false);
                                 }));
                             }));
@@ -578,6 +587,161 @@ function fin() {
         return ClothGroupInfo;
     })(UISection);
     UI.ClothGroupInfo = ClothGroupInfo;    
+    var ClothSelect = (function (_super) {
+        __extends(ClothSelect, _super);
+        function ClothSelect(doc) {
+            var _this = this;
+                _super.call(this);
+            this.doc = doc;
+            var c = this.getContent();
+            c.appendChild(el("h1", function (h1) {
+                h1.textContent = "服エディタ";
+            }));
+            c.appendChild(el("div", function (div) {
+                div.classList.add("clothselect-container");
+                div.appendChild(el("div", function (div) {
+                    div.classList.add("clothselect-typeselect");
+                    Cloth.clothTypes.forEach(function (obj) {
+                        var sample = Cloth.importCloth({
+                            clothType: obj.type,
+                            patterns: []
+                        });
+                        div.appendChild(el("div", function (div) {
+                            div.classList.add("clothselect-typebox");
+                            div.dataset.type = obj.type;
+                            div.appendChild(sample.getSVG("32px", "32px"));
+                        }));
+                    });
+                }));
+                div.appendChild(el("div", function (div) {
+                    _this.previewArea = div;
+                    div.classList.add("clothselect-previewbox");
+                    div.addEventListener("click", function (e) {
+                        var t = e.target;
+                        var node = t;
+                        var patternIndex = null;
+                        do {
+                            var el = node;
+                            var fi = el.getAttribute("fill");
+                            if(fi) {
+                                var result = fi.match(/^url\(#cloth(\d+)-pattern(\d+)\)$/);
+                                if(result) {
+                                    patternIndex = parseInt(result[2]);
+                                    break;
+                                }
+                            }
+                        }while(node = node.parentNode);
+                        if(patternIndex != null) {
+                            _this.editPattern(patternIndex);
+                        }
+                    }, false);
+                }));
+                div.appendChild(el("div", function (div) {
+                    _this.mainArea = div;
+                    div.textContent = "服をクリック/タップして服の模様を編集して下さい。";
+                }));
+            }));
+            c.appendChild(el("p", function (p) {
+                p.appendChild(el("button", function (b) {
+                    var button = b;
+                    button.textContent = "服を保存";
+                }));
+            }));
+            if(!doc) {
+                doc = this.doc = {
+                    clothType: "T-shirt",
+                    patterns: []
+                };
+            }
+            this.setType();
+        }
+        ClothSelect.prototype.setType = function () {
+            var _this = this;
+            empty(this.previewArea);
+            this.cloth = Cloth.importCloth(this.doc);
+            var pats = this.doc.patterns;
+            var tytyty = Cloth.clothTypes.filter(function (x) {
+                return x.type === _this.doc.clothType;
+            })[0];
+            while(pats.length < tytyty.patternNumber) {
+                pats[pats.length] = {
+                    type: "simple",
+                    size: 0,
+                    colors: [
+                        Cloth.defaultColors[pats.length]
+                    ]
+                };
+            }
+            this.previewArea.appendChild(this.cloth.getSVG("128px", "128px"));
+            this.editPattern(0);
+        };
+        ClothSelect.prototype.changePattern = function (index, pat) {
+            if(!this.cloth) {
+                return;
+            }
+            var vg = this.previewArea.getElementsByTagNameNS(Cloth.svgNS, "svg")[0];
+            Cloth.changePattern(index, pat, vg);
+            vg = this.mainArea.getElementsByTagNameNS(Cloth.svgNS, "svg")[0];
+            var patt = vg.getElementById("preview-pattern");
+            var newpatt = Cloth.makePattern(pat);
+            newpatt.id = "preview-pattern";
+            patt.parentNode.replaceChild(newpatt, patt);
+        };
+        ClothSelect.prototype.editPattern = function (index) {
+            var _this = this;
+            var main = this.mainArea;
+            empty(main);
+            var pat = this.doc.patterns[index];
+            var tytyty = Cloth.patternTypes.filter(function (x) {
+                return x.type === pat.type;
+            })[0];
+            while(pat.colors.length < tytyty.colorNumber) {
+                pat.colors[pat.colors.length] = Cloth.defaultColors[pat.colors.length];
+            }
+            var preview = svg("svg", function (v) {
+                var vg = v;
+                vg.setAttribute("version", "1.1");
+                vg.width.baseVal.valueAsString = "96px";
+                vg.height.baseVal.valueAsString = "96px";
+                vg.viewBox.baseVal.x = 0 , vg.viewBox.baseVal.y = 0 , vg.viewBox.baseVal.width = 256 , vg.viewBox.baseVal.height = 256;
+                var pattern = Cloth.makePattern(pat);
+                pattern.id = "preview-pattern";
+                vg.appendChild(pattern);
+                vg.appendChild(svg("rect", function (r) {
+                    var rect = r;
+                    rect.setAttribute("stroke", "#000000");
+                    rect.setAttribute("stroke-width", "2px");
+                    rect.x.baseVal.valueAsString = "0px";
+                    rect.y.baseVal.valueAsString = "0px";
+                    rect.width.baseVal.valueAsString = "256px";
+                    rect.height.baseVal.valueAsString = "256px";
+                    rect.setAttribute("fill", "url(#preview-pattern)");
+                }));
+            });
+            main.appendChild(el("div", function (div) {
+                div.appendChild(preview);
+            }));
+            for(var i = 0; i < tytyty.colorNumber; i++) {
+                main.appendChild(el("div", function (div) {
+                    var input;
+                    div.textContent = "色" + (i + 1) + ":";
+                    div.appendChild(input = el("input", function (inp) {
+                        var input = inp;
+                        input.type = "color";
+                        input.value = pat.colors[i];
+                    }));
+                    (function (i, input) {
+                        input.addEventListener("input", function (e) {
+                            pat.colors[i] = input.value;
+                            _this.changePattern(index, pat);
+                        }, false);
+                    })(i, input);
+                }));
+            }
+        };
+        return ClothSelect;
+    })(UISection);
+    UI.ClothSelect = ClothSelect;    
     var ModalUI = (function () {
         function ModalUI(ui) {
             this.ui = ui;
@@ -828,14 +992,6 @@ function fin() {
             });
         }
         icons.calender = calender;
-        var svgNS = "http://www.w3.org/2000/svg";
-        function svg(name, callback) {
-            var result = document.createElementNS(svgNS, name);
-            if(callback) {
-                callback(result);
-            }
-            return result;
-        }
         function registerHoverAnimation(el) {
             var flag = false;
             el.pauseAnimations();
@@ -930,9 +1086,30 @@ var Cloth = (function () {
     function Cloth() {
         this.clothType = null;
         this.patterns = [];
-        this.svg = null;
     }
     Cloth.svgNS = "http://www.w3.org/2000/svg";
+    Cloth.clothId = 0;
+    Cloth.clothTypes = [
+        {
+            type: "T-shirt",
+            patternNumber: 2
+        }
+    ];
+    Cloth.defaultColors = [
+        "#666666", 
+        "#cccccc", 
+        "#eeeeee", 
+        "#999999", 
+        "#333333"
+    ];
+    Cloth.patternTypes = [
+        {
+            type: "simple",
+            requiresSize: false,
+            defaultSize: 0,
+            colorNumber: 1
+        }
+    ];
     Cloth.prototype.importCloth = function (obj) {
         this.clothType = obj.clothType || null;
         this.patterns = Array.isArray(obj.pattenrs) ? obj.patterns : [];
@@ -952,21 +1129,19 @@ var Cloth = (function () {
         if (typeof width === "undefined") { width = "256px"; }
         if (typeof height === "undefined") { height = "256px"; }
         var svg;
-        if(this.svg) {
-            svg = this.svg.cloneNode();
-        } else {
-            svg = this.svg = document.createElementNS(Cloth.svgNS, "svg");
-            svg.setAttribute("version", "1.1");
-            svg.viewBox.baseVal.x = 0 , svg.viewBox.baseVal.y = 0 , svg.viewBox.baseVal.width = 256 , svg.viewBox.baseVal.height = 256;
-            this.makeCloth(svg);
-        }
+        svg = document.createElementNS(Cloth.svgNS, "svg");
+        svg.setAttribute("version", "1.1");
+        svg.viewBox.baseVal.x = 0 , svg.viewBox.baseVal.y = 0 , svg.viewBox.baseVal.width = 256 , svg.viewBox.baseVal.height = 256;
+        svg.id = "cloth" + (Cloth.clothId++);
+        this.makeCloth(svg);
         svg.width.baseVal.valueAsString = width;
         svg.height.baseVal.valueAsString = height;
-        this.setStyle(svg);
         return svg;
     };
     Cloth.prototype.makeCloth = function (el) {
-        var type = this.clothType;
+        var type = this.clothType, patterns = this.patterns;
+        var defs = svg("defs");
+        el.appendChild(defs);
         var d;
         switch(type) {
             case "T-shirt":
@@ -988,7 +1163,7 @@ var Cloth = (function () {
                     stroke: "#000000",
                     sw: 5
                 }, function (path) {
-                    path.className.baseVal = "color0";
+                    path.setAttribute("fill", "url(#" + makePattern(0) + ")");
                 }));
                 d = [
                     "M90,40", 
@@ -1002,16 +1177,9 @@ var Cloth = (function () {
                     sw: 5,
                     slj: "bevel"
                 }, function (path) {
-                    path.className.baseVal = "color1";
+                    path.setAttribute("fill", "url(#" + makePattern(1) + ")");
                 }));
                 break;
-        }
-        function svg(name, callback) {
-            var result = document.createElementNS(Cloth.svgNS, name);
-            if(callback) {
-                callback(result);
-            }
-            return result;
         }
         function path(d, v, callback) {
             var p = svg("path");
@@ -1027,8 +1195,70 @@ var Cloth = (function () {
             }
             return p;
         }
+        function makePattern(index) {
+            var pat = patterns[index];
+            if(!pat) {
+                pat = {
+                    type: "simple",
+                    size: 0,
+                    colors: [
+                        Cloth.defaultColors[index]
+                    ]
+                };
+            }
+            var pattern = Cloth.makePattern(pat);
+            pattern.id = el.id + "-pattern" + index;
+            defs.appendChild(pattern);
+            return el.id + "-pattern" + index;
+        }
     };
-    Cloth.prototype.setStyle = function (el) {
+    Cloth.makePattern = function makePattern(pat) {
+        var pattern = document.createElementNS(Cloth.svgNS, "pattern");
+        switch(pat.type) {
+            case "simple":
+                setwh(pattern, 0, 0, 256, 256);
+                setvb(pattern.viewBox, 0, 0, 256, 256);
+                pattern.setAttribute("patternUnits", "userSpaceOnUse");
+                pattern.appendChild(svg("rect", function (r) {
+                    var rect = r;
+                    setwh(rect, 0, 0, 256, 256);
+                    rect.setAttribute("fill", pat.colors[0]);
+                }));
+                break;
+        }
+        return pattern;
+        function setwh(pattern, x, y, width, height) {
+            pattern.x.baseVal.valueAsString = x + "px";
+            pattern.y.baseVal.valueAsString = y + "px";
+            pattern.width.baseVal.valueAsString = width + "px";
+            pattern.height.baseVal.valueAsString = height + "px";
+        }
+        function setvb(pattern, x, y, width, height) {
+            pattern.baseVal.x = x;
+            pattern.baseVal.y = y;
+            pattern.baseVal.width = width;
+            pattern.baseVal.height = height;
+        }
+    };
+    Cloth.changePattern = function changePattern(index, pat, vg) {
+        var defs = vg.getElementsByTagNameNS(Cloth.svgNS, "defs")[0];
+        var pats = defs.getElementsByTagNameNS(Cloth.svgNS, "pattern");
+        for(var i = 0, l = pats.length; i < l; i++) {
+            if((pats[i]).id === vg.id + "-pattern" + index) {
+                console.log(i, index);
+                var newpatt = Cloth.makePattern(pat);
+                newpatt.id = vg.id + "-pattern" + index;
+                defs.replaceChild(newpatt, pats[i]);
+                break;
+            }
+        }
     };
     return Cloth;
 })();
+function svg(name, callback) {
+    var result = document.createElementNS(Cloth.svgNS, name);
+    if(callback) {
+        callback(result);
+    }
+    return result;
+}

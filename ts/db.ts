@@ -1,12 +1,14 @@
 //DB-Object
+interface PatternObj{
+	type:string;
+	size:number;
+	colors:string[];
+}
 interface ClothDoc{
 	id:number;
 	name:string;
 	type:string;
-	patterns:{
-		type:string;
-		colors:string[];
-	}[];
+	patterns:PatternObj[];
 	group:number[];
 	used:number;
 	status:string;
@@ -247,6 +249,34 @@ class DB{
 		delete req;
 	}
 	//cloth
+	getCloth(id:number,callback:(result:ClothDoc)=>void):void{
+		var tr=this.db.transaction("cloth","readonly");
+		var cloth=tr.objectStore("cloth");
+		var req:IDBRequest=group.get(id);
+		req.addEventListener("success",(e)=>{
+			callback(<ClothDoc>req.result);
+		});
+		req.addEventListener("error",(e)=>{
+			console.error("getCloth error:",req.error);
+			callback(null);
+		});
+		delete req;
+	}
+	setCloth(doc:ClothDoc,callback:(result:number)=>void):void{
+		var tr=this.db.transaction("cloth","readwrite");
+		var cloth=tr.objectStore("cloth");
+		var req:IDBRequest=cloth.put(doc);
+		req.addEventListener("success",(e)=>{
+			setTimeout(()=>{
+				callback(req.result);
+			},0);
+		});
+		req.addEventListener("error",(e)=>{
+			console.error("getCloth error:",req.error);
+			callback(null);
+		});
+		delete req;
+	}
 	eachCloth(cond:{
 		keyrange?:any;
 		type?:string;

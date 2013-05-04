@@ -39,6 +39,22 @@ table.calender td.today div.date{
 	display:-moz-box;
 	display:box;
 }
+/* cloth design select */
+.clothselect-container{
+	/* dirty */
+	display:-webkit-box;
+	display:-moz-box;
+	display:box;
+}
+.clothselect-typeselect{
+	max-height:200px;
+	overflow-y:scroll;
+}
+.clothselect-typebox{
+	border:3px double #aaaaaa;
+	width:32px;
+	height:32px;
+}
 /* scheduler */
 .schedulerbox{
 	border:3px double #999999;
@@ -68,9 +84,11 @@ table.calender td.today div.date{
 /* UIs */
 button {
 	outline:none;
-	padding:0;
 	border:1px solid #aaaaaa;
 	background-color:#eeeeee;
+}
+button.iconbutton{
+	padding:0;
 }
 button svg{
 	padding:0;

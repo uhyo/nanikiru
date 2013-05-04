@@ -5,14 +5,14 @@
     "id": number(key path)
     "name":string
     "type":string(clothType) index
-    "patterns":{"type":string;"colors":[]}[]
+    "patterns":{"type":string;"size":number,"colors":[]}[]
     "group": number[](clothgroup.id) indexM
     //used times
     "used":number
     "status":string("active","washer") indexM
     //time info
     "made":Date,
-    "lastuse":Date,
+    "lastuse":Date,(null?)
   }
 ## ClothGroup (objectstore clothgroup)
   {
@@ -42,3 +42,9 @@
 ## lastScheduler
 scheduler.id(default one)
 
+# clothPattern doc
+  # 一色
+  {
+    "type":"single",
+    "color":["color1"],
+  }
