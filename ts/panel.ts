@@ -50,17 +50,21 @@ module Panels{
 			//共通
 			ui.onclose((returnValue:any)=>{
 				var result;
-				result=returnValue.match(/^scheduler::(\d+)$/);
-				if(result){
-					//スケジューラを開きたい
-					var sc=new SchedulerPanel(this.host,this.db,Number(result[1]));
-					this.host.setPanel(sc);
-				}
+				if("string"===typeof returnValue){
+					result=returnValue.match(/^scheduler::(\d+)$/);
+					if(result){
+						//スケジューラを開きたい
+						var sc=new SchedulerPanel(this.host,this.db,Number(result[1]));
+						this.host.setPanel(sc);
+						return;
+					}
 
-				result=returnValue.match(/^cloth::(\d+)$/);
-				if(result){
-					//服を開きたい
-					//ここ書いてないよ!!
+					result=returnValue.match(/^cloth::(\d+)$/);
+					if(result){
+						//服を開きたい
+						var cl=new ClothPanel(this.host,this.db,Number(result[1]));
+						this.host.setPanel(cl);
+					}
 				}
 			});
 		}
@@ -94,6 +98,16 @@ module Panels{
 			c.appendChild(list.getContent());
 			this.closeManage(list);
 		}
+	}
+	export class ClothPanel extends Panel{
+		constructor(private host:AppHost,private db:DB,clothid:number){
+			super(host,db);
+			var c=this.initContainer();
+			var info=new UI.ClothInfo(db,clothid);
+			c.appendChild(info.getContent());
+			this.closeManage(info);
+		}
+
 	}
 	function el(name:string,callback?:(e:HTMLElement)=>void):HTMLElement{
 		var result=document.createElement(name);

@@ -252,7 +252,7 @@ class DB{
 	getCloth(id:number,callback:(result:ClothDoc)=>void):void{
 		var tr=this.db.transaction("cloth","readonly");
 		var cloth=tr.objectStore("cloth");
-		var req:IDBRequest=group.get(id);
+		var req:IDBRequest=cloth.get(id);
 		req.addEventListener("success",(e)=>{
 			callback(<ClothDoc>req.result);
 		});

@@ -48,13 +48,18 @@ var Panels;
             }
             ui.onclose(function (returnValue) {
                 var result;
-                result = returnValue.match(/^scheduler::(\d+)$/);
-                if(result) {
-                    var sc = new SchedulerPanel(_this.host, _this.db, Number(result[1]));
-                    _this.host.setPanel(sc);
-                }
-                result = returnValue.match(/^cloth::(\d+)$/);
-                if(result) {
+                if("string" === typeof returnValue) {
+                    result = returnValue.match(/^scheduler::(\d+)$/);
+                    if(result) {
+                        var sc = new SchedulerPanel(_this.host, _this.db, Number(result[1]));
+                        _this.host.setPanel(sc);
+                        return;
+                    }
+                    result = returnValue.match(/^cloth::(\d+)$/);
+                    if(result) {
+                        var cl = new ClothPanel(_this.host, _this.db, Number(result[1]));
+                        _this.host.setPanel(cl);
+                    }
                 }
             });
         };
@@ -97,6 +102,20 @@ var Panels;
         return ClothGroupPanel;
     })(Panel);
     Panels.ClothGroupPanel = ClothGroupPanel;    
+    var ClothPanel = (function (_super) {
+        __extends(ClothPanel, _super);
+        function ClothPanel(host, db, clothid) {
+                _super.call(this, host, db);
+            this.host = host;
+            this.db = db;
+            var c = this.initContainer();
+            var info = new UI.ClothInfo(db, clothid);
+            c.appendChild(info.getContent());
+            this.closeManage(info);
+        }
+        return ClothPanel;
+    })(Panel);
+    Panels.ClothPanel = ClothPanel;    
     function el(name, callback) {
         var result = document.createElement(name);
         if(callback) {

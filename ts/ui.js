@@ -559,6 +559,29 @@ function fin() {
                                         var modal = new ModalUI(_self);
                                         modal.slide("simple", sel, function (returnValue) {
                                             if(returnValue != null) {
+                                                if(returnValue.mode === "save") {
+                                                    var clothd = {
+                                                        id: null,
+                                                        name: "",
+                                                        type: returnValue.doc.clothType,
+                                                        patterns: returnValue.doc.patterns,
+                                                        group: [
+                                                            doc.id
+                                                        ],
+                                                        used: 0,
+                                                        status: "active",
+                                                        made: new Date(),
+                                                        lastuse: null
+                                                    };
+                                                    delete clothd.id;
+                                                    db.setCloth(clothd, function (result) {
+                                                        if(result != null) {
+                                                            clothd.id = result;
+                                                            _self.close("cloth::" + result);
+                                                        }
+                                                    });
+                                                    return;
+                                                }
                                                 _self.close(returnValue);
                                             }
                                         });
@@ -645,6 +668,21 @@ function fin() {
                 p.appendChild(el("button", function (b) {
                     var button = b;
                     button.textContent = "服を保存";
+                    button.addEventListener("click", function (e) {
+                        _this.close({
+                            mode: "save",
+                            doc: _this.doc
+                        });
+                    }, false);
+                }));
+                p.appendChild(el("button", function (b) {
+                    var button = b;
+                    button.textContent = "キャンセル";
+                    button.addEventListener("click", function (e) {
+                        _this.close({
+                            mode: "cancel"
+                        });
+                    }, false);
                 }));
             }));
             if(!doc) {
@@ -742,6 +780,38 @@ function fin() {
         return ClothSelect;
     })(UISection);
     UI.ClothSelect = ClothSelect;    
+    var ClothInfo = (function (_super) {
+        __extends(ClothInfo, _super);
+        function ClothInfo(db, clothid) {
+                _super.call(this);
+            this.db = db;
+            this.clothid = clothid;
+            this.open();
+        }
+        ClothInfo.prototype.open = function () {
+            var db = this.db, clothid = this.clothid;
+            var c = this.getContent();
+            c.classList.add("cloth-info");
+            empty(c);
+            db.getCloth(clothid, function (doc) {
+                if(doc == null) {
+                    c.appendChild(el("p", function (p) {
+                        p.textContent = "この服の情報は取得できません。";
+                    }));
+                    return;
+                }
+                c.appendChild(el("h1", function (h1) {
+                    h1.appendChild(Cloth.importCloth({
+                        clothType: doc.type,
+                        patterns: doc.patterns
+                    }).getSVG("64px", "64px"));
+                    h1.appendChild(document.createTextNode(doc.name));
+                }));
+            });
+        };
+        return ClothInfo;
+    })(UISection);
+    UI.ClothInfo = ClothInfo;    
     var ModalUI = (function () {
         function ModalUI(ui) {
             this.ui = ui;
@@ -1065,7 +1135,11 @@ function fin() {
             return el("div", function (div) {
                 div.classList.add("clothbox");
                 div.classList.add("selection");
-                var cloth = Cloth.importCloth(doc);
+                console.log(doc);
+                var cloth = Cloth.importCloth({
+                    clothType: doc.type,
+                    patterns: doc.patterns
+                });
                 div.appendChild(cloth.getSVG("32px", "32px"));
                 if(clickhandler) {
                     div.addEventListener("click", function (e) {
@@ -1112,7 +1186,7 @@ var Cloth = (function () {
     ];
     Cloth.prototype.importCloth = function (obj) {
         this.clothType = obj.clothType || null;
-        this.patterns = Array.isArray(obj.pattenrs) ? obj.patterns : [];
+        this.patterns = Array.isArray(obj.patterns) ? obj.patterns : [];
     };
     Cloth.importCloth = function importCloth(obj) {
         var c = new Cloth();

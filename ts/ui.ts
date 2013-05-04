@@ -641,8 +641,10 @@ module UI{
 														if(result!=null){
 															clothd.id=result;
 															//詳細設定画面へ
+															_self.close("cloth::"+result);
 														}
 													});
+													return;
 												}
 												_self.close(returnValue);
 											}
@@ -851,6 +853,37 @@ module UI{
 					})(i,input);
 				}));
 			}
+		}
+	}
+	//服の情報UI
+	export class ClothInfo extends UISection{
+		constructor(private db:DB,public clothid:number){
+			super();
+			this.open();
+		}
+		private open():void{
+			var db=this.db, clothid=this.clothid;
+			var c=this.getContent();
+			c.classList.add("cloth-info");
+			empty(c);
+			//情報取得
+			db.getCloth(clothid,(doc:ClothDoc)=>{
+				if(doc==null){
+					//あれれーーーーーーー
+					c.appendChild(el("p",(p)=>{
+						p.textContent="この服の情報は取得できません。";
+					}));
+					return;
+				}
+				//情報をもとに構築
+				c.appendChild(el("h1",(h1)=>{
+					h1.appendChild(Cloth.importCloth({
+						clothType:doc.type,
+						patterns:doc.patterns,
+					}).getSVG("64px","64px"));
+					h1.appendChild(document.createTextNode(doc.name));
+				}));
+			});
 		}
 	}
 	//割り込みUI
@@ -1193,7 +1226,11 @@ module UI{
 				div.classList.add("clothbox");
 				div.classList.add("selection");
 				//アイコン
-				var cloth=Cloth.importCloth(doc);
+				console.log(doc);
+				var cloth=Cloth.importCloth({
+					clothType:doc.type,
+					patterns:doc.patterns,
+				});
 				div.appendChild(cloth.getSVG("32px","32px"));
 				if(clickhandler){
 					div.addEventListener("click",(e)=>{
@@ -1244,7 +1281,7 @@ class Cloth{
 	//JSON的なobjから作る
 	importCloth(obj:any):void{
 		this.clothType = obj.clothType || null;
-		this.patterns = Array.isArray(obj.pattenrs) ? obj.patterns : [];
+		this.patterns = Array.isArray(obj.patterns) ? obj.patterns : [];
 	}
 	static importCloth(obj:any):Cloth{
 		var c=new Cloth();

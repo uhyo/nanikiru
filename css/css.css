@@ -81,6 +81,19 @@ table.calender td.today div.date{
 .clothgroupbox.selection:hover{
 	background-color:#eeeeee;
 }
+/* clothbox */
+.clothbox{
+	border:3px double #999999;
+	display:inline-block;
+	padding:0.3ex;
+	margin:0.2ex;
+}
+.clothbox.selection{
+	cursor:pointer;
+}
+.clothbox.selection:hover{
+	background-color:#eeeeee;
+}
 /* UIs */
 button {
 	outline:none;

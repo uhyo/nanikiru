@@ -196,6 +196,34 @@ var DB = (function () {
         });
         delete req;
     };
+    DB.prototype.getCloth = function (id, callback) {
+        var tr = this.db.transaction("cloth", "readonly");
+        var cloth = tr.objectStore("cloth");
+        var req = cloth.get(id);
+        req.addEventListener("success", function (e) {
+            callback(req.result);
+        });
+        req.addEventListener("error", function (e) {
+            console.error("getCloth error:", req.error);
+            callback(null);
+        });
+        delete req;
+    };
+    DB.prototype.setCloth = function (doc, callback) {
+        var tr = this.db.transaction("cloth", "readwrite");
+        var cloth = tr.objectStore("cloth");
+        var req = cloth.put(doc);
+        req.addEventListener("success", function (e) {
+            setTimeout(function () {
+                callback(req.result);
+            }, 0);
+        });
+        req.addEventListener("error", function (e) {
+            console.error("getCloth error:", req.error);
+            callback(null);
+        });
+        delete req;
+    };
     DB.prototype.eachCloth = function (cond, callback) {
         var tr = this.db.transaction("cloth", "readonly");
         var cloth = tr.objectStore("cloth");
