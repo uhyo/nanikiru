@@ -201,7 +201,8 @@ module UI{
 					button.addEventListener("click",(e)=>{
 						//あれー
 						//服グループ管理画面に移行する
-						this.close("clothGroupEdit");
+						//this.close("clothGroupEdit");
+						this.close("clothgroup::scheduler:"+this.doc.id);
 					},false);
 				}));
 			}));
@@ -880,9 +881,120 @@ module UI{
 					h1.appendChild(Cloth.importCloth({
 						clothType:doc.type,
 						patterns:doc.patterns,
-					}).getSVG("64px","64px"));
-					h1.appendChild(document.createTextNode(doc.name));
+					}).getSVG("128px","128px"));
+					h1.appendChild(document.createTextNode(doc.name ? doc.name+"の設定" : "設定"));
 				}));
+				c.appendChild(el("p",(p)=>{
+					p.appendChild(el("button",(b)=>{
+						b.textContent="デザインを変更する";
+						b.addEventListener("click",(e)=>{
+							//デザイン変更するぜ!
+							var sel=new ClothSelect({
+								clothType:doc.type,
+								patterns:doc.patterns,
+							});
+							var modal=new ModalUI(this);
+							modal.slide("simple",sel,(returnValue?:any)=>{
+								if(returnValue!=null){
+									if(returnValue.mode==="save"){
+										//保存
+										doc.type=returnValue.doc.clothType;
+										doc.patterns=returnValue.doc.patterns;
+										this.saveDoc(doc);
+									}
+								}
+							});
+						},false);
+					}));
+				}));
+				c.appendChild(el("form",(f)=>{
+					var form=<HTMLFormElement>f;
+					form.appendChild(el("p",(p)=>{
+						p.textContent="服の名前（省略可能）:";
+						p.appendChild(el("input",(i)=>{
+							var input=<HTMLInputElement>i;
+							input.size=20;
+							input.name="name";
+							input.placeholder="名前";
+							input.value=doc.name || "";
+						}));
+						p.appendChild(el("input",(i)=>{
+							var input=<HTMLInputElement>i;
+							input.type="submit";
+							input.value="保存";
+						}));
+						form.addEventListener("submit",(e)=>{
+							e.preventDefault();
+							//保存
+							doc.name=(<HTMLInputElement>form.elements["name"]).value;
+							this.saveDoc(doc);
+						});
+					}));
+				}));
+				c.appendChild(el("section",(section)=>{
+					section.appendChild(el("h1",(h1)=>{
+						h1.textContent="情報";
+					}));
+					section.appendChild(el("p",(p)=>{
+						if(doc.used>0){
+							p.textContent="洗濯後"+doc.used+"回使用";
+						}else{
+							p.textContent="洗濯後未使用";
+						}
+					}));
+					if(doc.status==="washer"){
+						section.appendChild(el("p",(p)=>{
+							p.textContent="洗濯中";
+						}));
+					}
+				}));
+				c.appendChild(el("section",(section)=>{
+					section.appendChild(el("h1",(h1)=>{
+						h1.textContent="所属する服グループの一覧";
+					}));
+					var _self=this, count=0;
+					getone(0);
+					function getone(index:number):void{
+						var nextid=doc.group[index];
+						if(nextid==null){
+							//もうおわり
+							if(count===0){
+								//ひとつもない
+								section.appendChild(el("p",(p)=>{
+									p.textContent="所属する服グループはありません。";
+								}));
+							}
+							return;
+						}
+						//あった!
+						db.getClothGroup(nextid,(cgdoc:ClothGroupDoc)=>{
+							if(cgdoc){
+								//あった!
+								section.appendChild(selectbox.clothgroup(cgdoc,(mode:string)=>{
+									var info=new ClothGroupInfo(db,cgdoc.id);
+									var modal=new ModalUI(_self);
+									modal.slide("simple",info,(mode?:string)=>{
+										if(mode!=null){
+											_self.close(mode);
+										}
+									});
+								}));
+								count++;
+							}
+							getone(index+1);
+						});
+					}
+				}));
+			});
+		}
+		private saveDoc(doc:ClothDoc,callback?:()=>void):void{
+			this.db.setCloth(doc,(result:number)=>{
+				if(callback){
+					callback();
+				}else{
+					//デフォルト動作:かきなおす
+					this.open();
+				}
 			});
 		}
 	}
@@ -1226,7 +1338,6 @@ module UI{
 				div.classList.add("clothbox");
 				div.classList.add("selection");
 				//アイコン
-				console.log(doc);
 				var cloth=Cloth.importCloth({
 					clothType:doc.type,
 					patterns:doc.patterns,
@@ -1436,7 +1547,6 @@ class Cloth{
 		var pats=defs.getElementsByTagNameNS(Cloth.svgNS,"pattern");
 		for(var i=0,l=pats.length;i<l;i++){
 			if((<SVGElement>pats[i]).id===vg.id+"-pattern"+index){
-				console.log(i,index);
 				//これだ!
 				var newpatt=Cloth.makePattern(pat);
 				newpatt.id=vg.id+"-pattern"+index;

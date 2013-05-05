@@ -34,18 +34,6 @@ var Panels;
         };
         Panel.prototype.closeManage = function (ui) {
             var _this = this;
-            if(ui instanceof UI.Scheduler || ui instanceof UI.SchedulerContainer) {
-                var id = ui instanceof UI.Scheduler ? (ui).doc.id : (ui).id;
-                ui.onclose(function (returnValue) {
-                    if(returnValue === "clothGroupEdit") {
-                        var clothgroup = new ClothGroupPanel(_this.host, _this.db, {
-                            scheduler: id
-                        });
-                        _this.host.setPanel(clothgroup);
-                    }
-                });
-            } else if(ui instanceof UI.ClothGroupList) {
-            }
             ui.onclose(function (returnValue) {
                 var result;
                 if("string" === typeof returnValue) {
@@ -53,6 +41,19 @@ var Panels;
                     if(result) {
                         var sc = new SchedulerPanel(_this.host, _this.db, Number(result[1]));
                         _this.host.setPanel(sc);
+                        return;
+                    }
+                    result = returnValue.match(/^clothgroup::(\w+):(\d+)$/);
+                    if(result) {
+                        var cgl;
+                        switch(result[1]) {
+                            case "scheduler":
+                                cgl = new ClothGroupPanel(_this.host, _this.db, {
+                                    scheduler: Number(result[2])
+                                });
+                                break;
+                        }
+                        _this.host.setPanel(cgl);
                         return;
                     }
                     result = returnValue.match(/^cloth::(\d+)$/);

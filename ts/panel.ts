@@ -33,20 +33,6 @@ module Panels{
 		}
 		closeManage(ui:UI.UIObject):void{
 			//クローズ時の処理を記述
-			if(ui instanceof UI.Scheduler || ui instanceof UI.SchedulerContainer){
-			var id = ui instanceof UI.Scheduler ? (<UI.Scheduler>ui).doc.id : (<UI.SchedulerContainer>ui).id;
-				//スケジューラに対する
-				ui.onclose((returnValue:any)=>{
-					if(returnValue==="clothGroupEdit"){
-						//clothgroupを管理
-						var clothgroup=new ClothGroupPanel(this.host,this.db,{
-							scheduler:id,
-						});
-						this.host.setPanel(clothgroup);
-					}
-				});
-			}else if(ui instanceof UI.ClothGroupList){
-			}
 			//共通
 			ui.onclose((returnValue:any)=>{
 				var result;
@@ -56,6 +42,23 @@ module Panels{
 						//スケジューラを開きたい
 						var sc=new SchedulerPanel(this.host,this.db,Number(result[1]));
 						this.host.setPanel(sc);
+						return;
+					}
+					result=returnValue.match(/^clothgroup::(\w+):(\d+)$/);
+					if(result){
+						//服グループ
+						var cgl:ClothGroupPanel;
+						switch(result[1]){
+							case "scheduler":
+								//スケジューラidに対応する
+								cgl=new ClothGroupPanel(this.host,this.db,{
+									scheduler:Number(result[2]),
+								});
+								break;
+						}
+						if(cgl){
+							this.host.setPanel(cgl);
+						}
 						return;
 					}
 
