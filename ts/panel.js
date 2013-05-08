@@ -48,12 +48,17 @@ var Panels;
                         var cgl;
                         switch(result[1]) {
                             case "scheduler":
-                                cgl = new ClothGroupPanel(_this.host, _this.db, {
+                                cgl = new ClothGroupListPanel(_this.host, _this.db, {
                                     scheduler: Number(result[2])
                                 });
                                 break;
+                            case "id":
+                                cgl = new ClothGroupPanel(_this.host, _this.db, Number(result[2]));
+                                break;
                         }
-                        _this.host.setPanel(cgl);
+                        if(cgl) {
+                            _this.host.setPanel(cgl);
+                        }
                         return;
                     }
                     result = returnValue.match(/^cloth::(\d+)$/);
@@ -89,16 +94,38 @@ var Panels;
         return SchedulerPanel;
     })(Panel);
     Panels.SchedulerPanel = SchedulerPanel;    
-    var ClothGroupPanel = (function (_super) {
-        __extends(ClothGroupPanel, _super);
-        function ClothGroupPanel(host, db, option) {
+    var ClothGroupListPanel = (function (_super) {
+        __extends(ClothGroupListPanel, _super);
+        function ClothGroupListPanel(host, db, option) {
                 _super.call(this, host, db);
             this.host = host;
             this.db = db;
             var c = this.initContainer();
             var list = new UI.ClothGroupList(db, option && option.scheduler);
             c.appendChild(list.getContent());
+            list.onclose(function (returnValue) {
+                if("string" === typeof returnValue) {
+                    var result = returnValue.match(/^select;(\d+)$/);
+                    if(result) {
+                        list.close("clothgroup::id:" + result[1]);
+                    }
+                }
+            });
             this.closeManage(list);
+        }
+        return ClothGroupListPanel;
+    })(Panel);
+    Panels.ClothGroupListPanel = ClothGroupListPanel;    
+    var ClothGroupPanel = (function (_super) {
+        __extends(ClothGroupPanel, _super);
+        function ClothGroupPanel(host, db, clothgroupid) {
+                _super.call(this, host, db);
+            this.host = host;
+            this.db = db;
+            var c = this.initContainer();
+            var info = new UI.ClothGroupInfo(db, clothgroupid);
+            c.appendChild(info.getContent());
+            this.closeManage(info);
         }
         return ClothGroupPanel;
     })(Panel);

@@ -399,15 +399,9 @@ module UI{
 				if(doc){
 					count++;
 					//ある!つくる
-					c.appendChild(selectbox.clothgroup(doc,(e)=>{
-						//個別の設定画面へ!
-						var info=new ClothGroupInfo(db,doc.id);
-						var modal=new ModalUI(_self);
-						modal.slide("simple",info,(mode?:string)=>{
-							if(mode!=null){
-								_self.close(mode);
-							}
-						});
+					c.appendChild(selectbox.clothgroup(doc,(mode:string)=>{
+						//えらんだ!
+						_self.close("select;"+doc.id);
 					}));
 				}else{
 					//終了だ!
@@ -952,38 +946,71 @@ module UI{
 					section.appendChild(el("h1",(h1)=>{
 						h1.textContent="所属する服グループの一覧";
 					}));
-					var _self=this, count=0;
-					getone(0);
-					function getone(index:number):void{
-						var nextid=doc.group[index];
-						if(nextid==null){
-							//もうおわり
-							if(count===0){
-								//ひとつもない
-								section.appendChild(el("p",(p)=>{
-									p.textContent="所属する服グループはありません。";
-								}));
+					section.appendChild(el("div",(div)=>{
+						var _self=this, count=0;
+						getone(0);
+						function getone(index:number):void{
+							var nextid=doc.group[index];
+							if(nextid==null){
+								//もうおわり
+								if(count===0){
+									//ひとつもない
+									div.appendChild(el("p",(p)=>{
+										p.textContent="所属する服グループはありません。";
+									}));
+								}
+								return;
 							}
-							return;
+							//あった!
+							db.getClothGroup(nextid,(cgdoc:ClothGroupDoc)=>{
+								if(cgdoc){
+									//あった!
+									div.appendChild(selectbox.clothgroup(cgdoc,(mode:string)=>{
+										var info=new ClothGroupInfo(db,cgdoc.id);
+										var modal=new ModalUI(_self);
+										modal.slide("simple",info,(mode?:string)=>{
+											if(mode!=null){
+												_self.close(mode);
+											}
+										});
+									}));
+									count++;
+								}
+								getone(index+1);
+							});
 						}
-						//あった!
-						db.getClothGroup(nextid,(cgdoc:ClothGroupDoc)=>{
-							if(cgdoc){
-								//あった!
-								section.appendChild(selectbox.clothgroup(cgdoc,(mode:string)=>{
-									var info=new ClothGroupInfo(db,cgdoc.id);
-									var modal=new ModalUI(_self);
-									modal.slide("simple",info,(mode?:string)=>{
-										if(mode!=null){
-											_self.close(mode);
+					}));
+					//追加ボタン
+					section.appendChild(el("p",(p)=>{
+						p.appendChild(el("button",(b)=>{
+							var button=<HTMLButtonElement>b;
+							button.appendChild(icons.plus({
+								color:"#666666",
+								width:"24px",
+								height:"24px",
+							}));
+							button.appendChild(document.createTextNode("服グループを追加"));
+							button.addEventListener("click",(e)=>{
+								//新しいやつを追加したいなあ・・・
+								var list=new ClothGroupList(db);
+								var modal=new ModalUI(this);
+								modal.slide("simple",list,(returnValue?:any)=>{
+									if("string"===typeof returnValue){
+										var result=returnValue.match(/^select;(\d+)$/);
+										if(result){
+											//服グループを選んだ
+											var grid=Number(result[1]);
+											if(doc.group.indexOf(grid)<0){
+												//まだない
+												doc.group.push(grid);
+												this.saveDoc(doc);
+											}
 										}
-									});
-								}));
-								count++;
-							}
-							getone(index+1);
-						});
-					}
+									}
+								});
+							},false);
+						}));
+					}));
 				}));
 			});
 		}
@@ -1347,6 +1374,9 @@ module UI{
 					div.addEventListener("click",(e)=>{
 						clickhandler("normal");
 					},false);
+				}
+				if(doc.name){
+					div.title=doc.name;
 				}
 			});
 		}

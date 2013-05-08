@@ -47,13 +47,17 @@ module Panels{
 					result=returnValue.match(/^clothgroup::(\w+):(\d+)$/);
 					if(result){
 						//服グループ
-						var cgl:ClothGroupPanel;
+						var cgl:Panel;
 						switch(result[1]){
 							case "scheduler":
 								//スケジューラidに対応する
-								cgl=new ClothGroupPanel(this.host,this.db,{
+								cgl=new ClothGroupListPanel(this.host,this.db,{
 									scheduler:Number(result[2]),
 								});
+								break;
+							case "id":
+								//服グループidに対応する
+								cgl=new ClothGroupPanel(this.host,this.db,Number(result[2]));
 								break;
 						}
 						if(cgl){
@@ -91,7 +95,7 @@ module Panels{
 			this.closeManage(container);
 		}
 	}
-	export class ClothGroupPanel extends Panel{
+	export class ClothGroupListPanel extends Panel{
 		constructor(private host:AppHost,private db:DB,option?:{
 			scheduler:number;	//scheduler id
 		}){
@@ -99,7 +103,24 @@ module Panels{
 			var c=this.initContainer();
 			var list=new UI.ClothGroupList(db,option && option.scheduler);
 			c.appendChild(list.getContent());
+			list.onclose((returnValue?:any)=>{
+				if("string"===typeof returnValue){
+					var result=returnValue.match(/^select;(\d+)$/);
+					if(result){
+						list.close("clothgroup::id:"+result[1]);
+					}
+				}
+			});
 			this.closeManage(list);
+		}
+	}
+	export class ClothGroupPanel extends Panel{
+		constructor(private host:AppHost,private db:DB,clothgroupid:number){
+			super(host,db);
+			var c=this.initContainer();
+			var info=new UI.ClothGroupInfo(db,clothgroupid);
+			c.appendChild(info.getContent());
+			this.closeManage(info);
 		}
 	}
 	export class ClothPanel extends Panel{

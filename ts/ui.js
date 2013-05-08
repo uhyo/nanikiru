@@ -358,14 +358,8 @@ var UI;
 function addlist(doc) {
                 if(doc) {
                     count++;
-                    c.appendChild(selectbox.clothgroup(doc, function (e) {
-                        var info = new ClothGroupInfo(db, doc.id);
-                        var modal = new ModalUI(_self);
-                        modal.slide("simple", info, function (mode) {
-                            if(mode != null) {
-                                _self.close(mode);
-                            }
-                        });
+                    c.appendChild(selectbox.clothgroup(doc, function (mode) {
+                        _self.close("select;" + doc.id);
                     }));
                 } else {
                     fin();
@@ -873,34 +867,63 @@ function fin() {
                     section.appendChild(el("h1", function (h1) {
                         h1.textContent = "所属する服グループの一覧";
                     }));
-                    var _self = _this, count = 0;
-                    getone(0);
-                    function getone(index) {
-                        var nextid = doc.group[index];
-                        if(nextid == null) {
-                            if(count === 0) {
-                                section.appendChild(el("p", function (p) {
-                                    p.textContent = "所属する服グループはありません。";
-                                }));
+                    section.appendChild(el("div", function (div) {
+                        var _self = _this, count = 0;
+                        getone(0);
+                        function getone(index) {
+                            var nextid = doc.group[index];
+                            if(nextid == null) {
+                                if(count === 0) {
+                                    div.appendChild(el("p", function (p) {
+                                        p.textContent = "所属する服グループはありません。";
+                                    }));
+                                }
+                                return;
                             }
-                            return;
+                            db.getClothGroup(nextid, function (cgdoc) {
+                                if(cgdoc) {
+                                    div.appendChild(selectbox.clothgroup(cgdoc, function (mode) {
+                                        var info = new ClothGroupInfo(db, cgdoc.id);
+                                        var modal = new ModalUI(_self);
+                                        modal.slide("simple", info, function (mode) {
+                                            if(mode != null) {
+                                                _self.close(mode);
+                                            }
+                                        });
+                                    }));
+                                    count++;
+                                }
+                                getone(index + 1);
+                            });
                         }
-                        db.getClothGroup(nextid, function (cgdoc) {
-                            if(cgdoc) {
-                                section.appendChild(selectbox.clothgroup(cgdoc, function (mode) {
-                                    var info = new ClothGroupInfo(db, cgdoc.id);
-                                    var modal = new ModalUI(_self);
-                                    modal.slide("simple", info, function (mode) {
-                                        if(mode != null) {
-                                            _self.close(mode);
+                    }));
+                    section.appendChild(el("p", function (p) {
+                        p.appendChild(el("button", function (b) {
+                            var button = b;
+                            button.appendChild(icons.plus({
+                                color: "#666666",
+                                width: "24px",
+                                height: "24px"
+                            }));
+                            button.appendChild(document.createTextNode("服グループを追加"));
+                            button.addEventListener("click", function (e) {
+                                var list = new ClothGroupList(db);
+                                var modal = new ModalUI(_this);
+                                modal.slide("simple", list, function (returnValue) {
+                                    if("string" === typeof returnValue) {
+                                        var result = returnValue.match(/^select;(\d+)$/);
+                                        if(result) {
+                                            var grid = Number(result[1]);
+                                            if(doc.group.indexOf(grid) < 0) {
+                                                doc.group.push(grid);
+                                                _this.saveDoc(doc);
+                                            }
                                         }
-                                    });
-                                }));
-                                count++;
-                            }
-                            getone(index + 1);
-                        });
-                    }
+                                    }
+                                });
+                            }, false);
+                        }));
+                    }));
                 }));
             });
         };
@@ -1249,6 +1272,9 @@ function fin() {
                     div.addEventListener("click", function (e) {
                         clickhandler("normal");
                     }, false);
+                }
+                if(doc.name) {
+                    div.title = doc.name;
                 }
             });
         }
