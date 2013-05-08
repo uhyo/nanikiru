@@ -316,16 +316,23 @@ var UI;
     UI.SchedulerContainer = SchedulerContainer;    
     var ClothGroupList = (function (_super) {
         __extends(ClothGroupList, _super);
-        function ClothGroupList(db, schedulerid) {
+        function ClothGroupList(db, option) {
                 _super.call(this);
             this.db = db;
-            this.schedulerid = schedulerid;
+            if(!option) {
+                option = {
+                };
+            }
+            this.open(db, option);
+        }
+        ClothGroupList.prototype.open = function (db, option) {
             var _self = this;
             var c = this.getContent();
             c.classList.add("clothgroup-list");
+            empty(c);
             var count = 0;
-            if(schedulerid != null) {
-                db.getScheduler(schedulerid, function (schedulerdoc) {
+            if(option.schedulerid != null) {
+                db.getScheduler(option.schedulerid, function (schedulerdoc) {
                     if(schedulerdoc == null) {
                         c.appendChild(el("p", function (p) {
                             p.textContent = "エラー:そのスケジューラの情報は取得できません。";
@@ -355,44 +362,52 @@ var UI;
                 }));
                 db.eachClothGroup(null, addlist);
             }
-function addlist(doc) {
+            function addlist(doc) {
                 if(doc) {
                     count++;
-                    c.appendChild(selectbox.clothgroup(doc, function (mode) {
-                        _self.close("select;" + doc.id);
+                    c.appendChild(selectbox.clothgroup(doc, {
+                        del: !!option.del
+                    }, function (mode) {
+                        if(mode === "normal") {
+                            _self.close("select;" + doc.id);
+                        } else if(mode === "delete") {
+                            _self.close("edlete;" + doc.id);
+                        }
                     }));
                 } else {
                     fin();
                 }
             }
-function fin() {
+            function fin() {
                 if(count === 0) {
                     c.appendChild(el("p", function (p) {
                         p.textContent = "服グループはまだありません。";
                     }));
                 }
-                c.appendChild(el("p", function (p) {
-                    p.appendChild(el("button", function (b) {
-                        var button = b;
-                        button.appendChild(icons.plus({
-                            color: "#666666",
-                            width: "24px",
-                            height: "24px"
+                if(option.add) {
+                    c.appendChild(el("p", function (p) {
+                        p.appendChild(el("button", function (b) {
+                            var button = b;
+                            button.appendChild(icons.plus({
+                                color: "#666666",
+                                width: "24px",
+                                height: "24px"
+                            }));
+                            button.appendChild(document.createTextNode("新しい服グループを追加"));
+                            button.addEventListener("click", function (e) {
+                                var info = new ClothGroupInfo(db, null, option.schedulerid);
+                                var modal = new ModalUI(_self);
+                                modal.slide("simple", info, function (returnValue) {
+                                    if(returnValue != null) {
+                                        _self.close(returnValue);
+                                    }
+                                });
+                            }, false);
                         }));
-                        button.appendChild(document.createTextNode("新しい服グループを追加"));
-                        button.addEventListener("click", function (e) {
-                            var info = new ClothGroupInfo(db, null, schedulerid);
-                            var modal = new ModalUI(_self);
-                            modal.slide("simple", info, function (returnValue) {
-                                if(returnValue != null) {
-                                    _self.close(returnValue);
-                                }
-                            });
-                        }, false);
                     }));
-                }));
+                }
             }
-        }
+        };
         return ClothGroupList;
     })(UISection);
     UI.ClothGroupList = ClothGroupList;    
@@ -882,14 +897,23 @@ function fin() {
                             }
                             db.getClothGroup(nextid, function (cgdoc) {
                                 if(cgdoc) {
-                                    div.appendChild(selectbox.clothgroup(cgdoc, function (mode) {
-                                        var info = new ClothGroupInfo(db, cgdoc.id);
-                                        var modal = new ModalUI(_self);
-                                        modal.slide("simple", info, function (mode) {
-                                            if(mode != null) {
-                                                _self.close(mode);
-                                            }
-                                        });
+                                    div.appendChild(selectbox.clothgroup(cgdoc, {
+                                        del: true
+                                    }, function (mode) {
+                                        if(mode === "normal") {
+                                            var info = new ClothGroupInfo(db, cgdoc.id);
+                                            var modal = new ModalUI(_self);
+                                            modal.slide("simple", info, function (mode) {
+                                                if(mode != null) {
+                                                    _self.close(mode);
+                                                }
+                                            });
+                                        } else if(mode === "delete") {
+                                            doc.group = doc.group.filter(function (x) {
+                                                return x !== cgdoc.id;
+                                            });
+                                            _self.saveDoc(doc);
+                                        }
                                     }));
                                     count++;
                                 }
@@ -907,7 +931,9 @@ function fin() {
                             }));
                             button.appendChild(document.createTextNode("服グループを追加"));
                             button.addEventListener("click", function (e) {
-                                var list = new ClothGroupList(db);
+                                var list = new ClothGroupList(db, {
+                                    del: false
+                                });
                                 var modal = new ModalUI(_this);
                                 modal.slide("simple", list, function (returnValue) {
                                     if("string" === typeof returnValue) {
@@ -1242,7 +1268,11 @@ function fin() {
             });
         }
         selectbox.scheduler = scheduler;
-        function clothgroup(doc, clickhandler) {
+        function clothgroup(doc, option, clickhandler) {
+            if(!option) {
+                option = {
+                };
+            }
             return el("div", function (div) {
                 div.classList.add("clothgroupbox");
                 div.classList.add("selection");
@@ -1251,9 +1281,21 @@ function fin() {
                     height: "32px"
                 }));
                 div.appendChild(document.createTextNode(doc.name));
+                if(option.del) {
+                    div.appendChild(el("button", function (b) {
+                        var button = b;
+                        button.classList.add("deletebutton");
+                        button.textContent = "✗";
+                    }));
+                }
                 if(clickhandler) {
                     div.addEventListener("click", function (e) {
-                        clickhandler("normal");
+                        var t = e.target;
+                        if(t.classList.contains("deletebutton")) {
+                            clickhandler("delete");
+                        } else {
+                            clickhandler("normal");
+                        }
                     }, false);
                 }
             });

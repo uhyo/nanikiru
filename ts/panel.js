@@ -101,7 +101,11 @@ var Panels;
             this.host = host;
             this.db = db;
             var c = this.initContainer();
-            var list = new UI.ClothGroupList(db, option && option.scheduler);
+            var list = new UI.ClothGroupList(db, {
+                schedulerid: option && option.scheduler,
+                add: true,
+                del: true
+            });
             c.appendChild(list.getContent());
             list.onclose(function (returnValue) {
                 if("string" === typeof returnValue) {

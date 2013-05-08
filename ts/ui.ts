@@ -353,14 +353,29 @@ module UI{
 	}
 	//服グループのリスト
 	export class ClothGroupList extends UISection{
-		constructor(private db:DB,private schedulerid?:number){
+		constructor(private db:DB,option?:{
+			schedulerid?:number;
+			add?:bool;	//新規追加ボタンあるか
+			del?:bool;	//削除ボタンあるか
+		}){
 			super();
+			if(!option){
+				option={};
+			}
+			this.open(db,option);
+		}
+		open(db:DB,option:{
+				schedulerid?:number;
+				add?:bool;	//新規追加ボタンあるか
+				del?:bool;
+		}):void{
 			var _self=this;
 			var c=this.getContent();
 			c.classList.add("clothgroup-list");
+			empty(c);
 			var count:number=0;	//表示済みのやつを数える
-			if(schedulerid!=null){
-				db.getScheduler(schedulerid,(schedulerdoc:SchedulerDoc)=>{
+			if(option.schedulerid!=null){
+				db.getScheduler(option.schedulerid,(schedulerdoc:SchedulerDoc)=>{
 					if(schedulerdoc==null){
 						//あれれーーーーーーー
 						c.appendChild(el("p",(p)=>{
@@ -399,9 +414,15 @@ module UI{
 				if(doc){
 					count++;
 					//ある!つくる
-					c.appendChild(selectbox.clothgroup(doc,(mode:string)=>{
+					c.appendChild(selectbox.clothgroup(doc,{
+						del:!!option.del,
+					},(mode:string)=>{
 						//えらんだ!
-						_self.close("select;"+doc.id);
+						if(mode==="normal"){
+							_self.close("select;"+doc.id);
+						}else if(mode==="delete"){
+							_self.close("edlete;"+doc.id);
+						}
 					}));
 				}else{
 					//終了だ!
@@ -417,28 +438,30 @@ module UI{
 					}));
 				}
 				//追加ボタン
-				c.appendChild(el("p",(p)=>{
-					p.appendChild(el("button",(b)=>{
-						var button=<HTMLButtonElement>b;
-						button.appendChild(icons.plus({
-							color:"#666666",
-							width:"24px",
-							height:"24px",
+				if(option.add){
+					c.appendChild(el("p",(p)=>{
+						p.appendChild(el("button",(b)=>{
+							var button=<HTMLButtonElement>b;
+							button.appendChild(icons.plus({
+								color:"#666666",
+								width:"24px",
+								height:"24px",
+							}));
+							button.appendChild(document.createTextNode("新しい服グループを追加"));
+							button.addEventListener("click",(e)=>{
+								//新しいやつを追加したいなあ・・・
+								var info=new ClothGroupInfo(db,null,option.schedulerid);
+								var modal=new ModalUI(_self);
+								modal.slide("simple",info,(returnValue?:any)=>{
+									if(returnValue!=null){
+										//伝えたいことがあるんだ
+										_self.close(returnValue);
+									}
+								});
+							},false);
 						}));
-						button.appendChild(document.createTextNode("新しい服グループを追加"));
-						button.addEventListener("click",(e)=>{
-							//新しいやつを追加したいなあ・・・
-							var info=new ClothGroupInfo(db,null,schedulerid);
-							var modal=new ModalUI(_self);
-							modal.slide("simple",info,(returnValue?:any)=>{
-								if(returnValue!=null){
-									//伝えたいことがあるんだ
-									_self.close(returnValue);
-								}
-							});
-						},false);
 					}));
-				}));
+				}
 			}
 		}
 	}
@@ -965,14 +988,24 @@ module UI{
 							db.getClothGroup(nextid,(cgdoc:ClothGroupDoc)=>{
 								if(cgdoc){
 									//あった!
-									div.appendChild(selectbox.clothgroup(cgdoc,(mode:string)=>{
-										var info=new ClothGroupInfo(db,cgdoc.id);
-										var modal=new ModalUI(_self);
-										modal.slide("simple",info,(mode?:string)=>{
-											if(mode!=null){
-												_self.close(mode);
-											}
-										});
+									div.appendChild(selectbox.clothgroup(cgdoc,{
+										del:true,
+									},(mode:string)=>{
+										if(mode==="normal"){
+											var info=new ClothGroupInfo(db,cgdoc.id);
+											var modal=new ModalUI(_self);
+											modal.slide("simple",info,(mode?:string)=>{
+												if(mode!=null){
+													_self.close(mode);
+												}
+											});
+										}else if(mode==="delete"){
+											//この服グループは除外する
+											doc.group=doc.group.filter((x)=>{
+												return x!==cgdoc.id;
+											});
+											_self.saveDoc(doc);
+										}
 									}));
 									count++;
 								}
@@ -992,7 +1025,9 @@ module UI{
 							button.appendChild(document.createTextNode("服グループを追加"));
 							button.addEventListener("click",(e)=>{
 								//新しいやつを追加したいなあ・・・
-								var list=new ClothGroupList(db);
+								var list=new ClothGroupList(db,{
+									del:false,
+								});
 								var modal=new ModalUI(this);
 								modal.slide("simple",list,(returnValue?:any)=>{
 									if("string"===typeof returnValue){
@@ -1343,7 +1378,12 @@ module UI{
 				}
 			});
 		}
-		export function clothgroup(doc:ClothGroupDoc,clickhandler?:(mode:string)=>void):HTMLElement{
+		export function clothgroup(doc:ClothGroupDoc,option:{
+			del?:bool;
+		},clickhandler?:(mode:string)=>void):HTMLElement{
+			if(!option){
+				option={};
+			}
 			return el("div",(div)=>{
 				div.classList.add("clothgroupbox");
 				div.classList.add("selection");
@@ -1353,9 +1393,23 @@ module UI{
 					height:"32px",
 				}));
 				div.appendChild(document.createTextNode(doc.name));
+				if(option.del){
+					//削除ボタン追加
+					div.appendChild(el("button",(b)=>{
+						var button=<HTMLButtonElement>b;
+						button.classList.add("deletebutton");
+						button.textContent="✗";
+					}));
+				}
 				if(clickhandler){
 					div.addEventListener("click",(e)=>{
-						clickhandler("normal");
+						var t=<HTMLElement><any>e.target;
+						if(t.classList.contains("deletebutton")){
+							//削除だ!
+							clickhandler("delete");
+						}else{
+							clickhandler("normal");
+						}
 					},false);
 				}
 			});

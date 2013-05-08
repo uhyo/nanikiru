@@ -95,6 +95,18 @@ table.calender td.today div.date{
 	background-color:#eeeeee;
 }
 /* UIs */
+.selection{
+	position:relative;
+	left:0;
+	top:0;
+}
+.selection button.deletebutton{
+	background-color:#f9f9f9;
+	color:#ff3333;
+	position:absolute;
+	right:0.1ex;
+	bottom:0.1ex;
+}
 button {
 	outline:none;
 	border:1px solid #aaaaaa;
@@ -111,5 +123,5 @@ button:focus {
 	box-shadow:0 0 4px 3px #cccccc;
 }
 button:active{
-	background-color:#dddddd;
+	background-color:#dddddd !important;
 }

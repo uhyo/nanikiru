@@ -101,7 +101,11 @@ module Panels{
 		}){
 			super(host,db);
 			var c=this.initContainer();
-			var list=new UI.ClothGroupList(db,option && option.scheduler);
+			var list=new UI.ClothGroupList(db,{
+				schedulerid:option && option.scheduler,
+				add:true,
+				del:true,
+			});
 			c.appendChild(list.getContent());
 			list.onclose((returnValue?:any)=>{
 				if("string"===typeof returnValue){
