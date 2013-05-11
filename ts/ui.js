@@ -314,6 +314,69 @@ var UI;
         return SchedulerContainer;
     })(UIObject);
     UI.SchedulerContainer = SchedulerContainer;    
+    var ClothGroupListContainer = (function (_super) {
+        __extends(ClothGroupListContainer, _super);
+        function ClothGroupListContainer(db, schedulerid) {
+            var _this = this;
+                _super.call(this);
+            this.db = db;
+            var c = this.getContent();
+            var optobj = {
+                schedulerid: schedulerid,
+                add: true,
+                selectadd: schedulerid != null ? true : false,
+                del: true
+            };
+            var list = new ClothGroupList(db, optobj);
+            c.appendChild(list.getContent());
+            list.onclose(function (returnValue) {
+                if("string" === typeof returnValue) {
+                    var result = returnValue.match(/^(\w+);(\d+)$/);
+                    if(result) {
+                        switch(result[1]) {
+                            case "select":
+                                _this.close("clothgroup::id:" + result[2]);
+                                break;
+                            case "delete":
+                                if(schedulerid) {
+                                    db.getScheduler(schedulerid, function (sdoc) {
+                                        if(!sdoc) {
+                                            return;
+                                        }
+                                        sdoc.groups = sdoc.groups.filter(function (x) {
+                                            return x !== Number(result[2]);
+                                        });
+                                        db.setScheduler(sdoc, function (result) {
+                                            list.open(db, optobj);
+                                        });
+                                    });
+                                }
+                                break;
+                            case "add":
+                                if(schedulerid) {
+                                    db.getScheduler(schedulerid, function (sdoc) {
+                                        if(!sdoc) {
+                                            return;
+                                        }
+                                        var newcgl = Number(result[2]);
+                                        if(sdoc.groups.indexOf(newcgl) < 0) {
+                                            sdoc.groups.push(newcgl);
+                                        }
+                                        db.setScheduler(sdoc, function (result) {
+                                            list.open(db, optobj);
+                                        });
+                                    });
+                                }
+                        }
+                        return;
+                    }
+                }
+                _this.close(returnValue);
+            });
+        }
+        return ClothGroupListContainer;
+    })(UIObject);
+    UI.ClothGroupListContainer = ClothGroupListContainer;    
     var ClothGroupList = (function (_super) {
         __extends(ClothGroupList, _super);
         function ClothGroupList(db, option) {
@@ -371,7 +434,7 @@ var UI;
                         if(mode === "normal") {
                             _self.close("select;" + doc.id);
                         } else if(mode === "delete") {
-                            _self.close("edlete;" + doc.id);
+                            _self.close("delete;" + doc.id);
                         }
                     }));
                 } else {
@@ -384,6 +447,38 @@ var UI;
                         p.textContent = "服グループはまだありません。";
                     }));
                 }
+                if(option.selectadd) {
+                    c.appendChild(el("p", function (p) {
+                        p.appendChild(el("button", function (b) {
+                            var button = b;
+                            button.appendChild(icons.plus({
+                                color: "#666666",
+                                width: "24px",
+                                height: "24px"
+                            }));
+                            button.appendChild(document.createTextNode("既存の服グループを追加"));
+                            button.addEventListener("click", function (e) {
+                                var list2 = new ClothGroupList(db, {
+                                    add: false,
+                                    del: false
+                                });
+                                var modal = new ModalUI(_self);
+                                modal.slide("simple", list2, function (returnValue) {
+                                    if("string" === typeof returnValue) {
+                                        var result = returnValue.match(/^(\w+);(\d+)$/);
+                                        if(result && result[1] === "select") {
+                                            _self.close("add;" + result[2]);
+                                            return;
+                                        }
+                                    }
+                                    if(returnValue) {
+                                        _self.close(returnValue);
+                                    }
+                                });
+                            }, false);
+                        }));
+                    }));
+                }
                 if(option.add) {
                     c.appendChild(el("p", function (p) {
                         p.appendChild(el("button", function (b) {
@@ -393,7 +488,7 @@ var UI;
                                 width: "24px",
                                 height: "24px"
                             }));
-                            button.appendChild(document.createTextNode("新しい服グループを追加"));
+                            button.appendChild(document.createTextNode("新しい服グループを作成して追加"));
                             button.addEventListener("click", function (e) {
                                 var info = new ClothGroupInfo(db, null, option.schedulerid);
                                 var modal = new ModalUI(_self);
@@ -966,6 +1061,56 @@ var UI;
         return ClothInfo;
     })(UISection);
     UI.ClothInfo = ClothInfo;    
+    var Dialog = (function (_super) {
+        __extends(Dialog, _super);
+        function Dialog(title, message, buttons) {
+            var _this = this;
+                _super.call(this);
+            this.title = title;
+            this.message = message;
+            this.buttons = buttons;
+            var c = this.getContent();
+            c.classList.add("dialog-content");
+            c.appendChild(el("h1", function (h1) {
+                h1.textContent = title;
+            }));
+            c.appendChild(el("p", function (p) {
+                p.textContent = message;
+            }));
+            c.appendChild(el("p", function (p) {
+                buttons.forEach(function (label) {
+                    p.appendChild(el("button", function (b) {
+                        var button = b;
+                        button.textContent = Dialog.labelText[label];
+                        button.dataset.value = label;
+                    }));
+                });
+                p.addEventListener("click", function (e) {
+                    var target = e.target;
+                    if(target.dataset.value) {
+                        _this.close(target.dataset.value);
+                    }
+                }, false);
+            }));
+        }
+        Dialog.prototype.show = function () {
+            var d = document.createElement("dialog");
+            d.appendChild(this.getContent());
+            document.body.appendChild(d);
+            d.showModal();
+            this.onclose(function (returnValue) {
+                d.close();
+                document.body.removeChild(d);
+            });
+        };
+        Dialog.labelText = {
+            "ok": "OK",
+            "yes": "はい",
+            "no": "いいえ",
+            "cancel": "キャンセル"
+        };
+        return Dialog;
+    })(UISection);    
     var ModalUI = (function () {
         function ModalUI(ui) {
             this.ui = ui;
@@ -983,19 +1128,19 @@ var UI;
             if(mode === "simple") {
                 bc.style.display = "none";
                 tc.appendChild(nc);
+                dia.onclose(function (returnValue) {
+                    if(nc.parentNode === tc) {
+                        tc.removeChild(nc);
+                    }
+                    if(tc.parentNode) {
+                        tc.parentNode.replaceChild(bc, tc);
+                    }
+                    bc.style.display = null;
+                    if(callback) {
+                        callback(returnValue);
+                    }
+                });
             }
-            dia.onclose(function (returnValue) {
-                if(nc.parentNode === tc) {
-                    tc.removeChild(nc);
-                }
-                if(tc.parentNode) {
-                    tc.parentNode.replaceChild(bc, tc);
-                }
-                bc.style.display = null;
-                if(callback) {
-                    callback(returnValue);
-                }
-            });
         };
         return ModalUI;
     })();    

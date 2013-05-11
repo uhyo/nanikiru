@@ -20,7 +20,7 @@ table.calender td.Saturday div.date{
 	background-color:#ddeeff;
 }
 table.calender td.past{
-	background-color:#f6f6f6;
+	background-color:#dddddd;
 }
 table.calender td.today div.date{
 	font-weight:bold;

@@ -7,6 +7,15 @@ interface HTMLElement{
 interface HTMLTimeElement extends HTMLElement{
 	dateTime:string;
 }
+interface HTMLDialogElement extends HTMLElement{
+	open:bool;
+	returnValue:string;
+	show(anchor?:Element):void;
+	show(anchor:MouseEvent):void;
+	showModal(anchor?:Element):void;
+	showModal(anchor:MouseEvent):void;
+	close(returnValue?:string):void;
+}
 interface SVGAnimationElement extends SVGElement/*,SVGTests,SVGExternalResourcesRequired*/,ElementTimeControl{
 	targetElement:SVGElement;
 	getStartTime:()=>number;
@@ -351,11 +360,76 @@ module UI{
 			});
 		}
 	}
+	//独立系服グループリスト
+	export class ClothGroupListContainer extends UIObject{
+		constructor(private db:DB,schedulerid?:number){
+			super();
+			var c=this.getContent();
+			var optobj={
+				schedulerid:schedulerid,
+				add:true,
+				selectadd:schedulerid!=null ? true : false,
+				del:true,
+			};
+			var list=new ClothGroupList(db,optobj);
+			c.appendChild(list.getContent());
+			list.onclose((returnValue?:any)=>{
+				if("string"===typeof returnValue){
+					var result=returnValue.match(/^(\w+);(\d+)$/);
+					if(result){
+						//op
+						switch(result[1]){
+							case "select":	//ふつうに選択した
+								this.close("clothgroup::id:"+result[2]);
+								break;
+							case "delete":	//消したい
+								if(schedulerid){
+									//スケジューラがある場合: はずす
+									db.getScheduler(schedulerid,(sdoc:SchedulerDoc)=>{
+										if(!sdoc){
+											return;
+										}
+										sdoc.groups=sdoc.groups.filter((x)=>{
+											return x!==Number(result[2]);
+										});
+										db.setScheduler(sdoc,(result:bool)=>{
+											//新しく!再利用
+											list.open(db,optobj);
+										});
+									});
+								}
+								break;
+							case "add":	//既存から選んで追加
+								if(schedulerid){
+									//スケジューラがある場合: つける
+									db.getScheduler(schedulerid,(sdoc:SchedulerDoc)=>{
+										if(!sdoc){
+											return;
+										}
+										var newcgl=Number(result[2]);
+										if(sdoc.groups.indexOf(newcgl)<0){
+											sdoc.groups.push(newcgl);
+										}
+										db.setScheduler(sdoc,(result:bool)=>{
+											//新しく!再利用
+											list.open(db,optobj);
+										});
+									});
+								}
+						}
+						return;
+					}
+				}
+				this.close(returnValue);
+			});
+		}
+	}
 	//服グループのリスト
 	export class ClothGroupList extends UISection{
 		constructor(private db:DB,option?:{
 			schedulerid?:number;
 			add?:bool;	//新規追加ボタンあるか
+			selectadd?:bool;
 			del?:bool;	//削除ボタンあるか
 		}){
 			super();
@@ -367,6 +441,7 @@ module UI{
 		open(db:DB,option:{
 				schedulerid?:number;
 				add?:bool;	//新規追加ボタンあるか
+				selectadd?:bool;	//既存から選んで追加ボタンがあるか
 				del?:bool;
 		}):void{
 			var _self=this;
@@ -421,7 +496,7 @@ module UI{
 						if(mode==="normal"){
 							_self.close("select;"+doc.id);
 						}else if(mode==="delete"){
-							_self.close("edlete;"+doc.id);
+							_self.close("delete;"+doc.id);
 						}
 					}));
 				}else{
@@ -438,6 +513,40 @@ module UI{
 					}));
 				}
 				//追加ボタン
+				if(option.selectadd){
+					c.appendChild(el("p",(p)=>{
+						p.appendChild(el("button",(b)=>{
+							var button=<HTMLButtonElement>b;
+							button.appendChild(icons.plus({
+								color:"#666666",
+								width:"24px",
+								height:"24px",
+							}));
+							button.appendChild(document.createTextNode("既存の服グループを追加"));
+							button.addEventListener("click",(e)=>{
+								//新しいやつを追加したいなあ・・・
+								var list2=new ClothGroupList(db,{
+									add:false,
+									del:false,
+								});
+								var modal=new ModalUI(_self);
+								modal.slide("simple",list2,(returnValue?:any)=>{
+									if("string"===typeof returnValue){
+										var result=returnValue.match(/^(\w+);(\d+)$/);
+										if(result && result[1]==="select"){
+											//選択した
+											_self.close("add;"+result[2]);
+											return;
+										}
+									}
+									if(returnValue){
+										_self.close(returnValue);
+									}
+								});
+							},false);
+						}));
+					}));
+				}
 				if(option.add){
 					c.appendChild(el("p",(p)=>{
 						p.appendChild(el("button",(b)=>{
@@ -447,7 +556,7 @@ module UI{
 								width:"24px",
 								height:"24px",
 							}));
-							button.appendChild(document.createTextNode("新しい服グループを追加"));
+							button.appendChild(document.createTextNode("新しい服グループを作成して追加"));
 							button.addEventListener("click",(e)=>{
 								//新しいやつを追加したいなあ・・・
 								var info=new ClothGroupInfo(db,null,option.schedulerid);
@@ -1060,6 +1169,54 @@ module UI{
 			});
 		}
 	}
+	//ダイアログ
+	class Dialog extends UISection{
+		constructor(private title:string,private message:string,private buttons:string[]){
+			super();
+			var c=this.getContent();
+			c.classList.add("dialog-content");
+			c.appendChild(el("h1",(h1)=>{
+				h1.textContent=title;
+			}));
+			c.appendChild(el("p",(p)=>{
+				p.textContent=message;
+			}));
+			//ボタン設置
+			c.appendChild(el("p",(p)=>{
+				buttons.forEach((label:string)=>{
+					p.appendChild(el("button",(b)=>{
+						var button=<HTMLButtonElement>b;
+						button.textContent=Dialog.labelText[label];
+						button.dataset.value=label;
+					}));
+				});
+				p.addEventListener("click",(e)=>{
+					var target=<HTMLElement><any>e.target;
+					if(target.dataset.value){
+						this.close(target.dataset.value);
+					}
+				},false);
+			}));
+		}
+		//自分で全部やる
+		show():void{
+			var d=<HTMLDialogElement>document.createElement("dialog");
+			d.appendChild(this.getContent());
+			document.body.appendChild(d);
+			d.showModal();
+			this.onclose((returnValue?:string)=>{
+				//valueはもっと下でうけとめる
+				d.close();
+				document.body.removeChild(d);
+			});
+		}
+		static labelText:any={
+			"ok":"OK",
+			"yes":"はい",
+			"no":"いいえ",
+			"cancel":"キャンセル",
+		}
+	}
 	//割り込みUI
 	class ModalUI{
 		private container:HTMLElement;
@@ -1082,15 +1239,15 @@ module UI{
 				//ただの切り替え
 				bc.style.display="none";
 				tc.appendChild(nc);
+				dia.onclose((returnValue:any)=>{
+					//後始末
+					if(nc.parentNode===tc)tc.removeChild(nc);
+					if(tc.parentNode)tc.parentNode.replaceChild(bc,tc);
+					bc.style.display=null;
+					//クローズ時は?
+					if(callback)callback(returnValue);
+				});
 			}
-			dia.onclose((returnValue:any)=>{
-				//後始末
-				if(nc.parentNode===tc)tc.removeChild(nc);
-				if(tc.parentNode)tc.parentNode.replaceChild(bc,tc);
-				bc.style.display=null;
-				//クローズ時は?
-				if(callback)callback(returnValue);
-			});
 		}
 	}
 	//oh...

@@ -101,20 +101,8 @@ module Panels{
 		}){
 			super(host,db);
 			var c=this.initContainer();
-			var list=new UI.ClothGroupList(db,{
-				schedulerid:option && option.scheduler,
-				add:true,
-				del:true,
-			});
+			var list=new UI.ClothGroupListContainer(db,option && option.scheduler);
 			c.appendChild(list.getContent());
-			list.onclose((returnValue?:any)=>{
-				if("string"===typeof returnValue){
-					var result=returnValue.match(/^select;(\d+)$/);
-					if(result){
-						list.close("clothgroup::id:"+result[1]);
-					}
-				}
-			});
 			this.closeManage(list);
 		}
 	}
