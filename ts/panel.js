@@ -37,13 +37,26 @@ var Panels;
             ui.onclose(function (returnValue) {
                 var result;
                 if("string" === typeof returnValue) {
-                    result = returnValue.match(/^scheduler::(\d+)$/);
+                    result = returnValue.match(/^scheduler::(\w+):(\d*)$/);
                     if(result) {
-                        var sc = new SchedulerPanel(_this.host, _this.db, Number(result[1]));
+                        var sc;
+                        switch(result[1]) {
+                            case "open":
+                                sc = new SchedulerPanel(_this.host, _this.db, {
+                                    schedulerid: result[2] ? Number(result[2]) : null
+                                });
+                                break;
+                            case "conf":
+                                sc = new SchedulerPanel(_this.host, _this.db, {
+                                    schedulerid: result[2] ? Number(result[2]) : null,
+                                    conf: true
+                                });
+                                break;
+                        }
                         _this.host.setPanel(sc);
                         return;
                     }
-                    result = returnValue.match(/^clothgroup::(\w+):(\d+)$/);
+                    result = returnValue.match(/^clothgroup::(\w+):(\d*)$/);
                     if(result) {
                         var cgl;
                         switch(result[1]) {
@@ -52,6 +65,9 @@ var Panels;
                                     scheduler: Number(result[2])
                                 });
                                 break;
+                            case "list":
+                                cgl = new ClothGroupListPanel(_this.host, _this.db);
+                                break;
                             case "id":
                                 cgl = new ClothGroupPanel(_this.host, _this.db, Number(result[2]));
                                 break;
@@ -59,6 +75,12 @@ var Panels;
                         if(cgl) {
                             _this.host.setPanel(cgl);
                         }
+                        return;
+                    }
+                    result = returnValue.match(/^schedulerlist::$/);
+                    if(result) {
+                        var sl = new SchedulerListPanel(_this.host, _this.db);
+                        _this.host.setPanel(sl);
                         return;
                     }
                     result = returnValue.match(/^cloth::(\d+)$/);
@@ -72,14 +94,32 @@ var Panels;
         return Panel;
     })();
     Panels.Panel = Panel;    
-    var SchedulerPanel = (function (_super) {
-        __extends(SchedulerPanel, _super);
-        function SchedulerPanel(host, db, schedulerid) {
+    var MenuPanel = (function (_super) {
+        __extends(MenuPanel, _super);
+        function MenuPanel(host, db) {
                 _super.call(this, host, db);
             this.host = host;
             this.db = db;
             var c = this.initContainer();
-            var schid = schedulerid;
+            var menu = new UI.Menu();
+            c.appendChild(menu.getContent());
+            this.closeManage(menu);
+        }
+        return MenuPanel;
+    })(Panel);
+    Panels.MenuPanel = MenuPanel;    
+    var SchedulerPanel = (function (_super) {
+        __extends(SchedulerPanel, _super);
+        function SchedulerPanel(host, db, option) {
+                _super.call(this, host, db);
+            this.host = host;
+            this.db = db;
+            if(!option) {
+                option = {
+                };
+            }
+            var c = this.initContainer();
+            var schid = option.schedulerid;
             if(schid == null) {
                 schid = Number(localStorage.getItem("lastScheduler"));
                 if(!isNaN(schid)) {
@@ -87,13 +127,28 @@ var Panels;
                 }
             }
             var container = new UI.SchedulerContainer(schid, db);
-            container.open();
+            container.open(!!option.conf);
             c.appendChild(container.getContent());
             this.closeManage(container);
         }
         return SchedulerPanel;
     })(Panel);
     Panels.SchedulerPanel = SchedulerPanel;    
+    var SchedulerListPanel = (function (_super) {
+        __extends(SchedulerListPanel, _super);
+        function SchedulerListPanel(host, db, option) {
+                _super.call(this, host, db);
+            this.host = host;
+            this.db = db;
+            var c = this.initContainer();
+            var list = new UI.SchedulerList(db, {
+            });
+            c.appendChild(list.getContent());
+            this.closeManage(list);
+        }
+        return SchedulerListPanel;
+    })(Panel);
+    Panels.SchedulerListPanel = SchedulerListPanel;    
     var ClothGroupListPanel = (function (_super) {
         __extends(ClothGroupListPanel, _super);
         function ClothGroupListPanel(host, db, option) {

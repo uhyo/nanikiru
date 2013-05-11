@@ -37,14 +37,29 @@ module Panels{
 			ui.onclose((returnValue:any)=>{
 				var result;
 				if("string"===typeof returnValue){
-					result=returnValue.match(/^scheduler::(\d+)$/);
+					result=returnValue.match(/^scheduler::(\w+):(\d*)$/);
 					if(result){
 						//スケジューラを開きたい
-						var sc=new SchedulerPanel(this.host,this.db,Number(result[1]));
+						var sc:Panel;
+						switch(result[1]){
+							case "open":
+								//普通に開く
+								sc=new SchedulerPanel(this.host,this.db,{
+									schedulerid:result[2] ? Number(result[2]) : null,
+								});
+								break;
+							case "conf":
+								//設定画面をいきなり開く
+								sc=new SchedulerPanel(this.host,this.db,{
+									schedulerid:result[2] ? Number(result[2]) : null,
+									conf:true,
+								});
+								break;
+						}
 						this.host.setPanel(sc);
 						return;
 					}
-					result=returnValue.match(/^clothgroup::(\w+):(\d+)$/);
+					result=returnValue.match(/^clothgroup::(\w+):(\d*)$/);
 					if(result){
 						//服グループ
 						var cgl:Panel;
@@ -55,6 +70,10 @@ module Panels{
 									scheduler:Number(result[2]),
 								});
 								break;
+							case "list":
+								//全部表示
+								cgl=new ClothGroupListPanel(this.host,this.db);
+								break;
 							case "id":
 								//服グループidに対応する
 								cgl=new ClothGroupPanel(this.host,this.db,Number(result[2]));
@@ -63,6 +82,13 @@ module Panels{
 						if(cgl){
 							this.host.setPanel(cgl);
 						}
+						return;
+					}
+					result=returnValue.match(/^schedulerlist::$/);
+					if(result){
+						//スケジューラのリスト
+						var sl=new SchedulerListPanel(this.host,this.db);
+						this.host.setPanel(sl);
 						return;
 					}
 
@@ -76,12 +102,28 @@ module Panels{
 			});
 		}
 	}
-	//スケジューラ画面
-	export class SchedulerPanel extends Panel{
-		constructor(private host:AppHost,private db:DB,schedulerid?:number){
+	//メニュー
+	export class MenuPanel extends Panel{
+		constructor(private host:AppHost,private db:DB){
 			super(host,db);
 			var c=this.initContainer();
-			var schid:any=schedulerid;
+			var menu=new UI.Menu();
+			c.appendChild(menu.getContent());
+			this.closeManage(menu);
+		}
+	}
+	//スケジューラ画面
+	export class SchedulerPanel extends Panel{
+		constructor(private host:AppHost,private db:DB,option?:{
+				schedulerid?:number;
+				conf?:bool;	//最初から開くか
+			}){
+			super(host,db);
+			if(!option){
+				option={};
+			}
+			var c=this.initContainer();
+			var schid:any=option.schedulerid;
 			if(schid==null){
 				//優先スケジューラを探す
 				schid=Number(localStorage.getItem("lastScheduler"));
@@ -90,9 +132,20 @@ module Panels{
 				}
 			}
 			var container=new UI.SchedulerContainer(schid,db);
-			container.open();
+			container.open(!!option.conf);
 			c.appendChild(container.getContent());
 			this.closeManage(container);
+		}
+	}
+	//スケジューラのリスト
+	export class SchedulerListPanel extends Panel{
+		constructor(private host:AppHost,private db:DB,option?:{
+		}){
+			super(host,db);
+			var c=this.initContainer();
+			var list=new UI.SchedulerList(db,{});
+			c.appendChild(list.getContent());
+			this.closeManage(list);
 		}
 	}
 	export class ClothGroupListPanel extends Panel{

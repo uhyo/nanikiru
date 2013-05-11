@@ -5,8 +5,20 @@
 class AppHost{
 	private now:Panels.Panel=null;
 	private container:HTMLElement;
-	constructor(){
+	private menuContent:HTMLElement;
+	private mainContent:HTMLElement;
+	constructor(private db:DB){
 		this.container=document.getElementById('main');
+		this.menuContent=document.createElement("div");
+		this.mainContent=document.createElement("div");
+		this.container.appendChild(this.menuContent);
+		this.container.appendChild(this.mainContent);
+		//初期化
+		var me=new Panels.MenuPanel(this,db);
+		this.menuContent.appendChild(me.getContent());
+
+		var tp=new Panels.SchedulerPanel(this,db);
+		this.setPanel(tp);
 	}
 	//パネルを
 	setPanel(p:Panels.Panel):void{
@@ -16,7 +28,7 @@ class AppHost{
 	}
 	setContent(n:Node):void{
 		//コンテンツ
-		var c=this.container;
+		var c=this.mainContent;
 		while(c.firstChild)c.removeChild(c.firstChild);
 
 		c.appendChild(n);
@@ -24,12 +36,10 @@ class AppHost{
 }
 //イニシャライズする
 document.addEventListener("DOMContentLoaded",function(){
-	var host=new AppHost();
 	var db=new DB();
 	db.open((result:bool)=>{
 		if(result){
-			var tp=new Panels.SchedulerPanel(host,db);
-			host.setPanel(tp);
+			var host=new AppHost(db);
 		}
 	});
 },false);

@@ -1,3 +1,7 @@
+/*addition*/
+interface IDBObjectStore{
+	delete:(key:any)=>IDBRequest;
+}
 //DB-Object
 interface PatternObj{
 	type:string;
@@ -136,19 +140,19 @@ class DB{
 		delete req;
 	}
 	//DB setter
-	setScheduler(doc:SchedulerDoc,callback:(result:bool)=>void):void{
+	setScheduler(doc:SchedulerDoc,callback:(result:number)=>void):void{
 		var tr=this.db.transaction("scheduler","readwrite");
 		var scheduler=tr.objectStore("scheduler");
 		var req:IDBRequest=scheduler.put(doc);
 		req.addEventListener("success",(e)=>{
 			//トランザクションを終了させてからコールバック
 			setTimeout(()=>{
-				callback(true);
+				callback(<number>req.result);
 			},0);
 		});
 		req.addEventListener("error",(e)=>{
 			console.error("getScheduler error:",req.error);
-			callback(false);
+			callback(null);
 		});
 		delete req;
 	}
@@ -156,7 +160,7 @@ class DB{
 		keyrange?:any;
 		type?:string;
 		group?:number;
-	},callback:(result:ClothGroupDoc)=>void):void{
+	},callback:(result:SchedulerDoc)=>void):void{
 		var tr=this.db.transaction("scheduler","readonly");
 		var scheduler=tr.objectStore("scheduler");
 		var req:IDBRequest;
@@ -181,13 +185,29 @@ class DB{
 				return;
 			}else{
 				//まだある!続行
-				callback(<ClothGroupDoc>cursor.value);
+				callback(<SchedulerDoc>cursor.value);
 				cursor.advance(1);
 			}
 		});
 		req.addEventListener("error",(e)=>{
 			console.error("eachClothGroup error:",req.error);
 			callback(null);
+		});
+		delete req;
+	}
+	removeScheduler(id:number,callback:(result:bool)=>void):void{
+		var tr=this.db.transaction("scheduler","readwrite");
+		var scheduler=tr.objectStore("scheduler");
+		var req:IDBRequest=scheduler.delete(id);
+		req.addEventListener("success",(e)=>{
+			//トランザクションを終了させてからコールバック
+			setTimeout(()=>{
+				callback(true);
+			},0);
+		});
+		req.addEventListener("error",(e)=>{
+			console.error("removeScheduler error:",req.error);
+			callback(false);
 		});
 		delete req;
 	}
@@ -245,6 +265,22 @@ class DB{
 		req.addEventListener("error",(e)=>{
 			console.error("eachClothGroup error:",req.error);
 			callback(null);
+		});
+		delete req;
+	}
+	removeClothGroup(id:number,callback:(result:bool)=>void):void{
+		var tr=this.db.transaction("clothgroup","readwrite");
+		var clothgroup=tr.objectStore("clothgroup");
+		var req:IDBRequest=clothgroup.delete(id);
+		req.addEventListener("success",(e)=>{
+			//トランザクションを終了させてからコールバック
+			setTimeout(()=>{
+				callback(true);
+			},0);
+		});
+		req.addEventListener("error",(e)=>{
+			console.error("getScheduler error:",req.error);
+			callback(false);
 		});
 		delete req;
 	}

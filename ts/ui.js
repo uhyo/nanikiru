@@ -283,7 +283,7 @@ var UI;
             this.id = id;
             this.db = db;
         }
-        SchedulerContainer.prototype.open = function () {
+        SchedulerContainer.prototype.open = function (conf) {
             var _this = this;
             UI.Scheduler.getScheduler(this.db, this.id, function (result) {
                 var c = _this.getContent();
@@ -297,11 +297,21 @@ var UI;
                     c.appendChild(result.getContent());
                     result.onclose(function (returnValue) {
                         if(returnValue === "reload") {
-                            _this.open();
+                            _this.open(false);
                         } else {
                             _this.close(returnValue);
                         }
                     });
+                    if(conf) {
+                        var setting = new SchedulerConfig(_this.db, result);
+                        var modal = new ModalUI(result);
+                        modal.slide("simple", setting);
+                        setting.onclose(function (returnValue) {
+                            if(returnValue) {
+                                result.close("reload");
+                            }
+                        });
+                    }
                     var datewin = new DateIndicator(result);
                     c.appendChild(datewin.getContent());
                 } else {
@@ -314,6 +324,74 @@ var UI;
         return SchedulerContainer;
     })(UIObject);
     UI.SchedulerContainer = SchedulerContainer;    
+    var SchedulerList = (function (_super) {
+        __extends(SchedulerList, _super);
+        function SchedulerList(db, option) {
+                _super.call(this);
+            this.db = db;
+            var c = this.getContent();
+            this.open();
+        }
+        SchedulerList.prototype.open = function () {
+            var _this = this;
+            var c = this.getContent();
+            empty(c);
+            c.appendChild(el("h1", function (h1) {
+                h1.textContent = "全てのスケジューラ";
+            }));
+            c.classList.add("scheduler-list");
+            var count = 0;
+            this.db.eachScheduler({
+            }, function (doc) {
+                if(doc == null) {
+                    if(count === 0) {
+                        c.appendChild(el("p", function (p) {
+                            p.textContent = "スケジューラはありません。";
+                        }));
+                    }
+                    c.appendChild(el("button", function (button) {
+                        button.appendChild(icons.plus({
+                            color: "#666666",
+                            width: "24px",
+                            height: "24px"
+                        }));
+                        button.appendChild(document.createTextNode("新しいスケジューラを作成"));
+                        button.addEventListener("click", function (e) {
+                            var nsc = {
+                                id: Infinity,
+                                type: "calender",
+                                name: "新しいスケジューラ",
+                                made: new Date(),
+                                groups: []
+                            };
+                            delete nsc.id;
+                            _this.db.setScheduler(nsc, function (id) {
+                                nsc.id = id;
+                                _this.close("scheduler::conf:" + id);
+                            });
+                        }, false);
+                    }));
+                    return;
+                }
+                c.appendChild(selectbox.scheduler(doc, {
+                    del: true
+                }, function (mode) {
+                    if(mode === "normal") {
+                        _this.close("scheduler::open:" + doc.id);
+                    } else if(mode === "delete") {
+                        var res = window.confirm("スケジューラを削除しますか?この操作は元に戻せません。\n\nスケジューラを削除しても、服や服グループのデータは削除されません。");
+                        if(res) {
+                            _this.db.removeScheduler(doc.id, function (result) {
+                                _this.open();
+                            });
+                        }
+                    }
+                }));
+            });
+        };
+        return SchedulerList;
+    })(UISection);
+    UI.SchedulerList = SchedulerList;    
     var ClothGroupListContainer = (function (_super) {
         __extends(ClothGroupListContainer, _super);
         function ClothGroupListContainer(db, schedulerid) {
@@ -350,6 +428,13 @@ var UI;
                                             list.open(db, optobj);
                                         });
                                     });
+                                } else {
+                                    var res = window.confirm("服グループを削除しますか?\nこの動作は取り消せません。\n\n服グループを削除しても、所属する服は削除されません。");
+                                    if(res) {
+                                        db.removeClothGroup(Number(result[2]), function (result) {
+                                            list.open(db, optobj);
+                                        });
+                                    }
                                 }
                                 break;
                             case "add":
@@ -589,7 +674,6 @@ var UI;
                                     _self.clothgroupid = id;
                                     if(schedulerid != null) {
                                         db.getScheduler(schedulerid, function (schedulerdoc) {
-                                            console.log(schedulerdoc);
                                             if(schedulerdoc) {
                                                 if(schedulerdoc.groups.indexOf(id) < 0) {
                                                     schedulerdoc.groups.push(id);
@@ -626,8 +710,19 @@ var UI;
                             }
                             return;
                         }
-                        section.appendChild(selectbox.scheduler(sdoc, function (mode) {
-                            _self.close("scheduler::" + sdoc.id);
+                        section.appendChild(selectbox.scheduler(sdoc, {
+                            del: true
+                        }, function (mode) {
+                            if(mode === "normal") {
+                                _self.close("scheduler::open:" + sdoc.id);
+                            } else if(mode === "delete") {
+                                sdoc.groups = sdoc.groups.filter(function (x) {
+                                    return x !== doc.id;
+                                });
+                                db.setScheduler(sdoc, function (result) {
+                                    _self.open();
+                                });
+                            }
                         }));
                         count++;
                     });
@@ -1111,6 +1206,46 @@ var UI;
         };
         return Dialog;
     })(UISection);    
+    var Menu = (function (_super) {
+        __extends(Menu, _super);
+        function Menu() {
+            var _this = this;
+                _super.call(this);
+            var c = this.getContent();
+            c.textContent = "メニュー:";
+            c.appendChild(el("button", function (button) {
+                button.textContent = "トップ";
+                button.style.height = "32px";
+                button.addEventListener("click", function (e) {
+                    _this.close("scheduler::open:");
+                }, false);
+            }));
+            c.appendChild(el("button", function (button) {
+                button.classList.add("iconbutton");
+                button.title = "スケジューラの一覧";
+                button.appendChild(icons.calender({
+                    width: "32px",
+                    height: "32px"
+                }));
+                button.addEventListener("click", function (e) {
+                    _this.close("schedulerlist::");
+                }, false);
+            }));
+            c.appendChild(el("button", function (button) {
+                button.classList.add("iconbutton");
+                button.title = "全ての服グループ";
+                button.appendChild(icons.clothgroup({
+                    width: "32px",
+                    height: "32px"
+                }));
+                button.addEventListener("click", function (e) {
+                    _this.close("clothgroup::list:");
+                }, false);
+            }));
+        }
+        return Menu;
+    })(UIObject);
+    UI.Menu = Menu;    
     var ModalUI = (function () {
         function ModalUI(ui) {
             this.ui = ui;
@@ -1392,7 +1527,7 @@ var UI;
     })(icons || (icons = {}));
     var selectbox;
     (function (selectbox) {
-        function scheduler(doc, clickhandler) {
+        function scheduler(doc, option, clickhandler) {
             return el("div", function (div) {
                 div.classList.add("schedulerbox");
                 div.classList.add("selection");
@@ -1405,9 +1540,21 @@ var UI;
                         break;
                 }
                 div.appendChild(document.createTextNode(doc.name));
+                if(option.del) {
+                    div.appendChild(el("button", function (b) {
+                        var button = b;
+                        button.classList.add("deletebutton");
+                        button.textContent = "✗";
+                    }));
+                }
                 if(clickhandler) {
                     div.addEventListener("click", function (e) {
-                        clickhandler("normal");
+                        var t = e.target;
+                        if(t.classList.contains("deletebutton")) {
+                            clickhandler("delete");
+                        } else {
+                            clickhandler("normal");
+                        }
                     }, false);
                 }
             });

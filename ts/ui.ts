@@ -300,7 +300,7 @@ module UI{
 		save(doc:SchedulerDoc):void{
 			//DBに書き込む
 			var db=this.db;
-			db.setScheduler(doc,(result:bool)=>{
+			db.setScheduler(doc,(result:number)=>{
 				this.close(true);	//新しいDBがほしい!
 			});
 		}
@@ -329,7 +329,8 @@ module UI{
 			//id:スケジューラのID
 			super();
 		}
-		open():void{
+		//conf:オプション画面を開くかどうか
+		open(conf:bool):void{
 			UI.Scheduler.getScheduler(this.db,this.id,(result:Scheduler)=>{
 				var c=this.getContent();
 				c.classList.add("scheduler-container");
@@ -343,12 +344,24 @@ module UI{
 
 						if(returnValue==="reload"){
 							//読みなおしてほしい
-							this.open();
+							this.open(false);
 						}else{
 							//それ以外だったら道連れ終了
 							this.close(returnValue);
 						}
 					});
+					//設定画面導入
+					if(conf){
+						var setting=new SchedulerConfig(this.db,result);
+						var modal=new ModalUI(result);
+						modal.slide("simple",setting);
+						setting.onclose((returnValue:any)=>{
+							if(returnValue){
+								//DBを書き換えた
+								result.close("reload");
+							}
+						});
+					}
 					//日付部分
 					var datewin=new DateIndicator(result);
 					c.appendChild(datewin.getContent());
@@ -357,6 +370,77 @@ module UI{
 						p.textContent="スケジューラがありません。";
 					}));
 				}
+			});
+		}
+	}
+	//スケジューラリスト
+	export class SchedulerList extends UISection{
+		constructor(private db:DB,option:{
+		}){
+			super();
+			var c=this.getContent();
+			this.open();
+		}
+		private open():void{
+			var c=this.getContent();
+			empty(c);
+			c.appendChild(el("h1",(h1)=>{
+				h1.textContent="全てのスケジューラ";
+			}));
+			c.classList.add("scheduler-list");
+			var count:number=0;
+			this.db.eachScheduler({},(doc:SchedulerDoc)=>{
+				if(doc==null){
+					//終了
+					if(count===0){
+						//一つもない
+						c.appendChild(el("p",(p)=>{
+							p.textContent="スケジューラはありません。";
+						}));
+					}
+					//新しいスケジューラボタン
+					c.appendChild(el("button",(button)=>{
+						button.appendChild(icons.plus({
+							color:"#666666",
+							width:"24px",
+							height:"24px",
+						}));
+						button.appendChild(document.createTextNode("新しいスケジューラを作成"));
+						button.addEventListener("click",(e)=>{
+							//新しいのを作っちゃう
+							var nsc:SchedulerDoc={
+								id:Infinity,
+								type:"calender",
+								name:"新しいスケジューラ",
+								made:new Date,
+								groups:[],
+							};
+							delete nsc.id;
+							this.db.setScheduler(nsc,(id:number)=>{
+								//これだ!
+								nsc.id=id;
+								this.close("scheduler::conf:"+id);
+							});
+						},false);
+					}));
+					return;
+				}
+				c.appendChild(selectbox.scheduler(doc,{
+					del:true,
+				},(mode:string)=>{
+					if(mode==="normal"){
+						//開いて欲しいな
+						this.close("scheduler::open:"+doc.id);
+					}else if(mode==="delete"){
+						//消しちゃいたいな
+						var res=window.confirm("スケジューラを削除しますか?この操作は元に戻せません。\n\nスケジューラを削除しても、服や服グループのデータは削除されません。");
+						if(res){
+							this.db.removeScheduler(doc.id,(result:bool)=>{
+								this.open();
+							});
+						}
+					}
+				}));
 			});
 		}
 	}
@@ -392,11 +476,20 @@ module UI{
 										sdoc.groups=sdoc.groups.filter((x)=>{
 											return x!==Number(result[2]);
 										});
-										db.setScheduler(sdoc,(result:bool)=>{
+										db.setScheduler(sdoc,(result:number)=>{
 											//新しく!再利用
 											list.open(db,optobj);
 										});
 									});
+								}else{
+									// 抹 消
+									var res=window.confirm("服グループを削除しますか?\nこの動作は取り消せません。\n\n服グループを削除しても、所属する服は削除されません。");
+									if(res){
+										//消す
+										db.removeClothGroup(Number(result[2]),(result:bool)=>{
+											list.open(db,optobj);
+										});
+									}
 								}
 								break;
 							case "add":	//既存から選んで追加
@@ -410,7 +503,7 @@ module UI{
 										if(sdoc.groups.indexOf(newcgl)<0){
 											sdoc.groups.push(newcgl);
 										}
-										db.setScheduler(sdoc,(result:bool)=>{
+										db.setScheduler(sdoc,(result:number)=>{
 											//新しく!再利用
 											list.open(db,optobj);
 										});
@@ -665,11 +758,10 @@ module UI{
 									if(schedulerid!=null){
 										//新規で登録したい
 										db.getScheduler(schedulerid,(schedulerdoc:SchedulerDoc)=>{
-											console.log(schedulerdoc);
 											if(schedulerdoc){
 												if(schedulerdoc.groups.indexOf(id)<0){
 													schedulerdoc.groups.push(id);
-													db.setScheduler(schedulerdoc,(result:bool)=>{
+													db.setScheduler(schedulerdoc,(result:number)=>{
 														//設定した
 														_self.open();
 													});
@@ -706,9 +798,21 @@ module UI{
 							}
 							return;
 						}
-						section.appendChild(selectbox.scheduler(sdoc,(mode:string)=>{
-							//スケジューラを開く
-							_self.close("scheduler::"+sdoc.id);
+						section.appendChild(selectbox.scheduler(sdoc,{
+							del:true,
+						},(mode:string)=>{
+							if(mode==="normal"){
+								//スケジューラを開く
+								_self.close("scheduler::open:"+sdoc.id);
+							}else if(mode==="delete"){
+								//除去
+								sdoc.groups=sdoc.groups.filter((x)=>{
+									return x!==doc.id;
+								});
+								db.setScheduler(sdoc,(result:number)=>{
+									_self.open();
+								});
+							}
 						}));
 						count++;
 					});
@@ -1217,6 +1321,44 @@ module UI{
 			"cancel":"キャンセル",
 		}
 	}
+	//メニュー
+	export class Menu extends UIObject{
+		constructor(){
+			super();
+			var c=this.getContent();
+			c.textContent="メニュー:";
+			//各種ボタン
+			c.appendChild(el("button",(button)=>{
+				button.textContent="トップ";
+				button.style.height="32px";
+				button.addEventListener("click",(e)=>{
+					this.close("scheduler::open:");
+				},false);
+			}));
+			c.appendChild(el("button",(button)=>{
+				button.classList.add("iconbutton");
+				button.title="スケジューラの一覧";
+				button.appendChild(icons.calender({
+					width:"32px",
+					height:"32px",
+				}));
+				button.addEventListener("click",(e)=>{
+					this.close("schedulerlist::");
+				},false);
+			}));
+			c.appendChild(el("button",(button)=>{
+				button.classList.add("iconbutton");
+				button.title="全ての服グループ";
+				button.appendChild(icons.clothgroup({
+					width:"32px",
+					height:"32px",
+				}));
+				button.addEventListener("click",(e)=>{
+					this.close("clothgroup::list:");
+				},false);
+			}));
+		}
+	}
 	//割り込みUI
 	class ModalUI{
 		private container:HTMLElement;
@@ -1514,7 +1656,9 @@ module UI{
 	}
 	//領域
 	module selectbox{
-		export function scheduler(doc:SchedulerDoc,clickhandler?:(mode:string)=>void):HTMLElement{
+		export function scheduler(doc:SchedulerDoc,option:{
+			del?:bool;
+		},clickhandler?:(mode:string)=>void):HTMLElement{
 			return el("div",(div)=>{
 				div.classList.add("schedulerbox");
 				div.classList.add("selection");
@@ -1528,9 +1672,23 @@ module UI{
 						break;
 				}
 				div.appendChild(document.createTextNode(doc.name));
+				if(option.del){
+					//削除ボタン追加
+					div.appendChild(el("button",(b)=>{
+						var button=<HTMLButtonElement>b;
+						button.classList.add("deletebutton");
+						button.textContent="✗";
+					}));
+				}
 				if(clickhandler){
 					div.addEventListener("click",(e)=>{
-						clickhandler("normal");
+						var t=<HTMLElement><any>e.target;
+						if(t.classList.contains("deletebutton")){
+							//削除だ!
+							clickhandler("delete");
+						}else{
+							clickhandler("normal");
+						}
 					},false);
 				}
 			});

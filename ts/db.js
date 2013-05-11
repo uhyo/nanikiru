@@ -104,12 +104,12 @@ var DB = (function () {
         var req = scheduler.put(doc);
         req.addEventListener("success", function (e) {
             setTimeout(function () {
-                callback(true);
+                callback(req.result);
             }, 0);
         });
         req.addEventListener("error", function (e) {
             console.error("getScheduler error:", req.error);
-            callback(false);
+            callback(null);
         });
         delete req;
     };
@@ -141,6 +141,21 @@ var DB = (function () {
         req.addEventListener("error", function (e) {
             console.error("eachClothGroup error:", req.error);
             callback(null);
+        });
+        delete req;
+    };
+    DB.prototype.removeScheduler = function (id, callback) {
+        var tr = this.db.transaction("scheduler", "readwrite");
+        var scheduler = tr.objectStore("scheduler");
+        var req = scheduler.delete(id);
+        req.addEventListener("success", function (e) {
+            setTimeout(function () {
+                callback(true);
+            }, 0);
+        });
+        req.addEventListener("error", function (e) {
+            console.error("removeScheduler error:", req.error);
+            callback(false);
         });
         delete req;
     };
@@ -193,6 +208,21 @@ var DB = (function () {
         req.addEventListener("error", function (e) {
             console.error("eachClothGroup error:", req.error);
             callback(null);
+        });
+        delete req;
+    };
+    DB.prototype.removeClothGroup = function (id, callback) {
+        var tr = this.db.transaction("clothgroup", "readwrite");
+        var clothgroup = tr.objectStore("clothgroup");
+        var req = clothgroup.delete(id);
+        req.addEventListener("success", function (e) {
+            setTimeout(function () {
+                callback(true);
+            }, 0);
+        });
+        req.addEventListener("error", function (e) {
+            console.error("getScheduler error:", req.error);
+            callback(false);
         });
         delete req;
     };

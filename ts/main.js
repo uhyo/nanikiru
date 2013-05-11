@@ -1,14 +1,23 @@
 var AppHost = (function () {
-    function AppHost() {
+    function AppHost(db) {
+        this.db = db;
         this.now = null;
         this.container = document.getElementById('main');
+        this.menuContent = document.createElement("div");
+        this.mainContent = document.createElement("div");
+        this.container.appendChild(this.menuContent);
+        this.container.appendChild(this.mainContent);
+        var me = new Panels.MenuPanel(this, db);
+        this.menuContent.appendChild(me.getContent());
+        var tp = new Panels.SchedulerPanel(this, db);
+        this.setPanel(tp);
     }
     AppHost.prototype.setPanel = function (p) {
         this.now = p;
         this.setContent(p.getContent());
     };
     AppHost.prototype.setContent = function (n) {
-        var c = this.container;
+        var c = this.mainContent;
         while(c.firstChild) {
             c.removeChild(c.firstChild);
         }
@@ -17,12 +26,10 @@ var AppHost = (function () {
     return AppHost;
 })();
 document.addEventListener("DOMContentLoaded", function () {
-    var host = new AppHost();
     var db = new DB();
     db.open(function (result) {
         if(result) {
-            var tp = new Panels.SchedulerPanel(host, db);
-            host.setPanel(tp);
+            var host = new AppHost(db);
         }
     });
 }, false);
