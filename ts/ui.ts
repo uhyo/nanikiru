@@ -99,7 +99,10 @@ module UI{
 		static getScheduler(db:DB,id:number,callback:(result:Scheduler)=>void):void{
 			db.getScheduler(id,(doc:SchedulerDoc)=>{
 				//わーいスケジュールあったー
-				if(!doc)callback(null);
+				if(!doc){
+					callback(null);
+					return;
+				}
 				Scheduler.makeScheduler(doc,db,callback);
 			});
 		}
@@ -338,6 +341,9 @@ module UI{
 				if(result){
 					//hard!
 					this.id=result.doc.id;	//id保存
+					//現在のスケジューラとして保存
+					console.log(this.id);
+					localStorage.setItem("lastScheduler",String(this.id));
 					result.setDate(new Date);
 					c.appendChild(result.getContent());
 					result.onclose((returnValue:any)=>{
@@ -435,7 +441,7 @@ module UI{
 						//消しちゃいたいな
 						var res=window.confirm("スケジューラを削除しますか?この操作は元に戻せません。\n\nスケジューラを削除しても、服や服グループのデータは削除されません。");
 						if(res){
-							this.db.removeScheduler(doc.id,(result:bool)=>{
+							this.db.cleanupScheduler(doc.id,(result:bool)=>{
 								this.open();
 							});
 						}
@@ -486,7 +492,7 @@ module UI{
 									var res=window.confirm("服グループを削除しますか?\nこの動作は取り消せません。\n\n服グループを削除しても、所属する服は削除されません。");
 									if(res){
 										//消す
-										db.removeClothGroup(Number(result[2]),(result:bool)=>{
+										db.cleanupClothGroup(Number(result[2]),(result:bool)=>{
 											list.open(db,optobj);
 										});
 									}
@@ -750,7 +756,6 @@ module UI{
 							}
 							doc.name=name;
 							db.setClothGroup(doc,(id:number)=>{
-								console.log(doc,id);
 								if(id!=null){
 									//idをゲットした!
 									doc.id=id;
@@ -891,16 +896,6 @@ module UI{
 						}));
 						count++;
 					});
-				}));
-				//戻る
-				c.appendChild(el("p",(p)=>{
-					p.appendChild(el("button",(b)=>{
-						var button=<HTMLButtonElement>b;
-						button.textContent="戻る";
-						button.addEventListener("click",(e)=>{
-							_self.close();
-						},false);
-					}));
 				}));
 			}
 		}
@@ -1381,9 +1376,19 @@ module UI{
 				//ただの切り替え
 				bc.style.display="none";
 				tc.appendChild(nc);
+				var p=el("p",(p)=>{
+					p.appendChild(el("button",(button)=>{
+						button.textContent="戻る";
+						button.addEventListener("click",(e)=>{
+							dia.close();
+						},false);
+					}));
+				});
+				tc.appendChild(p);
 				dia.onclose((returnValue:any)=>{
 					//後始末
 					if(nc.parentNode===tc)tc.removeChild(nc);
+					if(p.parentNode===tc)tc.removeChild(p);
 					if(tc.parentNode)tc.parentNode.replaceChild(bc,tc);
 					bc.style.display=null;
 					//クローズ時は?

@@ -55,6 +55,7 @@ var UI;
             db.getScheduler(id, function (doc) {
                 if(!doc) {
                     callback(null);
+                    return;
                 }
                 Scheduler.makeScheduler(doc, db, callback);
             });
@@ -293,6 +294,8 @@ var UI;
                 }
                 if(result) {
                     _this.id = result.doc.id;
+                    console.log(_this.id);
+                    localStorage.setItem("lastScheduler", String(_this.id));
                     result.setDate(new Date());
                     c.appendChild(result.getContent());
                     result.onclose(function (returnValue) {
@@ -381,7 +384,7 @@ var UI;
                     } else if(mode === "delete") {
                         var res = window.confirm("スケジューラを削除しますか?この操作は元に戻せません。\n\nスケジューラを削除しても、服や服グループのデータは削除されません。");
                         if(res) {
-                            _this.db.removeScheduler(doc.id, function (result) {
+                            _this.db.cleanupScheduler(doc.id, function (result) {
                                 _this.open();
                             });
                         }
@@ -431,7 +434,7 @@ var UI;
                                 } else {
                                     var res = window.confirm("服グループを削除しますか?\nこの動作は取り消せません。\n\n服グループを削除しても、所属する服は削除されません。");
                                     if(res) {
-                                        db.removeClothGroup(Number(result[2]), function (result) {
+                                        db.cleanupClothGroup(Number(result[2]), function (result) {
                                             list.open(db, optobj);
                                         });
                                     }
@@ -668,7 +671,6 @@ var UI;
                             }
                             doc.name = name;
                             db.setClothGroup(doc, function (id) {
-                                console.log(doc, id);
                                 if(id != null) {
                                     doc.id = id;
                                     _self.clothgroupid = id;
@@ -794,15 +796,6 @@ var UI;
                         }));
                         count++;
                     });
-                }));
-                c.appendChild(el("p", function (p) {
-                    p.appendChild(el("button", function (b) {
-                        var button = b;
-                        button.textContent = "戻る";
-                        button.addEventListener("click", function (e) {
-                            _self.close();
-                        }, false);
-                    }));
                 }));
             }
         };
@@ -1263,9 +1256,21 @@ var UI;
             if(mode === "simple") {
                 bc.style.display = "none";
                 tc.appendChild(nc);
+                var p = el("p", function (p) {
+                    p.appendChild(el("button", function (button) {
+                        button.textContent = "戻る";
+                        button.addEventListener("click", function (e) {
+                            dia.close();
+                        }, false);
+                    }));
+                });
+                tc.appendChild(p);
                 dia.onclose(function (returnValue) {
                     if(nc.parentNode === tc) {
                         tc.removeChild(nc);
+                    }
+                    if(p.parentNode === tc) {
+                        tc.removeChild(p);
                     }
                     if(tc.parentNode) {
                         tc.parentNode.replaceChild(bc, tc);

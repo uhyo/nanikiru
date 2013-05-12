@@ -211,6 +211,16 @@ class DB{
 		});
 		delete req;
 	}
+	//関連データ消去
+	cleanupScheduler(id:number,callback:(result:bool)=>void):void{
+		this.removeScheduler(id,(result:bool)=>{
+			if(result && localStorage.getItem("lastScheduler")===String(id)){
+				//なくなってしまった・・・
+				localStorage.removeItem("lastScheduler");
+			}
+			callback(result);
+		});
+	}
 	//cloth group
 	getClothGroup(id:number,callback:(result:ClothGroupDoc)=>void):void{
 		var tr=this.db.transaction("clothgroup","readonly");
@@ -268,6 +278,7 @@ class DB{
 		});
 		delete req;
 	}
+	/* 使うのか? */
 	removeClothGroup(id:number,callback:(result:bool)=>void):void{
 		var tr=this.db.transaction("clothgroup","readwrite");
 		var clothgroup=tr.objectStore("clothgroup");
@@ -283,6 +294,98 @@ class DB{
 			callback(false);
 		});
 		delete req;
+	}
+	cleanupClothGroup(id:number,callback:(result:bool)=>void):void{
+		var tr=this.db.transaction(["clothgroup","cloth","scheduler"],"readwrite");
+		var clothgroup=tr.objectStore("clothgroup"), cloth=tr.objectStore("cloth"), scheduler=tr.objectStore("scheduler");
+		//まずclothgroupから削除
+		var req=clothgroup.delete(id);
+		req.addEventListener("success",(e)=>{
+			//次
+			var req2=cloth.index("group").openCursor(<any>id,"next");
+			if(!req2){
+				//ひとつもない
+				nx();
+				return;
+			}
+			req2.addEventListener("success",(e)=>{
+				//nullかも
+				var cursor=req2.result;
+				if(!cursor){
+					//もうない
+					nx();
+					return;
+				}else{
+					//あった
+					var cl=<ClothDoc>cursor.value;
+					cl.group=cl.group.filter((x)=>{
+						return x!==id;
+					});
+					var req2_1=cloth.put(cl);
+					req2_1.addEventListener("success",(e)=>{
+						cursor.advance(1);
+					});
+					req2_1.addEventListener("error",(e)=>{
+						console.error("cleanupClothgroup error:",req.error);
+						tr.abort();
+						callback(false);
+					});
+				}
+			});
+			req2.addEventListener("error",(e)=>{
+				console.error("cleanupClothGroup error:",req.error);
+				tr.abort();
+				callback(false);
+			});
+			function nx(){
+				//clothを全てきれいにした。
+				var req3=scheduler.index("groups").openCursor(<any>id,"next");
+				if(!req3){
+					//完了
+					setTimeout(()=>{
+						callback(true);
+					},0);
+					return;
+				}
+				req3.addEventListener("success",(e)=>{
+					//nullかも
+					var cursor=req3.result;
+					if(!cursor){
+						//もうない
+						setTimeout(()=>{
+							callback(true);
+						},0);
+						return;
+					}else{
+						//あった
+						var sc=<SchedulerDoc>cursor.value;
+						sc.groups=sc.groups.filter((x)=>{
+							return x!==id;
+						});
+						var req3_1=scheduler.put(sc);
+						req3_1.addEventListener("success",(e)=>{
+							cursor.advance(1);
+						});
+						req3_1.addEventListener("error",(e)=>{
+							console.error("cleanupClothgroup error:",req.error);
+							tr.abort();
+							callback(false);
+						});
+					}
+				});
+				req2.addEventListener("error",(e)=>{
+					console.error("cleanupClothGroup error:",req.error);
+					tr.abort();
+					callback(false);
+				});
+			}
+		});
+		req.addEventListener("error",(e)=>{
+			console.error("cleanupClothGroup error:",req.error);
+			tr.abort();
+			callback(false);
+		});
+
 	}
 	//cloth
 	getCloth(id:number,callback:(result:ClothDoc)=>void):void{

@@ -121,8 +121,10 @@ var Panels;
             var c = this.initContainer();
             var schid = option.schedulerid;
             if(schid == null) {
+                var sch = localStorage.getItem("lastScheduler");
+                console.log("find!", localStorage.getItem("lastScheduler"));
                 schid = Number(localStorage.getItem("lastScheduler"));
-                if(!isNaN(schid)) {
+                if(sch == null || isNaN(schid)) {
                     schid = (IDBKeyRange).lowerBound(-Infinity, false);
                 }
             }

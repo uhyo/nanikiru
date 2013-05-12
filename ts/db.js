@@ -159,6 +159,14 @@ var DB = (function () {
         });
         delete req;
     };
+    DB.prototype.cleanupScheduler = function (id, callback) {
+        this.removeScheduler(id, function (result) {
+            if(result && localStorage.getItem("lastScheduler") === String(id)) {
+                localStorage.removeItem("lastScheduler");
+            }
+            callback(result);
+        });
+    };
     DB.prototype.getClothGroup = function (id, callback) {
         var tr = this.db.transaction("clothgroup", "readonly");
         var clothgroup = tr.objectStore("clothgroup");
@@ -225,6 +233,90 @@ var DB = (function () {
             callback(false);
         });
         delete req;
+    };
+    DB.prototype.cleanupClothGroup = function (id, callback) {
+        var tr = this.db.transaction([
+            "clothgroup", 
+            "cloth", 
+            "scheduler"
+        ], "readwrite");
+        var clothgroup = tr.objectStore("clothgroup"), cloth = tr.objectStore("cloth"), scheduler = tr.objectStore("scheduler");
+        var req = clothgroup.delete(id);
+        req.addEventListener("success", function (e) {
+            var req2 = cloth.index("group").openCursor(id, "next");
+            if(!req2) {
+                nx();
+                return;
+            }
+            req2.addEventListener("success", function (e) {
+                var cursor = req2.result;
+                if(!cursor) {
+                    nx();
+                    return;
+                } else {
+                    var cl = cursor.value;
+                    cl.group = cl.group.filter(function (x) {
+                        return x !== id;
+                    });
+                    var req2_1 = cloth.put(cl);
+                    req2_1.addEventListener("success", function (e) {
+                        cursor.advance(1);
+                    });
+                    req2_1.addEventListener("error", function (e) {
+                        console.error("cleanupClothgroup error:", req.error);
+                        tr.abort();
+                        callback(false);
+                    });
+                }
+            });
+            req2.addEventListener("error", function (e) {
+                console.error("cleanupClothGroup error:", req.error);
+                tr.abort();
+                callback(false);
+            });
+            function nx() {
+                var req3 = scheduler.index("groups").openCursor(id, "next");
+                if(!req3) {
+                    setTimeout(function () {
+                        callback(true);
+                    }, 0);
+                    return;
+                }
+                req3.addEventListener("success", function (e) {
+                    var cursor = req3.result;
+                    if(!cursor) {
+                        setTimeout(function () {
+                            callback(true);
+                        }, 0);
+                        return;
+                    } else {
+                        var sc = cursor.value;
+                        sc.groups = sc.groups.filter(function (x) {
+                            return x !== id;
+                        });
+                        var req3_1 = scheduler.put(sc);
+                        req3_1.addEventListener("success", function (e) {
+                            cursor.advance(1);
+                        });
+                        req3_1.addEventListener("error", function (e) {
+                            console.error("cleanupClothgroup error:", req.error);
+                            tr.abort();
+                            callback(false);
+                        });
+                    }
+                });
+                req2.addEventListener("error", function (e) {
+                    console.error("cleanupClothGroup error:", req.error);
+                    tr.abort();
+                    callback(false);
+                });
+            }
+        });
+        req.addEventListener("error", function (e) {
+            console.error("cleanupClothGroup error:", req.error);
+            tr.abort();
+            callback(false);
+        });
     };
     DB.prototype.getCloth = function (id, callback) {
         var tr = this.db.transaction("cloth", "readonly");
