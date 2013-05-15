@@ -127,7 +127,6 @@ module Panels{
 			if(schid==null){
 				//優先スケジューラを探す
 				var sch=localStorage.getItem("lastScheduler");
-				console.log("find!",localStorage.getItem("lastScheduler"));
 				schid=Number(localStorage.getItem("lastScheduler"));
 				if(sch==null || isNaN(schid)){
 					schid=(<any>IDBKeyRange).lowerBound(-Infinity,false);

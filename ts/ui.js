@@ -41,15 +41,20 @@ var UI;
     UI.UISection = UISection;    
     var Scheduler = (function (_super) {
         __extends(Scheduler, _super);
-        function Scheduler(doc) {
+        function Scheduler(db, doc) {
                 _super.call(this);
+            this.db = db;
             this.doc = doc;
+            this.logs = {
+            };
         }
         Scheduler.prototype.setDate = function (d) {
             this.date = d;
             this.render(d);
         };
         Scheduler.prototype.render = function (d) {
+        };
+        Scheduler.prototype.loadLogs = function (d) {
         };
         Scheduler.getScheduler = function getScheduler(db, id, callback) {
             db.getScheduler(id, function (doc) {
@@ -64,7 +69,7 @@ var UI;
             var result = null;
             switch(doc.type) {
                 case "calender":
-                    result = new Calender(doc, db);
+                    result = new Calender(db, doc);
                     break;
             }
             callback(result);
@@ -77,19 +82,17 @@ var UI;
     UI.Scheduler = Scheduler;    
     var Calender = (function (_super) {
         __extends(Calender, _super);
-        function Calender(doc, db) {
-                _super.call(this, doc);
-            this.doc = doc;
+        function Calender(db, doc) {
+                _super.call(this, db, doc);
             this.db = db;
+            this.doc = doc;
         }
         Calender.prototype.render = function (d) {
             var _this = this;
             var c = this.getContent();
             c.classList.add("calender");
             var currentMonth = d.getMonth(), currentDate = d.getDate();
-            var mv = new Date(d.toJSON());
-            mv.setDate(1);
-            mv.setDate(1 - mv.getDay());
+            var mv = this.startDate(d);
             var t = document.createElement("table");
             t.classList.add("calender");
             while(mv.getMonth() <= currentMonth) {
@@ -167,6 +170,40 @@ var UI;
                 }));
             }));
             c.appendChild(t);
+        };
+        Calender.prototype.startDate = function (d) {
+            var mv = new Date(d.toJSON());
+            mv.setDate(1);
+            mv.setDate(1 - mv.getDay());
+            mv.setHours(0);
+            mv.setMinutes(0);
+            mv.setSeconds(0);
+            mv.setMilliseconds(0);
+            return mv;
+        };
+        Calender.prototype.lastDate = function (d) {
+            var result = this.startDate(d);
+            result.setDate(result.getDate() + 34);
+            return result;
+        };
+        Calender.prototype.loadLogs = function (d, callback) {
+            var st = this.startDate(d), ls = this.lastDate(d);
+            var db = this.db, logs = this.logs;
+            db.eachLog({
+                scheduler: this.doc.id,
+                date: {
+                    start: st,
+                    end: ls
+                }
+            }, function (log) {
+                if(log == null) {
+                    callback();
+                    return;
+                }
+                var thisd = log.date;
+                var thisds = thisd.getFullYear() + "-" + thisd.getMonth() + "-" + thisd.getDate();
+                logs[thisds] = log;
+            });
         };
         return Calender;
     })(Scheduler);
@@ -294,7 +331,6 @@ var UI;
                 }
                 if(result) {
                     _this.id = result.doc.id;
-                    console.log(_this.id);
                     localStorage.setItem("lastScheduler", String(_this.id));
                     result.setDate(new Date());
                     c.appendChild(result.getContent());

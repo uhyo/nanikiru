@@ -35,8 +35,9 @@
     "id":number(key path)
     "scheduler":number(scheduler.id) index
     "cloth":number[](cloth.id) index indexM
-    "date":Date
+    "date":Date	//<= 00:00:00+09:00 index
   }
+  +index "scheduler-date" [scheduler,date]
 
 # localStorage doc
 ## lastScheduler

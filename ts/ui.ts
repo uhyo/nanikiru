@@ -85,7 +85,10 @@ module UI{
 	//スケジューラ
 	export class Scheduler extends UISection{
 		public date:Date;
-		constructor(public doc:SchedulerDoc){
+		public logs:{
+			[index:string]:LogDoc;
+		}={};
+		constructor(private db:DB,public doc:SchedulerDoc){
 			super();
 		}
 		setDate(d:Date):void{
@@ -94,6 +97,9 @@ module UI{
 		}
 		//描画する
 		render(d:Date):void{
+		}
+		//必要なログを描画する
+		private loadLogs(d:Date):void{
 		}
 		//得るやつ
 		static getScheduler(db:DB,id:number,callback:(result:Scheduler)=>void):void{
@@ -110,7 +116,7 @@ module UI{
 			var result:Scheduler=null;
 			switch(doc.type){
 				case "calender":
-					result=new Calender(doc,db);
+					result=new Calender(db,doc);
 					break;
 			}
 			callback(result);
@@ -122,8 +128,8 @@ module UI{
 	}
 	//カレンダー
 	export class Calender extends Scheduler{
-		constructor(public doc:SchedulerDoc,private db:DB){
-			super(doc);
+		constructor(private db:DB,public doc:SchedulerDoc){
+			super(db,doc);
 		}
 		//この日付でカレンダーを描画
 		render(d:Date):void{
@@ -131,10 +137,7 @@ module UI{
 			c.classList.add("calender");
 
 			var currentMonth=d.getMonth(), currentDate=d.getDate();
-			var mv=new Date(d.toJSON());	//clone
-			mv.setDate(1);	//とりあえず今月のついたちにする
-			//日曜まで戻す
-			mv.setDate(1-mv.getDay());
+			var mv=this.startDate(d);
 			//カレンダーを作る
 			var t=<HTMLTableElement>document.createElement("table");
 			t.classList.add("calender");
@@ -219,6 +222,46 @@ module UI{
 				}));
 			}));
 			c.appendChild(t);
+		}
+		//このカレンダーの最初の日付を求める
+		private startDate(d:Date):Date{
+			var mv=new Date(d.toJSON());	//clone
+			mv.setDate(1);	//とりあえず今月のついたちにする
+			//日曜まで戻す
+			mv.setDate(1-mv.getDay());
+			//時刻セット
+			mv.setHours(0);
+			mv.setMinutes(0);
+			mv.setSeconds(0);
+			mv.setMilliseconds(0);
+			return mv;
+		}
+		private lastDate(d:Date):Date{
+			var result=this.startDate(d);
+			//カレンダーの右下へ
+			result.setDate(result.getDate()+34);
+			return result;
+		}
+		//ログを出す
+		private loadLogs(d:Date,callback:()=>void):void{
+			var st=this.startDate(d), ls=this.lastDate(d);
+			var db=this.db, logs=this.logs;
+			db.eachLog({
+				scheduler:this.doc.id,
+				date:{
+					start:st,
+					end:ls,
+				},
+			},(log:LogDoc)=>{
+				if(log==null){
+					//おわり
+					callback();
+					return;
+				}
+				var thisd=log.date;
+				var thisds=thisd.getFullYear()+"-"+thisd.getMonth()+"-"+thisd.getDate();
+				logs[thisds]=log;
+			});
 		}
 	}
 	//スケジューラ設定
@@ -342,7 +385,6 @@ module UI{
 					//hard!
 					this.id=result.doc.id;	//id保存
 					//現在のスケジューラとして保存
-					console.log(this.id);
 					localStorage.setItem("lastScheduler",String(this.id));
 					result.setDate(new Date);
 					c.appendChild(result.getContent());

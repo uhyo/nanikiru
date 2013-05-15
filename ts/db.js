@@ -57,6 +57,17 @@ var DB = (function () {
                     unique: false,
                     multiEntry: true
                 });
+                log.createIndex("date", "date", {
+                    unique: false,
+                    multiEntry: false
+                });
+                log.createIndex("scheduler-date", [
+                    "scheduler", 
+                    "date"
+                ], {
+                    unique: false,
+                    multiEntry: false
+                });
                 var req = scheduler.add({
                     "type": "calender",
                     "name": "カレンダー",
@@ -375,6 +386,51 @@ var DB = (function () {
         });
         req.addEventListener("error", function (e) {
             console.error("eachCloth error:", req.error);
+            callback(null);
+        });
+        delete req;
+    };
+    DB.prototype.eachLog = function (cond, callback) {
+        var tr = this.db.transaction("log", "readonly");
+        var log = tr.objectStore("log");
+        var req;
+        if(cond.cloth != null) {
+            if(Array.isArray(cond.cloth)) {
+                req = log.index("cloth_complex").openCursor(cond.cloth, "next");
+            } else {
+                req = log.index("cloth_multi").openCursor(cond.cloth, "next");
+            }
+        } else if(cond.scheduler != null && cond.date != null) {
+            req = log.index("scheduler-date").openCursor((IDBKeyRange).bound([
+                cond.scheduler, 
+                cond.date.start
+            ], [
+                cond.scheduler, 
+                cond.date.end
+            ]), "next");
+        } else if(cond.scheduler != null) {
+            req = log.index("scheduler").openCursor(cond.scheduler, "next");
+        } else if(cond.date != null) {
+            req = log.index("scheduler").openCursor((IDBKeyRange).bound(cond.date.start, cond.date.end), "next");
+        } else {
+            req = log.openCursor(cond.keyrange || null, "next");
+        }
+        if(req == null) {
+            callback(null);
+            return;
+        }
+        req.addEventListener("success", function (e) {
+            var cursor = req.result;
+            if(!cursor) {
+                callback(null);
+                return;
+            } else {
+                callback(cursor.value);
+                cursor.advance(1);
+            }
+        });
+        req.addEventListener("error", function (e) {
+            console.error("eachLog error:", req.error);
             callback(null);
         });
         delete req;

@@ -1,7 +1,16 @@
 /*addition*/
 interface IDBObjectStore{
 	delete:(key:any)=>IDBRequest;
+	//あれを追加(なぜかうまくいかない)
+	/*createIndex:(name:string,keys:string[],option?:{
+		unique?:bool;
+		multiEntry?:bool;
+	})=>IDBIndex;*/
 }
+/*
+declare var IDBKeyRange:{
+	bound:(key1:any,key2:any)=>IDBKeyRange;
+}*/
 //DB-Object
 interface PatternObj{
 	type:string;
@@ -97,6 +106,13 @@ class DB{
 				//服個別検索用
 				log.createIndex("cloth_multi","cloth",{
 					unique:false, multiEntry:true,
+				});
+				log.createIndex("date","date",{
+					unique:false, multiEntry:false,
+				});
+				//スケジューラ用
+				log.createIndex("scheduler-date",<any>["scheduler","date"],{
+					unique:false, multiEntry:false,
 				});
 
 				//初期カレンダーを作る
@@ -454,6 +470,58 @@ class DB{
 		});
 		req.addEventListener("error",(e)=>{
 			console.error("eachCloth error:",req.error);
+			callback(null);
+		});
+		delete req;
+	}
+	//cloth log
+	eachLog(cond:{
+		keyrange?:any;
+		scheduler?:number;	//scheduler id
+		cloth?:any;	//実は number or number[]
+		date?:{
+			start:Date;
+			end:Date;
+		};
+	},callback:(result:LogDoc)=>void):void{
+		var tr=this.db.transaction("log","readonly");
+		var log=tr.objectStore("log");
+		var req:IDBRequest;
+		if(cond.cloth!=null){
+			if(Array.isArray(cond.cloth)){
+				req=log.index("cloth_complex").openCursor(cond.cloth,"next");
+			}else{
+				req=log.index("cloth_multi").openCursor(cond.cloth,"next");
+			}
+		}else if(cond.scheduler!=null && cond.date!=null){
+			req=log.index("scheduler-date").openCursor((<any>IDBKeyRange).bound(<any[]>[cond.scheduler,cond.date.start],<any[]>[cond.scheduler,cond.date.end]),"next");
+		}else if(cond.scheduler!=null){
+			req=log.index("scheduler").openCursor(<any>cond.scheduler,"next");
+		}else if(cond.date!=null){
+			req=log.index("scheduler").openCursor((<any>IDBKeyRange).bound(cond.date.start,cond.date.end),"next");
+		}else{
+			//keyrange: nullable
+			req=log.openCursor(cond.keyrange||null,"next");
+		}
+		if(req==null){
+			callback(null);	//ひとつもない
+			return;
+		}
+		req.addEventListener("success",(e)=>{
+			//nullかも
+			var cursor=req.result;
+			if(!cursor){
+				//もうない
+				callback(null);
+				return;
+			}else{
+				//まだある!続行
+				callback(<LogDoc>cursor.value);
+				cursor.advance(1);
+			}
+		});
+		req.addEventListener("error",(e)=>{
+			console.error("eachLog error:",req.error);
 			callback(null);
 		});
 		delete req;
