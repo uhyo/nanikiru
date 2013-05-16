@@ -89,87 +89,111 @@ var UI;
         }
         Calender.prototype.render = function (d) {
             var _this = this;
+            var db = this.db;
             var c = this.getContent();
             c.classList.add("calender");
             var currentMonth = d.getMonth(), currentDate = d.getDate();
             var mv = this.startDate(d);
-            var t = document.createElement("table");
-            t.classList.add("calender");
-            while(mv.getMonth() <= currentMonth) {
-                var tr = t.insertRow(-1);
-                for(var i = 0; i < 7; i++) {
-                    var dd = mv.getDate(), mn = mv.getMonth();
-                    var td = tr.insertCell(-1);
-                    if(i === 0) {
-                        td.classList.add("Sunday");
-                    } else if(i === 6) {
-                        td.classList.add("Saturday");
-                    }
-                    if(mn < currentMonth || currentMonth === mn && dd < currentDate) {
-                        td.classList.add("past");
-                    } else if(currentDate === dd && currentMonth === mn) {
-                        td.classList.add("today");
-                    }
-                    td.appendChild(el("div", function (div) {
-                        div.classList.add("date");
-                        div.appendChild(el("time", function (time) {
-                            var t = time;
-                            t.dateTime = mv.getFullYear() + "-" + (mn + 1) + "-" + dd;
-                            t.textContent = (mn !== currentMonth ? (mn + 1) + "/" : "") + dd;
+            this.loadLogs(d, function () {
+                var logs = _this.logs;
+                var t = document.createElement("table");
+                t.classList.add("calender");
+                while(mv.getMonth() <= currentMonth) {
+                    var tr = t.insertRow(-1);
+                    for(var i = 0; i < 7; i++) {
+                        var dd = mv.getDate(), mn = mv.getMonth();
+                        var td = tr.insertCell(-1);
+                        if(i === 0) {
+                            td.classList.add("Sunday");
+                        } else if(i === 6) {
+                            td.classList.add("Saturday");
+                        }
+                        if(mn < currentMonth || currentMonth === mn && dd < currentDate) {
+                            td.classList.add("past");
+                        } else if(currentDate === dd && currentMonth === mn) {
+                            td.classList.add("today");
+                        }
+                        var dateStr = mv.getFullYear() + "-" + (mn + 1) + "-" + dd;
+                        td.appendChild(el("div", function (div) {
+                            div.classList.add("date");
+                            div.appendChild(el("time", function (time) {
+                                var t = time;
+                                t.dateTime = dateStr;
+                                t.textContent = (mn !== currentMonth ? (mn + 1) + "/" : "") + dd;
+                            }));
                         }));
-                    }));
-                    mv.setDate(dd + 1);
+                        if(logs[dateStr]) {
+                            td.appendChild(el("div", function (div) {
+                                div.classList.add("dailylog");
+                                var clothas = [];
+                                logs[dateStr].cloth.forEach(function (clothid) {
+                                    db.getCloth(clothid, function (clothdoc) {
+                                        var main = _this.doc.main;
+                                        if(main.some(function (x) {
+                                            return clothdoc.group.indexOf(x) >= 0;
+                                        })) {
+                                            div.appendChild(Cloth.importCloth({
+                                                clothType: clothdoc.type,
+                                                patterns: clothdoc.patterns
+                                            }).getSVG("32px", "32px"));
+                                        }
+                                    });
+                                });
+                            }));
+                        }
+                        mv.setDate(dd + 1);
+                    }
                 }
-            }
-            while(c.firstChild) {
-                c.removeChild(c.firstChild);
-            }
-            c.appendChild(el("h1", function (h1) {
-                h1.textContent = _this.doc.name;
-            }));
-            c.appendChild(el("div", function (div) {
-                div.appendChild(el("button", function (b) {
-                    var button = b;
-                    button.title = "設定";
-                    button.classList.add("iconbutton");
-                    button.appendChild(icons.gear({
-                        radius1: 90,
-                        radius2: 35,
-                        z: 10,
-                        length: 24,
-                        color: "#666666",
-                        width: "24px",
-                        height: "24px",
-                        anime: "hover"
+                while(c.firstChild) {
+                    c.removeChild(c.firstChild);
+                }
+                c.appendChild(el("h1", function (h1) {
+                    h1.textContent = _this.doc.name;
+                }));
+                c.appendChild(el("div", function (div) {
+                    div.appendChild(el("button", function (b) {
+                        var button = b;
+                        button.title = "設定";
+                        button.classList.add("iconbutton");
+                        button.appendChild(icons.gear({
+                            radius1: 90,
+                            radius2: 35,
+                            z: 10,
+                            length: 24,
+                            color: "#666666",
+                            width: "24px",
+                            height: "24px",
+                            anime: "hover"
+                        }));
+                        button.addEventListener("click", function (e) {
+                            var setting = new SchedulerConfig(_this.db, _this);
+                            var modal = new ModalUI(_this);
+                            modal.slide("simple", setting);
+                            setting.onclose(function (returnValue) {
+                                if(returnValue) {
+                                    _this.close("reload");
+                                }
+                            });
+                        }, false);
                     }));
-                    button.addEventListener("click", function (e) {
-                        var setting = new SchedulerConfig(_this.db, _this);
-                        var modal = new ModalUI(_this);
-                        modal.slide("simple", setting);
-                        setting.onclose(function (returnValue) {
-                            if(returnValue) {
-                                _this.close("reload");
-                            }
-                        });
-                    }, false);
+                    div.appendChild(el("button", function (b) {
+                        var button = b;
+                        button.title = "服グループ";
+                        button.classList.add("iconbutton");
+                        button.appendChild(Cloth.importCloth({
+                            clothType: "T-shirt",
+                            colors: [
+                                "#999999", 
+                                "#999999"
+                            ]
+                        }).getSVG("24px", "24px"));
+                        button.addEventListener("click", function (e) {
+                            _this.close("clothgroup::scheduler:" + _this.doc.id);
+                        }, false);
+                    }));
                 }));
-                div.appendChild(el("button", function (b) {
-                    var button = b;
-                    button.title = "服グループ";
-                    button.classList.add("iconbutton");
-                    button.appendChild(Cloth.importCloth({
-                        clothType: "T-shirt",
-                        colors: [
-                            "#999999", 
-                            "#999999"
-                        ]
-                    }).getSVG("24px", "24px"));
-                    button.addEventListener("click", function (e) {
-                        _this.close("clothgroup::scheduler:" + _this.doc.id);
-                    }, false);
-                }));
-            }));
-            c.appendChild(t);
+                c.appendChild(t);
+            });
         };
         Calender.prototype.startDate = function (d) {
             var mv = new Date(d.toJSON());
@@ -188,7 +212,8 @@ var UI;
         };
         Calender.prototype.loadLogs = function (d, callback) {
             var st = this.startDate(d), ls = this.lastDate(d);
-            var db = this.db, logs = this.logs;
+            var db = this.db, logs = this.logs = {
+            };
             db.eachLog({
                 scheduler: this.doc.id,
                 date: {
@@ -201,7 +226,7 @@ var UI;
                     return;
                 }
                 var thisd = log.date;
-                var thisds = thisd.getFullYear() + "-" + thisd.getMonth() + "-" + thisd.getDate();
+                var thisds = thisd.getFullYear() + "-" + (thisd.getMonth() + 1) + "-" + thisd.getDate();
                 logs[thisds] = log;
             });
         };
@@ -401,7 +426,8 @@ var UI;
                                 type: "calender",
                                 name: "新しいスケジューラ",
                                 made: new Date(),
-                                groups: []
+                                groups: [],
+                                main: []
                             };
                             delete nsc.id;
                             _this.db.setScheduler(nsc, function (id) {

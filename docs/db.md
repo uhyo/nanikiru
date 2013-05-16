@@ -28,6 +28,7 @@
     "name":string
     "made":Date
     "groups":number[](clothgroup.id) indexM
+    "main":number[](clothgroup.id)	//main clothgroup
   }
 
 ## Daily cloth log (objectstore log)

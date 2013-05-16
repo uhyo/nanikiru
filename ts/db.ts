@@ -39,6 +39,7 @@ interface SchedulerDoc{
 	name:string;
 	made:Date;
 	groups:number[];
+	main:number[];
 }
 interface LogDoc{
 	id:number;

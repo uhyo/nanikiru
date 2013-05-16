@@ -133,95 +133,123 @@ module UI{
 		}
 		//この日付でカレンダーを描画
 		render(d:Date):void{
+			var db=this.db;
 			var c=this.getContent();
 			c.classList.add("calender");
 
 			var currentMonth=d.getMonth(), currentDate=d.getDate();
 			var mv=this.startDate(d);
-			//カレンダーを作る
-			var t=<HTMLTableElement>document.createElement("table");
-			t.classList.add("calender");
-			while(mv.getMonth()<=currentMonth){
-				var tr=<HTMLTableRowElement>t.insertRow(-1);
-				//一週間
-				for(var i=0;i<7;i++){
-					var dd=mv.getDate(), mn=mv.getMonth();
-					//セル
-					var td=tr.insertCell(-1);
-					if(i===0){
-						td.classList.add("Sunday");
-					}else if(i===6){
-						td.classList.add("Saturday");
-					}
-					if(mn<currentMonth || currentMonth===mn && dd<currentDate){
-						td.classList.add("past");
-					}else if(currentDate===dd && currentMonth===mn){
-						td.classList.add("today");
-					}
-					//日付をかく
-					td.appendChild(el("div",(div)=>{
-						div.classList.add("date");
-						div.appendChild(el("time",(time)=>{
-							var t=<HTMLTimeElement>time;
-							t.dateTime=mv.getFullYear()+"-"+(mn+1)+"-"+dd;
-							t.textContent = (mn!==currentMonth ? (mn+1)+"/" : "")+dd;
+			//まず読み込む
+			this.loadLogs(d,()=>{
+				var logs=this.logs;
+				//カレンダーを作る
+				var t=<HTMLTableElement>document.createElement("table");
+				t.classList.add("calender");
+				while(mv.getMonth()<=currentMonth){
+					var tr=<HTMLTableRowElement>t.insertRow(-1);
+					//一週間
+					for(var i=0;i<7;i++){
+						var dd=mv.getDate(), mn=mv.getMonth();
+						//セル
+						var td=tr.insertCell(-1);
+						if(i===0){
+							td.classList.add("Sunday");
+						}else if(i===6){
+							td.classList.add("Saturday");
+						}
+						if(mn<currentMonth || currentMonth===mn && dd<currentDate){
+							td.classList.add("past");
+						}else if(currentDate===dd && currentMonth===mn){
+							td.classList.add("today");
+						}
+						//日付をかく
+						var dateStr=mv.getFullYear()+"-"+(mn+1)+"-"+dd;
+						td.appendChild(el("div",(div)=>{
+							div.classList.add("date");
+							div.appendChild(el("time",(time)=>{
+								var t=<HTMLTimeElement>time;
+								t.dateTime=dateStr;
+								t.textContent = (mn!==currentMonth ? (mn+1)+"/" : "")+dd;
+							}));
 						}));
-					}));
-					mv.setDate(dd+1);
+						//服情報
+						if(logs[dateStr]){
+							td.appendChild(el("div",(div)=>{
+								div.classList.add("dailylog");
+								//服を並べる
+								var clothas:number[]=[];	//挿入した服管理
+								logs[dateStr].cloth.forEach((clothid:number)=>{
+									db.getCloth(clothid,(clothdoc:ClothDoc)=>{
+										var main=this.doc.main;
+										if(main.some((x)=>{
+											return clothdoc.group.indexOf(x)>=0;
+										})){
+											//ある
+											div.appendChild(Cloth.importCloth({
+												clothType:clothdoc.type,
+												patterns:clothdoc.patterns,
+											}).getSVG("32px","32px"));
+										}
+									});
+								});
+							}));
+						}
+						mv.setDate(dd+1);
+					}
 				}
-			}
-			//書き換える
-			while(c.firstChild)c.removeChild(c.firstChild);
-			//まず題
-			c.appendChild(el("h1",(h1)=>{
-				h1.textContent=this.doc.name;
-			}));
-			//メニュー
-			c.appendChild(el("div",(div)=>{
-				div.appendChild(el("button",(b)=>{
-					var button=<HTMLButtonElement>b;
-					button.title="設定";
-					button.classList.add("iconbutton");
-					button.appendChild(icons.gear({
-						radius1:90,
-						radius2:35,
-						z:10,
-						length:24,
-						color:"#666666",
-						width:"24px",
-						height:"24px",
-						anime:"hover",
+				//書き換える
+				while(c.firstChild)c.removeChild(c.firstChild);
+				//まず題
+				c.appendChild(el("h1",(h1)=>{
+					h1.textContent=this.doc.name;
+				}));
+				//メニュー
+				c.appendChild(el("div",(div)=>{
+					div.appendChild(el("button",(b)=>{
+						var button=<HTMLButtonElement>b;
+						button.title="設定";
+						button.classList.add("iconbutton");
+						button.appendChild(icons.gear({
+							radius1:90,
+							radius2:35,
+							z:10,
+							length:24,
+							color:"#666666",
+							width:"24px",
+							height:"24px",
+							anime:"hover",
+						}));
+						button.addEventListener("click",(e)=>{
+							//クリックされたら:スケジューラ設定メニュー
+							var setting=new SchedulerConfig(this.db,this);
+							var modal=new ModalUI(this);
+							modal.slide("simple",setting);
+							setting.onclose((returnValue:any)=>{
+								if(returnValue){
+									//DBを書き換えた
+									this.close("reload");
+								}
+							});
+						},false);
 					}));
-					button.addEventListener("click",(e)=>{
-						//クリックされたら:スケジューラ設定メニュー
-						var setting=new SchedulerConfig(this.db,this);
-						var modal=new ModalUI(this);
-						modal.slide("simple",setting);
-						setting.onclose((returnValue:any)=>{
-							if(returnValue){
-								//DBを書き換えた
-								this.close("reload");
-							}
-						});
-					},false);
+					div.appendChild(el("button",(b)=>{
+						var button=<HTMLButtonElement>b;
+						button.title="服グループ";
+						button.classList.add("iconbutton");
+						button.appendChild(Cloth.importCloth({
+							clothType:"T-shirt",
+							colors:["#999999","#999999"],
+						}).getSVG("24px","24px"));
+						button.addEventListener("click",(e)=>{
+							//あれー
+							//服グループ管理画面に移行する
+							//this.close("clothGroupEdit");
+							this.close("clothgroup::scheduler:"+this.doc.id);
+						},false);
+					}));
 				}));
-				div.appendChild(el("button",(b)=>{
-					var button=<HTMLButtonElement>b;
-					button.title="服グループ";
-					button.classList.add("iconbutton");
-					button.appendChild(Cloth.importCloth({
-						clothType:"T-shirt",
-						colors:["#999999","#999999"],
-					}).getSVG("24px","24px"));
-					button.addEventListener("click",(e)=>{
-						//あれー
-						//服グループ管理画面に移行する
-						//this.close("clothGroupEdit");
-						this.close("clothgroup::scheduler:"+this.doc.id);
-					},false);
-				}));
-			}));
-			c.appendChild(t);
+				c.appendChild(t);
+			});
 		}
 		//このカレンダーの最初の日付を求める
 		private startDate(d:Date):Date{
@@ -245,7 +273,7 @@ module UI{
 		//ログを出す
 		private loadLogs(d:Date,callback:()=>void):void{
 			var st=this.startDate(d), ls=this.lastDate(d);
-			var db=this.db, logs=this.logs;
+			var db=this.db, logs=this.logs={};
 			db.eachLog({
 				scheduler:this.doc.id,
 				date:{
@@ -259,7 +287,7 @@ module UI{
 					return;
 				}
 				var thisd=log.date;
-				var thisds=thisd.getFullYear()+"-"+thisd.getMonth()+"-"+thisd.getDate();
+				var thisds=thisd.getFullYear()+"-"+(thisd.getMonth()+1)+"-"+thisd.getDate();
 				logs[thisds]=log;
 			});
 		}
@@ -462,6 +490,7 @@ module UI{
 								name:"新しいスケジューラ",
 								made:new Date,
 								groups:[],
+								main:[],
 							};
 							delete nsc.id;
 							this.db.setScheduler(nsc,(id:number)=>{

@@ -25,6 +25,8 @@ table.calender td.past{
 table.calender td.today div.date{
 	font-weight:bold;
 }
+table.calender td div.dailylog{
+}
 /* sccon */
 .scheduler-container{
 	/* dirty prefix */
