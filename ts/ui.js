@@ -170,25 +170,8 @@ var UI;
                             var modal = new ModalUI(_this);
                             modal.slide("simple", setting);
                             setting.onclose(function (returnValue) {
-                                if(returnValue) {
-                                    _this.close("reload");
-                                }
+                                _this.close("scheduler::open:" + _this.doc.id);
                             });
-                        }, false);
-                    }));
-                    div.appendChild(el("button", function (b) {
-                        var button = b;
-                        button.title = "服グループ";
-                        button.classList.add("iconbutton");
-                        button.appendChild(Cloth.importCloth({
-                            clothType: "T-shirt",
-                            colors: [
-                                "#999999", 
-                                "#999999"
-                            ]
-                        }).getSVG("24px", "24px"));
-                        button.addEventListener("click", function (e) {
-                            _this.close("clothgroup::scheduler:" + _this.doc.id);
                         }, false);
                     }));
                 }));
@@ -236,11 +219,16 @@ var UI;
     var SchedulerConfig = (function (_super) {
         __extends(SchedulerConfig, _super);
         function SchedulerConfig(db, scheduler) {
-            var _this = this;
                 _super.call(this);
             this.db = db;
             this.scheduler = scheduler;
+            this.open();
+        }
+        SchedulerConfig.prototype.open = function () {
+            var _this = this;
+            var db = this.db, scheduler = this.scheduler, doc = scheduler.doc;
             var c = this.getContent();
+            empty(c);
             var doc = scheduler.doc;
             c.appendChild(el("h1", function (h1) {
                 h1.appendChild(icons.gear({
@@ -293,14 +281,6 @@ var UI;
                         input.type = "submit";
                         input.value = "変更を保存";
                     }));
-                    p.appendChild(el("input", function (i) {
-                        var input = i;
-                        input.type = "button";
-                        input.value = "キャンセル";
-                        input.addEventListener("click", function (e) {
-                            _this.close(false);
-                        }, false);
-                    }));
                 }));
                 form.addEventListener("submit", function (e) {
                     e.preventDefault();
@@ -309,12 +289,42 @@ var UI;
                     _this.save(doc);
                 }, false);
             }));
-        }
+            var list = new ClothGroupList(db, {
+                schedulerid: doc.id,
+                add: true,
+                selectadd: true,
+                del: true
+            });
+            list.onclose(function (returnValue) {
+                if("string" === typeof returnValue) {
+                    var result;
+                    if(result = returnValue.match(/^select;(\d+)$/)) {
+                        _this.close("clothgroup::open:" + result[1]);
+                        return;
+                    } else if(result = returnValue.match(/^delete;(\d+)$/)) {
+                        var cgid = Number(result[1]);
+                        doc.groups = doc.groups.filter(function (x) {
+                            return x !== cgid;
+                        });
+                        _this.save(doc);
+                        return;
+                    } else if(result = returnValue.match(/^add;(\d+)$/)) {
+                        var cgid = Number(result[1]);
+                        if(doc.groups.indexOf(cgid) < 0) {
+                            doc.groups.push(cgid);
+                            _this.save(doc);
+                        }
+                        return;
+                    }
+                }
+            });
+            c.appendChild(list.getContent());
+        };
         SchedulerConfig.prototype.save = function (doc) {
             var _this = this;
             var db = this.db;
             db.setScheduler(doc, function (result) {
-                _this.close(true);
+                _this.open();
             });
         };
         return SchedulerConfig;
@@ -360,20 +370,14 @@ var UI;
                     result.setDate(new Date());
                     c.appendChild(result.getContent());
                     result.onclose(function (returnValue) {
-                        if(returnValue === "reload") {
-                            _this.open(false);
-                        } else {
-                            _this.close(returnValue);
-                        }
+                        _this.close(returnValue);
                     });
                     if(conf) {
                         var setting = new SchedulerConfig(_this.db, result);
                         var modal = new ModalUI(result);
-                        modal.slide("simple", setting);
-                        setting.onclose(function (returnValue) {
-                            if(returnValue) {
-                                result.close("reload");
-                            }
+                        modal.slide("simple", setting, function (returnValue) {
+                            console.log(returnValue);
+                            _this.close("scheduler::open:" + _this.id);
                         });
                     }
                     var datewin = new DateIndicator(result);
@@ -459,15 +463,14 @@ var UI;
     UI.SchedulerList = SchedulerList;    
     var ClothGroupListContainer = (function (_super) {
         __extends(ClothGroupListContainer, _super);
-        function ClothGroupListContainer(db, schedulerid) {
+        function ClothGroupListContainer(db) {
             var _this = this;
                 _super.call(this);
             this.db = db;
             var c = this.getContent();
             var optobj = {
-                schedulerid: schedulerid,
                 add: true,
-                selectadd: schedulerid != null ? true : false,
+                selectadd: false,
                 del: true
             };
             var list = new ClothGroupList(db, optobj);
@@ -481,42 +484,16 @@ var UI;
                                 _this.close("clothgroup::id:" + result[2]);
                                 break;
                             case "delete":
-                                if(schedulerid) {
-                                    db.getScheduler(schedulerid, function (sdoc) {
-                                        if(!sdoc) {
-                                            return;
-                                        }
-                                        sdoc.groups = sdoc.groups.filter(function (x) {
-                                            return x !== Number(result[2]);
-                                        });
-                                        db.setScheduler(sdoc, function (result) {
-                                            list.open(db, optobj);
-                                        });
+                                var res = window.confirm("服グループを削除しますか?\nこの動作は取り消せません。\n\n服グループを削除しても、所属する服は削除されません。");
+                                if(res) {
+                                    db.cleanupClothGroup(Number(result[2]), function (result) {
+                                        list.open(db, optobj);
                                     });
-                                } else {
-                                    var res = window.confirm("服グループを削除しますか?\nこの動作は取り消せません。\n\n服グループを削除しても、所属する服は削除されません。");
-                                    if(res) {
-                                        db.cleanupClothGroup(Number(result[2]), function (result) {
-                                            list.open(db, optobj);
-                                        });
-                                    }
                                 }
                                 break;
                             case "add":
-                                if(schedulerid) {
-                                    db.getScheduler(schedulerid, function (sdoc) {
-                                        if(!sdoc) {
-                                            return;
-                                        }
-                                        var newcgl = Number(result[2]);
-                                        if(sdoc.groups.indexOf(newcgl) < 0) {
-                                            sdoc.groups.push(newcgl);
-                                        }
-                                        db.setScheduler(sdoc, function (result) {
-                                            list.open(db, optobj);
-                                        });
-                                    });
-                                }
+                                list.open(db, optobj);
+                                break;
                         }
                         return;
                     }
@@ -640,11 +617,15 @@ var UI;
                             }));
                             button.appendChild(document.createTextNode("新しい服グループを作成して追加"));
                             button.addEventListener("click", function (e) {
-                                var info = new ClothGroupInfo(db, null, option.schedulerid);
+                                var info = new NewClothGroup(db, option.schedulerid);
                                 var modal = new ModalUI(_self);
                                 modal.slide("simple", info, function (returnValue) {
                                     if(returnValue != null) {
-                                        _self.close(returnValue);
+                                        if("number" === typeof returnValue) {
+                                            _self.close("add;" + returnValue);
+                                        } else {
+                                            _self.close(returnValue);
+                                        }
                                     }
                                 });
                             }, false);
@@ -864,6 +845,75 @@ var UI;
         return ClothGroupInfo;
     })(UISection);
     UI.ClothGroupInfo = ClothGroupInfo;    
+    var NewClothGroup = (function (_super) {
+        __extends(NewClothGroup, _super);
+        function NewClothGroup(db, schedulerid) {
+            var _this = this;
+                _super.call(this);
+            this.db = db;
+            var c = this.getContent();
+            c.appendChild(el("h1", function (h1) {
+                h1.appendChild(icons.clothgroup({
+                    width: "32px",
+                    height: "32px"
+                }));
+                h1.appendChild(document.createTextNode("新しい服グループを作成する"));
+            }));
+            c.appendChild(el("form", function (f) {
+                var form = f;
+                form.appendChild(el("p", function (p) {
+                    p.textContent = "名前:";
+                    p.appendChild(el("input", function (i) {
+                        var input = i;
+                        input.name = "name";
+                        input.size = 30;
+                        input.placeholder = "名前を入力";
+                        input.value = "新しい服グループ";
+                    }));
+                }));
+                form.appendChild(el("p", function (p) {
+                    p.appendChild(el("input", function (i) {
+                        var input = i;
+                        input.type = "submit";
+                        input.value = "決定";
+                    }));
+                }));
+                form.addEventListener("submit", function (e) {
+                    e.preventDefault();
+                    var name = (form.elements["name"]).value;
+                    var doc = {
+                        id: null,
+                        name: name,
+                        made: new Date()
+                    };
+                    delete doc.id;
+                    db.setClothGroup(doc, function (id) {
+                        if(id != null) {
+                            doc.id = id;
+                            if(schedulerid != null) {
+                                db.getScheduler(schedulerid, function (schedulerdoc) {
+                                    if(schedulerdoc) {
+                                        if(schedulerdoc.groups.indexOf(id) < 0) {
+                                            schedulerdoc.groups.push(id);
+                                            db.setScheduler(schedulerdoc, function (result) {
+                                                _this.close(id);
+                                            });
+                                        }
+                                    }
+                                });
+                            } else {
+                                _this.close(id);
+                            }
+                        } else {
+                            _this.close(null);
+                        }
+                    });
+                }, false);
+            }));
+        }
+        return NewClothGroup;
+    })(UISection);
+    UI.NewClothGroup = NewClothGroup;    
     var ClothSelect = (function (_super) {
         __extends(ClothSelect, _super);
         function ClothSelect(doc) {

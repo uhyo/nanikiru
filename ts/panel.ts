@@ -64,12 +64,6 @@ module Panels{
 						//服グループ
 						var cgl:Panel;
 						switch(result[1]){
-							case "scheduler":
-								//スケジューラidに対応する
-								cgl=new ClothGroupListPanel(this.host,this.db,{
-									scheduler:Number(result[2]),
-								});
-								break;
 							case "list":
 								//全部表示
 								cgl=new ClothGroupListPanel(this.host,this.db);
@@ -150,12 +144,10 @@ module Panels{
 		}
 	}
 	export class ClothGroupListPanel extends Panel{
-		constructor(private host:AppHost,private db:DB,option?:{
-			scheduler:number;	//scheduler id
-		}){
+		constructor(private host:AppHost,private db:DB){
 			super(host,db);
 			var c=this.initContainer();
-			var list=new UI.ClothGroupListContainer(db,option && option.scheduler);
+			var list=new UI.ClothGroupListContainer(db);
 			c.appendChild(list.getContent());
 			this.closeManage(list);
 		}

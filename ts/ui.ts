@@ -225,26 +225,9 @@ module UI{
 							var modal=new ModalUI(this);
 							modal.slide("simple",setting);
 							setting.onclose((returnValue:any)=>{
-								if(returnValue){
-									//DBを書き換えた
-									this.close("reload");
-								}
+								//DBを書き換えた
+								this.close("scheduler::open:"+this.doc.id);
 							});
-						},false);
-					}));
-					div.appendChild(el("button",(b)=>{
-						var button=<HTMLButtonElement>b;
-						button.title="服グループ";
-						button.classList.add("iconbutton");
-						button.appendChild(Cloth.importCloth({
-							clothType:"T-shirt",
-							colors:["#999999","#999999"],
-						}).getSVG("24px","24px"));
-						button.addEventListener("click",(e)=>{
-							//あれー
-							//服グループ管理画面に移行する
-							//this.close("clothGroupEdit");
-							this.close("clothgroup::scheduler:"+this.doc.id);
 						},false);
 					}));
 				}));
@@ -296,8 +279,13 @@ module UI{
 	export class SchedulerConfig extends UISection{
 		constructor(private db:DB,private scheduler:Scheduler){
 			super();
+			this.open();
+		}
+		private open():void{
+			var db=this.db, scheduler=this.scheduler, doc=scheduler.doc;
 			//初期化
 			var c=this.getContent();
+			empty(c);
 			var doc=scheduler.doc;
 			c.appendChild(el("h1",(h1)=>{
 				h1.appendChild(icons.gear({
@@ -351,15 +339,6 @@ module UI{
 						input.type="submit";
 						input.value="変更を保存";
 					}));
-					p.appendChild(el("input",(i)=>{
-						var input=<HTMLInputElement>i;
-						input.type="button";
-						input.value="キャンセル";
-						input.addEventListener("click",(e)=>{
-							//セーブせずに終了
-							this.close(false);
-						},false);
-					}));
 				}));
 				form.addEventListener("submit",(e)=>{
 					//変更をセーブしたい
@@ -370,12 +349,46 @@ module UI{
 					this.save(doc);
 				},false);
 			}));
+			//所属するスケジューラのリストをだすぞ!
+			var list=new ClothGroupList(db,{
+				schedulerid:doc.id,
+				add:true,
+				selectadd:true,
+				del:true,
+			});
+			list.onclose((returnValue:any)=>{
+				if("string"===typeof returnValue){
+					var result;
+					if(result=returnValue.match(/^select;(\d+)$/)){
+						//ふつうに選択
+						this.close("clothgroup::open:"+result[1]);
+						return;
+					}else if(result=returnValue.match(/^delete;(\d+)$/)){
+						//これはどける
+						var cgid=Number(result[1]);
+						doc.groups=doc.groups.filter((x)=>{return x!==cgid});
+						this.save(doc);
+						return;
+					}else if(result=returnValue.match(/^add;(\d+)$/)){
+						//既存のを追加
+						var cgid=Number(result[1]);
+						if(doc.groups.indexOf(cgid)<0){
+							//ついあk
+							doc.groups.push(cgid);
+							this.save(doc);
+						}
+						return;
+					}
+				}
+			});
+			c.appendChild(list.getContent());
 		}
 		save(doc:SchedulerDoc):void{
 			//DBに書き込む
 			var db=this.db;
 			db.setScheduler(doc,(result:number)=>{
-				this.close(true);	//新しいDBがほしい!
+				//this.close(true);	//新しいDBがほしい!
+				this.open();
 			});
 		}
 	}
@@ -418,24 +431,23 @@ module UI{
 					c.appendChild(result.getContent());
 					result.onclose((returnValue:any)=>{
 
-						if(returnValue==="reload"){
+						/*if(returnValue==="reload"){
 							//読みなおしてほしい
 							this.open(false);
 						}else{
 							//それ以外だったら道連れ終了
 							this.close(returnValue);
-						}
+						}*/
+						this.close(returnValue);
 					});
 					//設定画面導入
 					if(conf){
 						var setting=new SchedulerConfig(this.db,result);
 						var modal=new ModalUI(result);
-						modal.slide("simple",setting);
-						setting.onclose((returnValue:any)=>{
-							if(returnValue){
-								//DBを書き換えた
-								result.close("reload");
-							}
+						modal.slide("simple",setting,(returnValue:any)=>{
+							//よみ直す
+							console.log(returnValue);
+							this.close("scheduler::open:"+this.id);
 						});
 					}
 					//日付部分
@@ -523,13 +535,12 @@ module UI{
 	}
 	//独立系服グループリスト
 	export class ClothGroupListContainer extends UIObject{
-		constructor(private db:DB,schedulerid?:number){
+		constructor(private db:DB){
 			super();
 			var c=this.getContent();
 			var optobj={
-				schedulerid:schedulerid,
 				add:true,
-				selectadd:schedulerid!=null ? true : false,
+				selectadd:false,
 				del:true,
 			};
 			var list=new ClothGroupList(db,optobj);
@@ -544,48 +555,19 @@ module UI{
 								this.close("clothgroup::id:"+result[2]);
 								break;
 							case "delete":	//消したい
-								if(schedulerid){
-									//スケジューラがある場合: はずす
-									db.getScheduler(schedulerid,(sdoc:SchedulerDoc)=>{
-										if(!sdoc){
-											return;
-										}
-										sdoc.groups=sdoc.groups.filter((x)=>{
-											return x!==Number(result[2]);
-										});
-										db.setScheduler(sdoc,(result:number)=>{
-											//新しく!再利用
-											list.open(db,optobj);
-										});
+								// 抹 消
+								var res=window.confirm("服グループを削除しますか?\nこの動作は取り消せません。\n\n服グループを削除しても、所属する服は削除されません。");
+								if(res){
+									//消す
+									db.cleanupClothGroup(Number(result[2]),(result:bool)=>{
+										list.open(db,optobj);
 									});
-								}else{
-									// 抹 消
-									var res=window.confirm("服グループを削除しますか?\nこの動作は取り消せません。\n\n服グループを削除しても、所属する服は削除されません。");
-									if(res){
-										//消す
-										db.cleanupClothGroup(Number(result[2]),(result:bool)=>{
-											list.open(db,optobj);
-										});
-									}
 								}
 								break;
-							case "add":	//既存から選んで追加
-								if(schedulerid){
-									//スケジューラがある場合: つける
-									db.getScheduler(schedulerid,(sdoc:SchedulerDoc)=>{
-										if(!sdoc){
-											return;
-										}
-										var newcgl=Number(result[2]);
-										if(sdoc.groups.indexOf(newcgl)<0){
-											sdoc.groups.push(newcgl);
-										}
-										db.setScheduler(sdoc,(result:number)=>{
-											//新しく!再利用
-											list.open(db,optobj);
-										});
-									});
-								}
+							case "add":	//既存のを追加した
+								//新しく!再利用
+								list.open(db,optobj);
+								break;
 						}
 						return;
 					}
@@ -729,12 +711,18 @@ module UI{
 							button.appendChild(document.createTextNode("新しい服グループを作成して追加"));
 							button.addEventListener("click",(e)=>{
 								//新しいやつを追加したいなあ・・・
-								var info=new ClothGroupInfo(db,null,option.schedulerid);
+								var info=new NewClothGroup(db,option.schedulerid);
 								var modal=new ModalUI(_self);
 								modal.slide("simple",info,(returnValue?:any)=>{
 									if(returnValue!=null){
 										//伝えたいことがあるんだ
-										_self.close(returnValue);
+										if("number"===typeof returnValue){
+											//新しい服グループのidがきた!
+											//_self.open(db,option);
+											_self.close("add;"+returnValue);
+										}else{
+											_self.close(returnValue);
+										}
 									}
 								});
 							},false);
@@ -969,6 +957,74 @@ module UI{
 					});
 				}));
 			}
+		}
+	}
+	//新しい服グループのやつ
+	export class NewClothGroup extends UISection{
+		constructor(private db:DB,schedulerid?:number){
+			super();
+			var c=this.getContent();
+			c.appendChild(el("h1",(h1)=>{
+				h1.appendChild(icons.clothgroup({
+					width:"32px",
+					height:"32px",
+				}));
+				h1.appendChild(document.createTextNode("新しい服グループを作成する"));
+			}));
+			c.appendChild(el("form",(f)=>{
+				var form=<HTMLFormElement>f;
+				form.appendChild(el("p",(p)=>{
+					p.textContent="名前:";
+					p.appendChild(el("input",(i)=>{
+						var input=<HTMLInputElement>i;
+						input.name="name";
+						input.size=30;
+						input.placeholder="名前を入力";
+						input.value="新しい服グループ";
+					}));
+				}));
+				form.appendChild(el("p",(p)=>{
+					p.appendChild(el("input",(i)=>{
+						var input=<HTMLInputElement>i;
+						input.type="submit";
+						input.value="決定";
+					}));
+				}));
+				form.addEventListener("submit",(e)=>{
+					e.preventDefault();
+					var name=(<HTMLInputElement>form.elements["name"]).value;
+					var doc:ClothGroupDoc={
+						id:null,
+						name:name,
+						made:new Date(),
+					};
+					delete doc.id;
+					db.setClothGroup(doc,(id:number)=>{
+						if(id!=null){
+							//idをゲットした!
+							doc.id=id;
+							if(schedulerid!=null){
+								//新規で登録したい
+								db.getScheduler(schedulerid,(schedulerdoc:SchedulerDoc)=>{
+									if(schedulerdoc){
+										if(schedulerdoc.groups.indexOf(id)<0){
+											schedulerdoc.groups.push(id);
+											db.setScheduler(schedulerdoc,(result:number)=>{
+												//設定した
+												this.close(id);
+											});
+										}
+									}
+								});
+							}else{
+								this.close(id);
+							}
+						}else{
+							this.close(null);
+						}
+					});
+				},false);
+			}));
 		}
 	}
 	//服のデザイン選択UI
@@ -1440,7 +1496,7 @@ module UI{
 			}
 		}
 		//画面割り込み発生!
-		slide(mode:string,dia:UIObject,callback?:(returnValue?:any)=>void):void{
+		slide(mode:string,dia:UIObject,callback?:(returnValue:any)=>void):void{
 			this.dia=dia;
 			var tc=this.container, bc=this.ui.getContent(), nc=dia.getContent();
 			if(mode==="simple"){

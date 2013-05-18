@@ -47,6 +47,9 @@ var Panels;
                                 });
                                 break;
                             case "conf":
+                                console.log("hyoe-");
+                                debugger;
+
                                 sc = new SchedulerPanel(_this.host, _this.db, {
                                     schedulerid: result[2] ? Number(result[2]) : null,
                                     conf: true
