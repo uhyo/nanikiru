@@ -128,7 +128,7 @@ var UI;
                                 var clothas = [];
                                 logs[dateStr].cloth.forEach(function (clothid) {
                                     db.getCloth(clothid, function (clothdoc) {
-                                        var main = _this.doc.main;
+                                        var main = _this.doc.groups.slice(0, 2);
                                         if(main.some(function (x) {
                                             return clothdoc.group.indexOf(x) >= 0;
                                         })) {
@@ -176,16 +176,20 @@ var UI;
                     }));
                 }));
                 c.appendChild(t);
+                _this.calculateScore(logs, d);
             });
+        };
+        Calender.prototype.zeroDate = function (d) {
+            d.setHours(0);
+            d.setMinutes(0);
+            d.setSeconds(0);
+            d.setMilliseconds(0);
         };
         Calender.prototype.startDate = function (d) {
             var mv = new Date(d.toJSON());
             mv.setDate(1);
             mv.setDate(1 - mv.getDay());
-            mv.setHours(0);
-            mv.setMinutes(0);
-            mv.setSeconds(0);
-            mv.setMilliseconds(0);
+            this.zeroDate(mv);
             return mv;
         };
         Calender.prototype.lastDate = function (d) {
@@ -212,6 +216,88 @@ var UI;
                 var thisds = thisd.getFullYear() + "-" + (thisd.getMonth() + 1) + "-" + thisd.getDate();
                 logs[thisds] = log;
             });
+        };
+        Calender.prototype.calculateScore = function (logs, d, callback) {
+            if (typeof callback === "undefined") { callback = function () {
+            }; }
+            var db = this.db, doc = this.doc;
+            var cs = this.clothScores;
+            var clothscores = {
+            };
+            var startd = new Date(d.getTime());
+            this.zeroDate(startd);
+            for(var key in logs) {
+                var dd = new Date(key);
+                this.zeroDate(dd);
+                var sub = Math.floor((startd.getTime() - dd.getTime()) / (1000 * 3600 * 24));
+                var badpoint = 0;
+                if(sub === 1) {
+                    badpoint = 10;
+                } else if(sub === 2) {
+                    badpoint = 4;
+                } else if(sub === 3) {
+                    badpoint = 1;
+                }
+                var log = logs[key];
+                if(badpoint > 0) {
+                    log.cloth.forEach(function (clothid) {
+                        if(clothscores[clothid] == null) {
+                            clothscores[clothid] = -sub;
+                        } else {
+                            clothscores[clothid] -= sub;
+                        }
+                    });
+                }
+            }
+            var mains = doc.groups.slice(0, 2);
+            if(mains.length === 0) {
+                callback();
+                return;
+            }
+            if(mains.length === 1) {
+                db.eachCloth({
+                    group: mains[0]
+                }, function (cdoc) {
+                    if(cdoc != null) {
+                        cs["[" + cdoc.id + "]"] = clothscores[cdoc.id] || 0;
+                    } else {
+                        callback();
+                    }
+                });
+                return;
+            }
+            if(mains.length === 2) {
+                var cloths1 = [];
+                db.eachCloth({
+                    group: mains[0]
+                }, function (cdoc) {
+                    if(cdoc != null) {
+                        cloths1.push(cdoc.id);
+                    } else {
+                        var cloths2 = [];
+                        db.eachCloth({
+                            group: mains[1]
+                        }, function (cdoc) {
+                            if(cdoc != null) {
+                                cloths2.push(cdoc.id);
+                            } else {
+                                cloths1.forEach(function (cid1) {
+                                    cloths2.forEach(function (cid2) {
+                                        var score = (clothscores[cid1] || 0) + (clothscores[cid2] || 0);
+                                        var keyarr = [
+                                            cid1, 
+                                            cid2
+                                        ].sort();
+                                        cs[JSON.stringify(keyarr)] = score;
+                                    });
+                                });
+                                callback();
+                            }
+                        });
+                    }
+                });
+                return;
+            }
         };
         return Calender;
     })(Scheduler);
@@ -430,8 +516,7 @@ var UI;
                                 type: "calender",
                                 name: "新しいスケジューラ",
                                 made: new Date(),
-                                groups: [],
-                                main: []
+                                groups: []
                             };
                             delete nsc.id;
                             _this.db.setScheduler(nsc, function (id) {

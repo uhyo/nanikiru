@@ -128,6 +128,9 @@ module UI{
 	}
 	//カレンダー
 	export class Calender extends Scheduler{
+		public clothScores:{
+			[index:string]:number;
+		};
 		constructor(private db:DB,public doc:SchedulerDoc){
 			super(db,doc);
 		}
@@ -180,7 +183,8 @@ module UI{
 								var clothas:number[]=[];	//挿入した服管理
 								logs[dateStr].cloth.forEach((clothid:number)=>{
 									db.getCloth(clothid,(clothdoc:ClothDoc)=>{
-										var main=this.doc.main;
+										//メイン服グループは先頭2個
+										var main=this.doc.groups.slice(0,2);
 										if(main.some((x)=>{
 											return clothdoc.group.indexOf(x)>=0;
 										})){
@@ -232,7 +236,16 @@ module UI{
 					}));
 				}));
 				c.appendChild(t);
+				//スコア計算
+				this.calculateScore(logs,d);
 			});
+		}
+		private zeroDate(d:Date):void{
+			//時刻セット
+			d.setHours(0);
+			d.setMinutes(0);
+			d.setSeconds(0);
+			d.setMilliseconds(0);
 		}
 		//このカレンダーの最初の日付を求める
 		private startDate(d:Date):Date{
@@ -240,11 +253,7 @@ module UI{
 			mv.setDate(1);	//とりあえず今月のついたちにする
 			//日曜まで戻す
 			mv.setDate(1-mv.getDay());
-			//時刻セット
-			mv.setHours(0);
-			mv.setMinutes(0);
-			mv.setSeconds(0);
-			mv.setMilliseconds(0);
+			this.zeroDate(mv);
 			return mv;
 		}
 		private lastDate(d:Date):Date{
@@ -273,6 +282,96 @@ module UI{
 				var thisds=thisd.getFullYear()+"-"+(thisd.getMonth()+1)+"-"+thisd.getDate();
 				logs[thisds]=log;
 			});
+		}
+		//得点計算
+		private calculateScore(logs:{
+			[index:string]:LogDoc;
+		},d:Date,callback?:()=>void=function(){}):void{
+			var db=this.db,doc:SchedulerDoc=this.doc;
+			var cs=this.clothScores;
+			//cs format:JSON clothid array(sorted)
+			var clothscores:{
+				[index:number]:number;	//clothid:score
+			}=<any>{};
+			var startd=new Date(d.getTime());
+			this.zeroDate(startd);
+			for(var key in logs){
+				var dd=new Date(key);
+				this.zeroDate(dd);	//0時どうしにする
+				var sub=Math.floor((startd.getTime()-dd.getTime())/(1000*3600*24));	//日数の差
+				//日数の差に応じて減点（近すぎ）
+				var badpoint=0;
+				if(sub===1){
+					badpoint=10;
+				}else if(sub===2){
+					badpoint=4;
+				}else if(sub===3){
+					badpoint=1;
+				}
+				var log:LogDoc=logs[key];
+				if(badpoint>0){
+					log.cloth.forEach((clothid:number)=>{
+						//
+						if(clothscores[clothid]==null){
+							clothscores[clothid]=-sub;
+						}else{
+							clothscores[clothid]-=sub;
+						}
+					});
+				}
+			}
+			//さて、出揃った。組み合わせ計算
+			var mains=doc.groups.slice(0,2);
+			if(mains.length===0){
+				callback();
+				return;	//何もないじゃん!
+			}
+			if(mains.length===1){
+				//ひとつじゃん!
+				db.eachCloth({
+					group:mains[0],
+				},(cdoc:ClothDoc)=>{
+					if(cdoc!=null){
+						cs["["+cdoc.id+"]"]=clothscores[cdoc.id] || 0;
+					}else{
+						callback();
+					}
+				});
+				return;
+			}
+			if(mains.length===2){
+				//ふたつじゃん!
+				var cloths1:number[]=[];
+				db.eachCloth({
+					group:mains[0],
+				},(cdoc:ClothDoc)=>{
+					if(cdoc!=null){
+						cloths1.push(cdoc.id);
+					}else{
+						//もうない! 2つ目
+						var cloths2=[];
+						db.eachCloth({
+							group:mains[1],
+						},(cdoc:ClothDoc)=>{
+							if(cdoc!=null){
+								cloths2.push(cdoc.id);
+							}else{
+								//全部調べた!
+								cloths1.forEach((cid1)=>{
+									cloths2.forEach((cid2)=>{
+										var score=(clothscores[cid1]||0)+(clothscores[cid2]||0);
+										var keyarr=[cid1,cid2].sort();
+										cs[JSON.stringify(keyarr)]=score;
+									});
+								});
+								//できた
+								callback();
+							}
+						});
+					}
+				});
+				return;
+			}
 		}
 	}
 	//スケジューラ設定
@@ -502,7 +601,6 @@ module UI{
 								name:"新しいスケジューラ",
 								made:new Date,
 								groups:[],
-								main:[],
 							};
 							delete nsc.id;
 							this.db.setScheduler(nsc,(id:number)=>{
