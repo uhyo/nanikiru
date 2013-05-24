@@ -519,7 +519,11 @@ var UI;
                                                         cloths1.forEach(function (cdoc1, i) {
                                                             c1col[i] = Cloth.importCloth(cdoc1);
                                                             (function (td) {
-                                                                td.appendChild(c1col[i].getSVG("24px", "24px"));
+                                                                td.appendChild(selectbox.cloth(cdoc1, {
+                                                                    size: "24px"
+                                                                }, function (mode) {
+                                                                    _this.close("cloth::" + cdoc1.id);
+                                                                }));
                                                             })(tr.insertCell(-1));
                                                         });
                                                     })(table.insertRow(-1));
@@ -535,7 +539,11 @@ var UI;
                                                         }
                                                         var c2svg = Cloth.importCloth(cdoc2);
                                                         (function (td) {
-                                                            td.appendChild(c2svg.getSVG("24px", "24px"));
+                                                            td.appendChild(selectbox.cloth(cdoc2, {
+                                                                size: "24px"
+                                                            }, function (mode) {
+                                                                _this.close("cloth::" + cdoc2.id);
+                                                            }));
                                                         })(tr.insertCell(-1));
                                                         cloths1.forEach(function (cdoc1, j) {
                                                             (function (td) {

@@ -599,7 +599,12 @@ module UI{
 														cloths1.forEach((cdoc1:ClothDoc,i)=>{
 															c1col[i]=Cloth.importCloth(cdoc1);
 															((td)=>{
-																td.appendChild(c1col[i].getSVG("24px","24px"));
+																//td.appendChild(c1col[i].getSVG("24px","24px"));
+																td.appendChild(selectbox.cloth(cdoc1,{
+																	size:"24px",
+																},(mode:string)=>{
+																	this.close("cloth::"+cdoc1.id);
+																}));
 															})(<HTMLTableCellElement>tr.insertCell(-1));
 														});
 													})(<HTMLTableRowElement>table.insertRow(-1));
@@ -617,7 +622,11 @@ module UI{
 														var c2svg=Cloth.importCloth(cdoc2);
 														//服インディケータ
 														((td)=>{
-															td.appendChild(c2svg.getSVG("24px","24px"));
+															td.appendChild(selectbox.cloth(cdoc2,{
+																size:"24px",
+															},(mode:string)=>{
+																this.close("cloth::"+cdoc2.id);
+															}));
 														})(<HTMLTableCellElement>tr.insertCell(-1));
 														cloths1.forEach((cdoc1:ClothDoc,j)=>{
 															((td)=>{
