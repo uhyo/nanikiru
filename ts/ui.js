@@ -660,14 +660,31 @@ var UI;
                                     section.appendChild(el("p", function (p) {
                                         p.textContent = "服が未選択です。";
                                     }));
-                                    section.appendChild(el("div", function (div) {
+                                    section.appendChild(el("ul", function (div) {
+                                        div.classList.add("choosecloth-field");
                                         db.eachCloth({
                                             group: cgdoc.id
                                         }, function (cdoc) {
                                             if(cdoc) {
-                                                div.appendChild(Cloth.importCloth(cdoc).getSVG("32px", "32px"));
+                                                div.appendChild(el("li", function (div) {
+                                                    div.dataset.cloth = String(cdoc.id);
+                                                    div.appendChild(Cloth.importCloth(cdoc).getSVG("32px", "32px"));
+                                                }));
                                             }
                                         });
+                                        div.addEventListener("click", function (e) {
+                                            var node = e.target;
+                                            do {
+                                                if(node.dataset && node.dataset.cloth) {
+                                                    var newcloth = original_cloth.concat([
+                                                        Number(node.dataset.cloth)
+                                                    ]);
+                                                    newcloth.sort();
+                                                    _this.open(d, newcloth);
+                                                    break;
+                                                }
+                                            }while(node = node.parentNode);
+                                        }, false);
                                     }));
                                     button.disabled = true;
                                 }

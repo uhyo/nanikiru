@@ -57,6 +57,18 @@ table.dayvision-table td.cloth-option:hover{
 table.dayvision-table th.vertical-th{
 	max-width:3rem;
 }
+ul.choosecloth-field{
+	margin:0;
+	padding:0;
+}
+ul.choosecloth-field li{
+	border:3px double #dddddd;
+	margin:2px;
+	display: inline-block;
+}
+ul.choosecloth-field li:hover{
+	cursor:pointer;
+}
 /* cloth */
 .cloth-container{
 	/* dirty prefix */

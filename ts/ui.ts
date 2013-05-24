@@ -46,7 +46,6 @@ interface _SVGSomeBox extends SVGElement{
 	y:SVGAnimatedLength;
 	width:SVGAnimatedLength;
 	height:SVGAnimatedLength;
-	
 }
 
 module UI{
@@ -749,15 +748,33 @@ module UI{
 									section.appendChild(el("p",(p)=>{
 										p.textContent="服が未選択です。";
 									}));
-									section.appendChild(el("div",(div)=>{
+									section.appendChild(el("ul",(div)=>{
 										//服一覧
+										div.classList.add("choosecloth-field");
 										db.eachCloth({
 											group:cgdoc.id
 										},(cdoc)=>{
 											if(cdoc){
-												div.appendChild(Cloth.importCloth(cdoc).getSVG("32px","32px"));
+												div.appendChild(el("li",(div)=>{
+													div.dataset.cloth=String(cdoc.id);
+													div.appendChild(Cloth.importCloth(cdoc).getSVG("32px","32px"));
+												}));
 											}
 										});
+										//クリックで選択できる
+										div.addEventListener("click",(e)=>{
+											var node:HTMLElement=<HTMLElement>e.target;
+											do{
+												if(node.dataset && node.dataset.cloth){
+													//服を選択した
+													var newcloth=original_cloth.concat([Number(node.dataset.cloth)]);
+													newcloth.sort();
+													//これでどうだ!
+													this.open(d,newcloth);
+													break;
+												}
+											}while(node=<HTMLElement>node.parentNode);
+										},false);
 									}));
 									//まだだめだよ!
 									button.disabled=true;
