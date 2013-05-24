@@ -69,6 +69,12 @@ ul.choosecloth-field li{
 ul.choosecloth-field li:hover{
 	cursor:pointer;
 }
+.group-cloth-group{
+	display:inline-block;
+	border:5px double #dddddd;
+	padding:0.6ex;
+	margin:0.2ex;
+}
 /* cloth */
 .cloth-container{
 	/* dirty prefix */

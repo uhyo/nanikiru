@@ -251,6 +251,32 @@ class DB{
 		});
 		delete req;
 	}
+	getClothGroups(ids:number[],callback:(result:ClothGroupDoc[])=>void):void{
+		var tr=this.db.transaction("clothgroup","readonly");
+		var clothgroup=tr.objectStore("clothgroup");
+		var result:ClothGroupDoc[]=[];
+		getone(0);
+		function getone(index:number):void{
+			if(ids[index]==null){
+				//無事終了
+				callback(result);
+				return;
+			}
+			var req:IDBRequest=clothgroup.get(ids[index]);
+			req.addEventListener("success",(e)=>{
+				var cgdoc=<ClothGroupDoc>req.result;
+				if(cgdoc==null){
+					console.warn("no cgdoc!",ids,index);
+				}
+				result.push(cgdoc);
+				getone(index+1);
+			});
+			req.addEventListener("error",(e)=>{
+				console.error("getClothGroups error:",req.error);
+				callback(null);
+			});
+		}
+	}
 	setClothGroup(doc:ClothGroupDoc,callback:(result:number)=>void):void{
 		var tr=this.db.transaction("clothgroup","readwrite");
 		var clothgroup=tr.objectStore("clothgroup");
@@ -417,6 +443,35 @@ class DB{
 		});
 		delete req;
 	}
+	//複数idをまとめて返す
+	getClothes(ids:number[],callback:(result:ClothDoc[])=>void):void{
+		var tr=this.db.transaction("cloth","readonly");
+		var cloth=tr.objectStore("cloth");
+		var result:ClothDoc[]=[];
+		getone(0);
+		function getone(index){
+			if(ids[index]==null){
+				//おわり
+				callback(result);
+				return;
+			}
+			var req:IDBRequest=cloth.get(ids[index]);
+			req.addEventListener("success",(e)=>{
+				//OK
+				var doc=<ClothDoc>req.result;
+				if(!doc){
+					//あれ
+					console.warn("getClothes nocloth",ids,index);
+				}
+				result.push(doc);
+				getone(index+1);
+			});
+			req.addEventListener("error",(e)=>{
+				console.error("getClothes error:",req.error);
+				callback(null);
+			});
+		}
+	}
 	setCloth(doc:ClothDoc,callback:(result:number)=>void):void{
 		var tr=this.db.transaction("cloth","readwrite");
 		var cloth=tr.objectStore("cloth");
@@ -509,11 +564,11 @@ class DB{
 				req=log.index("cloth_multi").openCursor(cond.cloth,"next");
 			}
 		}else if(cond.scheduler!=null && cond.date!=null){
-			req=log.index("scheduler-date").openCursor((<any>IDBKeyRange).bound(<any[]>[cond.scheduler,cond.date.start],<any[]>[cond.scheduler,cond.date.end]),"next");
+			req=log.index("scheduler-date").openCursor((<any>IDBKeyRange).bound(<any[]>[cond.scheduler,cond.date.start],<any[]>[cond.scheduler,cond.date.end],false,false),"next");
 		}else if(cond.scheduler!=null){
 			req=log.index("scheduler").openCursor(<any>cond.scheduler,"next");
 		}else if(cond.date!=null){
-			req=log.index("scheduler").openCursor((<any>IDBKeyRange).bound(cond.date.start,cond.date.end),"next");
+			req=log.index("date").openCursor((<any>IDBKeyRange).bound(cond.date.start,cond.date.end,false,false),"next");
 		}else{
 			//keyrange: nullable
 			req=log.openCursor(cond.keyrange||null,"next");

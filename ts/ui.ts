@@ -258,11 +258,22 @@ module UI{
 								var dv=new DayVision(db,this);
 								dv.open(thisdate);
 								modal.slide("simple",dv,(returnValue:any)=>{
+									if(returnValue){
+										this.close(returnValue);
+									}
+								});
+							}else{
+								//ログがある（ログ閲覧）
+								var modal=new ModalUI(this);
+								var dl=new DayLog(db,this);
+								dl.open(new Date(node.dataset.date));
+								modal.slide("simple",dl,(returnValue:any)=>{
 									//ここ書いてないよ!
 									if(returnValue){
 										this.close(returnValue);
 									}
 								});
+								
 							}
 						}
 					}while(node=<HTMLElement>node.parentNode);
@@ -805,6 +816,70 @@ module UI{
 			})(0);
 		}
 	}
+	//ログ
+	export class DayLog extends UISection{
+		constructor(private db:DB,private scheduler:Scheduler){
+			super();
+		}
+		open(d:Date):void{
+			var db=this.db, scheduler=this.scheduler, doc=scheduler.doc;
+			var c=this.getContent();
+			d=zeroDate(d);
+			empty(c);
+			c.appendChild(el("h1",(h1)=>{
+				h1.textContent=(d.getMonth()+1)+"月"+d.getDate()+"日のログ";
+			}));
+			//まず服を全部取得するか!
+			db.getClothGroups(doc.groups,(cgdocs:ClothGroupDoc[])=>{
+				//次にログを取得するか!
+				db.eachLog({
+					scheduler:doc.id,
+					date:{
+						start:d,
+						end:d,
+					},
+				},(ldoc:LogDoc)=>{
+					//1つしかこないよね・・・
+					if(ldoc==null)return;
+					var cloth=ldoc.cloth.concat([]);
+					//次に服を全部取得するか!
+					db.getClothes(cloth,(cdocs:ClothDoc[])=>{
+						c.appendChild(el("div",(div)=>{
+							//各clothgroupについて
+							cgdocs.forEach((cgdoc)=>{
+								//服を探す
+								for(var i=0,l=cloth.length;i<l;i++){
+									if(cloth[i]!=null && cdocs[i].group.indexOf(cgdoc.id)>=0){
+										//所属だ!
+										((cdoc:ClothDoc)=>{
+											div.appendChild(el("div",(div)=>{
+												div.classList.add("group-cloth-group");
+												//服グループの情報
+												div.appendChild(selectbox.clothgroup(cgdoc,{
+													del:false,
+												},(mode:string)=>{
+													//開く
+													this.close("clothgroup::id:"+cgdoc.id);
+												}));
+												div.appendChild(selectbox.cloth(cdoc,{
+													size:"96px",
+												},(mode:string)=>{
+													this.close("cloth::"+cdoc.id);
+												}));
+											}));
+										})(cdocs[i]);
+										cloth[i]=null;
+										break;
+									}
+								}
+							});
+						}));
+					});
+				});
+			});
+
+		}
+	}
 	//スケジューラコンテナ
 	export class SchedulerContainer extends UIObject{
 		private date:Date;
@@ -842,7 +917,6 @@ module UI{
 						var modal=new ModalUI(result);
 						modal.slide("simple",setting,(returnValue:any)=>{
 							//よみ直す
-							console.log(returnValue);
 							this.close("scheduler::open:"+this.id);
 						});
 					}
@@ -1344,7 +1418,7 @@ module UI{
 							}));
 							return;
 						}
-						section.appendChild(selectbox.cloth(cdoc,(mode:string)=>{
+						section.appendChild(selectbox.cloth(cdoc,null,(mode:string)=>{
 							//スケジューラを開く
 							_self.close("cloth::"+cdoc.id);
 						}));
@@ -2261,7 +2335,11 @@ module UI{
 				}
 			});
 		}
-		export function cloth(doc:ClothDoc,clickhandler?:(mode:string)=>void):HTMLElement{
+		export function cloth(doc:ClothDoc,option:{
+			size?:string;	//width & height
+		},clickhandler?:(mode:string)=>void):HTMLElement{
+			if(!option)option={};
+			if(!option.size)option.size="32px";
 			return el("div",(div)=>{
 				div.classList.add("clothbox");
 				div.classList.add("selection");
@@ -2270,7 +2348,7 @@ module UI{
 					type:doc.type,
 					patterns:doc.patterns,
 				});
-				div.appendChild(cloth.getSVG("32px","32px"));
+				div.appendChild(cloth.getSVG(option.size,option.size));
 				if(clickhandler){
 					div.addEventListener("click",(e)=>{
 						clickhandler("normal");

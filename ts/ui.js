@@ -198,6 +198,15 @@ var UI;
                                         _this.close(returnValue);
                                     }
                                 });
+                            } else {
+                                var modal = new ModalUI(_this);
+                                var dl = new DayLog(db, _this);
+                                dl.open(new Date(node.dataset.date));
+                                modal.slide("simple", dl, function (returnValue) {
+                                    if(returnValue) {
+                                        _this.close(returnValue);
+                                    }
+                                });
                             }
                         }
                     }while(node = node.parentNode);
@@ -712,6 +721,67 @@ var UI;
         return DayDecision;
     })(UISection);
     UI.DayDecision = DayDecision;    
+    var DayLog = (function (_super) {
+        __extends(DayLog, _super);
+        function DayLog(db, scheduler) {
+                _super.call(this);
+            this.db = db;
+            this.scheduler = scheduler;
+        }
+        DayLog.prototype.open = function (d) {
+            var _this = this;
+            var db = this.db, scheduler = this.scheduler, doc = scheduler.doc;
+            var c = this.getContent();
+            d = zeroDate(d);
+            empty(c);
+            c.appendChild(el("h1", function (h1) {
+                h1.textContent = (d.getMonth() + 1) + "月" + d.getDate() + "日のログ";
+            }));
+            db.getClothGroups(doc.groups, function (cgdocs) {
+                db.eachLog({
+                    scheduler: doc.id,
+                    date: {
+                        start: d,
+                        end: d
+                    }
+                }, function (ldoc) {
+                    if(ldoc == null) {
+                        return;
+                    }
+                    var cloth = ldoc.cloth.concat([]);
+                    db.getClothes(cloth, function (cdocs) {
+                        c.appendChild(el("div", function (div) {
+                            cgdocs.forEach(function (cgdoc) {
+                                for(var i = 0, l = cloth.length; i < l; i++) {
+                                    if(cloth[i] != null && cdocs[i].group.indexOf(cgdoc.id) >= 0) {
+                                        (function (cdoc) {
+                                            div.appendChild(el("div", function (div) {
+                                                div.classList.add("group-cloth-group");
+                                                div.appendChild(selectbox.clothgroup(cgdoc, {
+                                                    del: false
+                                                }, function (mode) {
+                                                    _this.close("clothgroup::id:" + cgdoc.id);
+                                                }));
+                                                div.appendChild(selectbox.cloth(cdoc, {
+                                                    size: "96px"
+                                                }, function (mode) {
+                                                    _this.close("cloth::" + cdoc.id);
+                                                }));
+                                            }));
+                                        })(cdocs[i]);
+                                        cloth[i] = null;
+                                        break;
+                                    }
+                                }
+                            });
+                        }));
+                    });
+                });
+            });
+        };
+        return DayLog;
+    })(UISection);
+    UI.DayLog = DayLog;    
     var SchedulerContainer = (function (_super) {
         __extends(SchedulerContainer, _super);
         function SchedulerContainer(id, db) {
@@ -739,7 +809,6 @@ var UI;
                         var setting = new SchedulerConfig(_this.db, result);
                         var modal = new ModalUI(result);
                         modal.slide("simple", setting, function (returnValue) {
-                            console.log(returnValue);
                             _this.close("scheduler::open:" + _this.id);
                         });
                     }
@@ -1196,7 +1265,7 @@ var UI;
                             }));
                             return;
                         }
-                        section.appendChild(selectbox.cloth(cdoc, function (mode) {
+                        section.appendChild(selectbox.cloth(cdoc, null, function (mode) {
                             _self.close("cloth::" + cdoc.id);
                         }));
                         count++;
@@ -2077,7 +2146,14 @@ var UI;
             });
         }
         selectbox.clothgroup = clothgroup;
-        function cloth(doc, clickhandler) {
+        function cloth(doc, option, clickhandler) {
+            if(!option) {
+                option = {
+                };
+            }
+            if(!option.size) {
+                option.size = "32px";
+            }
             return el("div", function (div) {
                 div.classList.add("clothbox");
                 div.classList.add("selection");
@@ -2085,7 +2161,7 @@ var UI;
                     type: doc.type,
                     patterns: doc.patterns
                 });
-                div.appendChild(cloth.getSVG("32px", "32px"));
+                div.appendChild(cloth.getSVG(option.size, option.size));
                 if(clickhandler) {
                     div.addEventListener("click", function (e) {
                         clickhandler("normal");

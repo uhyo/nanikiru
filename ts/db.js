@@ -191,6 +191,31 @@ var DB = (function () {
         });
         delete req;
     };
+    DB.prototype.getClothGroups = function (ids, callback) {
+        var tr = this.db.transaction("clothgroup", "readonly");
+        var clothgroup = tr.objectStore("clothgroup");
+        var result = [];
+        getone(0);
+        function getone(index) {
+            if(ids[index] == null) {
+                callback(result);
+                return;
+            }
+            var req = clothgroup.get(ids[index]);
+            req.addEventListener("success", function (e) {
+                var cgdoc = req.result;
+                if(cgdoc == null) {
+                    console.warn("no cgdoc!", ids, index);
+                }
+                result.push(cgdoc);
+                getone(index + 1);
+            });
+            req.addEventListener("error", function (e) {
+                console.error("getClothGroups error:", req.error);
+                callback(null);
+            });
+        }
+    };
     DB.prototype.setClothGroup = function (doc, callback) {
         var tr = this.db.transaction("clothgroup", "readwrite");
         var clothgroup = tr.objectStore("clothgroup");
@@ -342,6 +367,31 @@ var DB = (function () {
         });
         delete req;
     };
+    DB.prototype.getClothes = function (ids, callback) {
+        var tr = this.db.transaction("cloth", "readonly");
+        var cloth = tr.objectStore("cloth");
+        var result = [];
+        getone(0);
+        function getone(index) {
+            if(ids[index] == null) {
+                callback(result);
+                return;
+            }
+            var req = cloth.get(ids[index]);
+            req.addEventListener("success", function (e) {
+                var doc = req.result;
+                if(!doc) {
+                    console.warn("getClothes nocloth", ids, index);
+                }
+                result.push(doc);
+                getone(index + 1);
+            });
+            req.addEventListener("error", function (e) {
+                console.error("getClothes error:", req.error);
+                callback(null);
+            });
+        }
+    };
     DB.prototype.setCloth = function (doc, callback) {
         var tr = this.db.transaction("cloth", "readwrite");
         var cloth = tr.objectStore("cloth");
@@ -422,11 +472,11 @@ var DB = (function () {
             ], [
                 cond.scheduler, 
                 cond.date.end
-            ]), "next");
+            ], false, false), "next");
         } else if(cond.scheduler != null) {
             req = log.index("scheduler").openCursor(cond.scheduler, "next");
         } else if(cond.date != null) {
-            req = log.index("scheduler").openCursor((IDBKeyRange).bound(cond.date.start, cond.date.end), "next");
+            req = log.index("date").openCursor((IDBKeyRange).bound(cond.date.start, cond.date.end, false, false), "next");
         } else {
             req = log.openCursor(cond.keyrange || null, "next");
         }
