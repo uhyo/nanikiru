@@ -546,10 +546,13 @@ module UI{
 			//テーブルをつくる
 			var table=el("table",(t)=>{
 				var table=<HTMLTableElement>t;
+				table.classList.add("dayvision-table");
 				var tr=<HTMLTableRowElement>table.insertRow(-1);
 				if(mains.length===2){
 					//左上のあきコマ
-					tr.insertCell(-1);
+					((td)=>{
+						td.colSpan=2, td.rowSpan=2;
+					})(<HTMLTableCellElement>tr.insertCell(-1));
 				}
 				if(mains.length>0){
 					//服をれっきょっきょ
@@ -572,6 +575,59 @@ module UI{
 												cloths2.push(cdoc);
 											}else{
 												//調べ終わったぞおおお
+												if(cloths1.length>0 &&cloths2.length>0){
+													//横軸
+													tr.appendChild(el("th",(thh)=>{
+														var th=<HTMLTableHeaderCellElement>thh;
+														th.colSpan=cloths1.length;
+														th.textContent=cgdoc1.name;
+													}));
+													//服をならべてあげる
+													//cloth1のCloth週
+													var c1col:Cloth[]=[];
+													((tr)=>{
+														cloths1.forEach((cdoc1:ClothDoc,i)=>{
+															c1col[i]=Cloth.importCloth(cdoc1);
+															((td)=>{
+																td.appendChild(c1col[i].getSVG("24px","24px"));
+															})(<HTMLTableCellElement>tr.insertCell(-1));
+														});
+													})(<HTMLTableRowElement>table.insertRow(-1));
+													cloths2.forEach((cdoc2:ClothDoc,i)=>{
+														var tr=<HTMLTableRowElement>table.insertRow(-1);
+														if(i===0){
+															//最初は縦軸のアレをついあk
+															tr.appendChild(el("th",(thh)=>{
+																var th=<HTMLTableHeaderCellElement>thh;
+																th.rowSpan=cloths2.length;
+																th.textContent=cgdoc2.name;
+																th.classList.add("vertical-th");
+															}));
+														}
+														var c2svg=Cloth.importCloth(cdoc2);
+														//服インディケータ
+														((td)=>{
+															td.appendChild(c2svg.getSVG("24px","24px"));
+														})(<HTMLTableCellElement>tr.insertCell(-1));
+														cloths1.forEach((cdoc1:ClothDoc,j)=>{
+															((td)=>{
+																//服をいれる
+																td.appendChild(c1col[j].getSVG("32px","32px"));
+																td.appendChild(c2svg.getSVG("32px","32px"));
+																td.classList.add("cloth-option");
+																//配列をつくる
+																var cloths=[cdoc1.id,cdoc2.id];
+																cloths.sort();
+																var clothstr=JSON.stringify(cloths);
+																if(clothScores[clothstr]>-Infinity){
+																	td.dataset.clotharray=clothstr;
+																}else{
+																	td.classList.add("unavailable");
+																}
+															})(<HTMLTableCellElement>tr.insertCell(-1));
+														});
+													});
+												}
 											}
 										});
 									});
@@ -589,7 +645,6 @@ module UI{
 												(function(td){
 													td.appendChild(Cloth.importCloth(cloth).getSVG("32px","32px"));
 													td.classList.add("cloth-option");
-													if(cloth.name)td.title=cloth.name;
 													if(clothScores["["+cloth.id+"]"]>-Infinity){
 														td.dataset.clotharray="["+cloth.id+"]";
 													}else{

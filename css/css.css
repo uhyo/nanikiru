@@ -34,6 +34,29 @@ table.calender td div.dailylog{
 	display:-moz-box;
 	display:box;
 }
+/* dayvision */
+table.dayvision-table{
+	border-collapse:collapse;
+}
+table.dayvision-table td, table.dayvision-table th{
+	border:1px #dddddd solid;
+	text-align:center;
+	vertical-align:middle;
+	padding:0.5ex;
+	background-color:#eeeeee;	/* えらべない感じ */
+}
+table.dayvision-table td.unavailable{
+	background-color:#ffeeee !important;
+}
+table.dayvision-table td.cloth-option{
+	background-color:#ffffff;
+}
+table.dayvision-table td.cloth-option:hover{
+	background-color:#eeffff;
+}
+table.dayvision-table th.vertical-th{
+	max-width:3rem;
+}
 /* cloth */
 .cloth-container{
 	/* dirty prefix */

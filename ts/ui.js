@@ -474,9 +474,12 @@ var UI;
             var mains = scheduler.doc.groups.slice(0, 2);
             var table = el("table", function (t) {
                 var table = t;
+                table.classList.add("dayvision-table");
                 var tr = table.insertRow(-1);
                 if(mains.length === 2) {
-                    tr.insertCell(-1);
+                    (function (td) {
+                        td.colSpan = 2 , td.rowSpan = 2;
+                    })(tr.insertCell(-1));
                 }
                 if(mains.length > 0) {
                     db.getClothGroup(mains[0], function (cgdoc1) {
@@ -496,6 +499,55 @@ var UI;
                                             if(cdoc) {
                                                 cloths2.push(cdoc);
                                             } else {
+                                                if(cloths1.length > 0 && cloths2.length > 0) {
+                                                    tr.appendChild(el("th", function (thh) {
+                                                        var th = thh;
+                                                        th.colSpan = cloths1.length;
+                                                        th.textContent = cgdoc1.name;
+                                                    }));
+                                                    var c1col = [];
+                                                    (function (tr) {
+                                                        cloths1.forEach(function (cdoc1, i) {
+                                                            c1col[i] = Cloth.importCloth(cdoc1);
+                                                            (function (td) {
+                                                                td.appendChild(c1col[i].getSVG("24px", "24px"));
+                                                            })(tr.insertCell(-1));
+                                                        });
+                                                    })(table.insertRow(-1));
+                                                    cloths2.forEach(function (cdoc2, i) {
+                                                        var tr = table.insertRow(-1);
+                                                        if(i === 0) {
+                                                            tr.appendChild(el("th", function (thh) {
+                                                                var th = thh;
+                                                                th.rowSpan = cloths2.length;
+                                                                th.textContent = cgdoc2.name;
+                                                                th.classList.add("vertical-th");
+                                                            }));
+                                                        }
+                                                        var c2svg = Cloth.importCloth(cdoc2);
+                                                        (function (td) {
+                                                            td.appendChild(c2svg.getSVG("24px", "24px"));
+                                                        })(tr.insertCell(-1));
+                                                        cloths1.forEach(function (cdoc1, j) {
+                                                            (function (td) {
+                                                                td.appendChild(c1col[j].getSVG("32px", "32px"));
+                                                                td.appendChild(c2svg.getSVG("32px", "32px"));
+                                                                td.classList.add("cloth-option");
+                                                                var cloths = [
+                                                                    cdoc1.id, 
+                                                                    cdoc2.id
+                                                                ];
+                                                                cloths.sort();
+                                                                var clothstr = JSON.stringify(cloths);
+                                                                if(clothScores[clothstr] > -Infinity) {
+                                                                    td.dataset.clotharray = clothstr;
+                                                                } else {
+                                                                    td.classList.add("unavailable");
+                                                                }
+                                                            })(tr.insertCell(-1));
+                                                        });
+                                                    });
+                                                }
                                             }
                                         });
                                     });
@@ -511,9 +563,6 @@ var UI;
                                                 (function (td) {
                                                     td.appendChild(Cloth.importCloth(cloth).getSVG("32px", "32px"));
                                                     td.classList.add("cloth-option");
-                                                    if(cloth.name) {
-                                                        td.title = cloth.name;
-                                                    }
                                                     if(clothScores["[" + cloth.id + "]"] > -Infinity) {
                                                         td.dataset.clotharray = "[" + cloth.id + "]";
                                                     } else {
