@@ -88,6 +88,9 @@ module UI{
 		public logs:{
 			[index:string]:LogDoc;
 		}={};
+		public clothScores:{
+			[index:string]:number;
+		};
 		constructor(private db:DB,public doc:SchedulerDoc){
 			super();
 		}
@@ -128,9 +131,6 @@ module UI{
 	}
 	//カレンダー
 	export class Calender extends Scheduler{
-		public clothScores:{
-			[index:string]:number;
-		};
 		constructor(private db:DB,public doc:SchedulerDoc){
 			super(db,doc);
 		}
@@ -155,6 +155,7 @@ module UI{
 						var dd=mv.getDate(), mn=mv.getMonth();
 						//セル
 						var td=tr.insertCell(-1);
+						td.classList.add("datecell");
 						if(i===0){
 							td.classList.add("Sunday");
 						}else if(i===6){
@@ -167,6 +168,7 @@ module UI{
 						}
 						//日付をかく
 						var dateStr=mv.getFullYear()+"-"+(mn+1)+"-"+dd;
+						td.dataset.date=dateStr;
 						td.appendChild(el("div",(div)=>{
 							div.classList.add("date");
 							div.appendChild(el("time",(time)=>{
@@ -177,6 +179,7 @@ module UI{
 						}));
 						//服情報
 						if(logs[dateStr]){
+							td.classList.add("haslog");
 							td.appendChild(el("div",(div)=>{
 								div.classList.add("dailylog");
 								//服を並べる
@@ -190,7 +193,7 @@ module UI{
 										})){
 											//ある
 											div.appendChild(Cloth.importCloth({
-												clothType:clothdoc.type,
+												type:clothdoc.type,
 												patterns:clothdoc.patterns,
 											}).getSVG("32px","32px"));
 										}
@@ -230,7 +233,11 @@ module UI{
 							modal.slide("simple",setting);
 							setting.onclose((returnValue:any)=>{
 								//DBを書き換えた
-								this.close("scheduler::open:"+this.doc.id);
+								if(returnValue){
+									this.close(returnValue);
+								}else{
+									this.close("scheduler::open:"+this.doc.id);
+								}
 							});
 						},false);
 					}));
@@ -238,14 +245,30 @@ module UI{
 				c.appendChild(t);
 				//スコア計算
 				this.calculateScore(logs,d);
+				//テーブルイベント
+				t.addEventListener("click",(e)=>{
+					//ますを探す
+					var node:HTMLElement=<HTMLElement>e.target;
+					do{
+						if(node.classList && node.classList.contains("datecell")){
+							if(!node.classList.contains("haslog")){
+								//これだ!(まだログがない)
+								var thisdate=new Date(node.dataset.date);
+								//開く
+								var modal=new ModalUI(this);
+								var dv=new DayVision(db,this);
+								dv.open(thisdate);
+								modal.slide("simple",dv,(returnValue:any)=>{
+									//ここ書いてないよ!
+									if(returnValue){
+										this.close(returnValue);
+									}
+								});
+							}
+						}
+					}while(node=<HTMLElement>node.parentNode);
+				},false);
 			});
-		}
-		private zeroDate(d:Date):void{
-			//時刻セット
-			d.setHours(0);
-			d.setMinutes(0);
-			d.setSeconds(0);
-			d.setMilliseconds(0);
 		}
 		//このカレンダーの最初の日付を求める
 		private startDate(d:Date):Date{
@@ -253,7 +276,7 @@ module UI{
 			mv.setDate(1);	//とりあえず今月のついたちにする
 			//日曜まで戻す
 			mv.setDate(1-mv.getDay());
-			this.zeroDate(mv);
+			mv=zeroDate(mv);
 			return mv;
 		}
 		private lastDate(d:Date):Date{
@@ -288,16 +311,15 @@ module UI{
 			[index:string]:LogDoc;
 		},d:Date,callback?:()=>void=function(){}):void{
 			var db=this.db,doc:SchedulerDoc=this.doc;
+			if(!this.clothScores)this.clothScores={};
 			var cs=this.clothScores;
 			//cs format:JSON clothid array(sorted)
 			var clothscores:{
 				[index:number]:number;	//clothid:score
 			}=<any>{};
-			var startd=new Date(d.getTime());
-			this.zeroDate(startd);
+			var startd=zeroDate(d);
 			for(var key in logs){
-				var dd=new Date(key);
-				this.zeroDate(dd);	//0時どうしにする
+				var dd=zeroDate(new Date(key));
 				var sub=Math.floor((startd.getTime()-dd.getTime())/(1000*3600*24));	//日数の差
 				//日数の差に応じて減点（近すぎ）
 				var badpoint=0;
@@ -332,7 +354,7 @@ module UI{
 					group:mains[0],
 				},(cdoc:ClothDoc)=>{
 					if(cdoc!=null){
-						cs["["+cdoc.id+"]"]=clothscores[cdoc.id] || 0;
+						cs["["+cdoc.id+"]"]=cdoc.status!=="active" ? -Infinity : clothscores[cdoc.id] || 0;
 					}else{
 						callback();
 					}
@@ -460,7 +482,7 @@ module UI{
 					var result;
 					if(result=returnValue.match(/^select;(\d+)$/)){
 						//ふつうに選択
-						this.close("clothgroup::open:"+result[1]);
+						this.close("clothgroup::id:"+result[1]);
 						return;
 					}else if(result=returnValue.match(/^delete;(\d+)$/)){
 						//これはどける
@@ -478,6 +500,9 @@ module UI{
 						}
 						return;
 					}
+				}
+				if(returnValue){
+					this.close(returnValue);
 				}
 			});
 			c.appendChild(list.getContent());
@@ -506,6 +531,206 @@ module UI{
 					time.textContent=(date.getMonth()+1)+"/"+date.getDate();
 				}));
 			}));
+		}
+	}
+	//スケジューラ付随の今日は何着る?画面
+	export class DayVision extends UISection{
+		constructor(private db:DB,private scheduler:Scheduler){
+			super();
+		}
+		open(d:Date):void{
+			var db=this.db, scheduler=this.scheduler;
+			var c=this.getContent();
+			var clothScores=scheduler.clothScores;
+			var mains=scheduler.doc.groups.slice(0,2);	//メインの服グループ
+			//テーブルをつくる
+			var table=el("table",(t)=>{
+				var table=<HTMLTableElement>t;
+				var tr=<HTMLTableRowElement>table.insertRow(-1);
+				if(mains.length===2){
+					//左上のあきコマ
+					tr.insertCell(-1);
+				}
+				if(mains.length>0){
+					//服をれっきょっきょ
+					db.getClothGroup(mains[0],(cgdoc1:ClothGroupDoc)=>{
+						var cloths1:ClothDoc[]=[];
+						db.eachCloth({
+							group:mains[0],
+						},(cdoc:ClothDoc)=>{
+							if(cdoc){
+								cloths1.push(cdoc);
+							}else{
+								//列挙した!2つ目
+								if(mains.length>1){
+									db.getClothGroup(mains[1],(cgdoc2:ClothGroupDoc)=>{
+										var cloths2:ClothDoc[]=[];
+										db.eachCloth({
+											group:mains[1],
+										},(cdoc:ClothDoc)=>{
+											if(cdoc){
+												cloths2.push(cdoc);
+											}else{
+												//調べ終わったぞおおお
+											}
+										});
+									});
+								}else{
+									//1つだけ
+									if(cloths1.length>0){
+										tr.appendChild(el("th",(thh)=>{
+											var th=<HTMLTableHeaderCellElement>thh;
+											th.colSpan=cloths1.length;
+											th.textContent=cgdoc1.name;
+										}));
+										(function(tr){
+											//服をぜんぶ書く
+											cloths1.forEach((cloth:ClothDoc)=>{
+												(function(td){
+													td.appendChild(Cloth.importCloth(cloth).getSVG("32px","32px"));
+													td.classList.add("cloth-option");
+													if(cloth.name)td.title=cloth.name;
+													if(clothScores["["+cloth.id+"]"]>-Infinity){
+														td.dataset.clotharray="["+cloth.id+"]";
+													}else{
+														td.classList.add("unavailable");
+													}
+												})(<HTMLTableCellElement>tr.insertCell(-1));
+											});
+										})(<HTMLTableRowElement>table.insertRow(-1));
+									}
+								}
+							}
+						});
+					});
+				}
+			});
+			empty(c);
+			c.appendChild(el("h1",(h1)=>{
+				h1.textContent=(d.getMonth()+1)+"月"+d.getDate()+"日の服を選択";
+			}));
+			c.appendChild(table);
+			//クリックイベント
+			table.addEventListener("click",(e)=>{
+				//ますを探す
+				var node:HTMLElement=<HTMLElement>e.target;
+				do{
+					if(node.classList && node.classList.contains("cloth-option")){
+						if(!node.classList.contains("unavailable")){
+							//開く
+							var modal=new ModalUI(this);
+							var ddc=new DayDecision(db,scheduler);
+							ddc.open(d,<number[]>JSON.parse(node.dataset.clotharray));
+							modal.slide("simple",ddc,(returnValue:any)=>{
+								//ここ書いてないよ!
+								if(returnValue){
+									this.close(returnValue);
+								}
+							});
+						}
+					}
+				}while(node=<HTMLElement>node.parentNode);
+			},false);
+		}
+	}
+	export class DayDecision extends UISection{
+		constructor(private db:DB,private scheduler:Scheduler){
+			super();
+		}
+		open(d:Date,cloth:number[]):void{
+			//cloth: 服IDを列挙 sorted
+			var original_cloth=cloth;
+			cloth=cloth.concat([]);	//非破壊的
+			d=zeroDate(d);
+			var db=this.db, scheduler=this.scheduler;
+			//ここ書いてないよ!
+			var c=this.getContent();
+			empty(c);
+			c.appendChild(el("h1",(h1)=>{
+				h1.textContent=(d.getMonth()+1)+"月"+d.getDate()+"日の服装";
+			}));
+			//服グループごとに
+			var groups=scheduler.doc.groups;
+			//まず服の情報を全部とる
+			var clothdocs:ClothDoc[]=[];
+			var getCloth;
+			(getCloth=(index:number)=>{
+				db.getCloth(cloth[index],(cdoc:ClothDoc)=>{
+					if(cdoc){
+						clothdocs[index]=cdoc;
+						if(index<cloth.length-1){
+							getCloth(index+1);
+							return;
+						}
+					}
+					//もう終わり
+					//とりあえずボタンつくっておく
+					var button=<HTMLButtonElement>el("button",(button)=>{
+						button.textContent=(d.getMonth()+1)+"月"+d.getDate()+"日の服を登録";
+					});
+					groups.forEach((x:number)=>{
+						c.appendChild(el("section",(section)=>{
+							db.getClothGroup(x,(cgdoc:ClothGroupDoc)=>{
+								section.appendChild(el("h1",(h1)=>{
+									h1.appendChild(icons.clothgroup({
+										width:"32px",
+										height:"32px",
+									}));
+									h1.appendChild(document.createTextNode(cgdoc.name));
+								}));
+								//服
+								for(var i=0,l=clothdocs.length;i<l;i++){
+									if(cloth[i]!=null && clothdocs[i].group.indexOf(cgdoc.id)>=0){
+										//これに当てはまる
+										section.appendChild(el("div",(div)=>{
+											div.appendChild(Cloth.importCloth(clothdocs[i]).getSVG("48px","48px"));
+										}));
+										cloth[i]=null;	//消費済み
+										break;
+									}
+								}
+								if(i===l){
+									//該当なしだった
+									section.appendChild(el("p",(p)=>{
+										p.textContent="服が未選択です。";
+									}));
+									section.appendChild(el("div",(div)=>{
+										//服一覧
+										db.eachCloth({
+											group:cgdoc.id
+										},(cdoc)=>{
+											if(cdoc){
+												div.appendChild(Cloth.importCloth(cdoc).getSVG("32px","32px"));
+											}
+										});
+									}));
+									//まだだめだよ!
+									button.disabled=true;
+								}
+							});
+						}));
+					});
+					//登録ボタン
+					c.appendChild(el("p",(p)=>{
+						p.appendChild(button);
+						button.addEventListener("click",(e)=>{
+							//服を登録する
+							//dbにaddLogを追加するところから!
+							var newlog:LogDoc={
+								id:null,
+								scheduler:scheduler.doc.id,
+								cloth:original_cloth,
+								date:d,
+							};
+							delete newlog.id;
+							db.addupLog(newlog,(result:number)=>{
+								//成功を伝える
+								this.close("scheduler::open:"+newlog.scheduler);
+							});
+						},false);
+					}));
+				});
+			})(0);
 		}
 	}
 	//スケジューラコンテナ
@@ -1020,7 +1245,7 @@ module UI{
 													var clothd:ClothDoc={
 														id:null,
 														name:"",
-														type:returnValue.doc.clothType,
+														type:returnValue.doc.type,
 														patterns:returnValue.doc.patterns,
 														group:[doc.id],
 														used:0,
@@ -1131,7 +1356,7 @@ module UI{
 		private mainArea:HTMLElement;
 		private cloth:Cloth;	//現在編集中のやつ
 		constructor(private doc:{
-			clothType:string;
+			type:string;
 			patterns:PatternObj[];
 		}){
 			super();
@@ -1146,7 +1371,7 @@ module UI{
 					//服を入れていく
 					Cloth.clothTypes.forEach((obj)=>{
 						var sample=Cloth.importCloth({
-							clothType:obj.type,
+							type:obj.type,
 							patterns:[],
 						});
 						div.appendChild(el("div",(div)=>{
@@ -1213,7 +1438,7 @@ module UI{
 			//docがない!?
 			if(!doc){
 				doc=this.doc={
-					clothType:"T-shirt",
+					type:"T-shirt",
 					patterns:[],
 				};
 			}
@@ -1224,7 +1449,7 @@ module UI{
 			this.cloth=Cloth.importCloth(this.doc);
 			var pats=this.doc.patterns;
 			//数たりてるかチェック
-			var tytyty=Cloth.clothTypes.filter((x)=>x.type===this.doc.clothType)[0];
+			var tytyty=Cloth.clothTypes.filter((x)=>x.type===this.doc.type)[0];
 			while(pats.length<tytyty.patternNumber){
 				pats[pats.length]={
 					type:"simple",
@@ -1329,7 +1554,7 @@ module UI{
 				//情報をもとに構築
 				c.appendChild(el("h1",(h1)=>{
 					h1.appendChild(Cloth.importCloth({
-						clothType:doc.type,
+						type:doc.type,
 						patterns:doc.patterns,
 					}).getSVG("128px","128px"));
 					h1.appendChild(document.createTextNode(doc.name ? doc.name+"の設定" : "設定"));
@@ -1340,7 +1565,7 @@ module UI{
 						b.addEventListener("click",(e)=>{
 							//デザイン変更するぜ!
 							var sel=new ClothSelect({
-								clothType:doc.type,
+								type:doc.type,
 								patterns:doc.patterns,
 							});
 							var modal=new ModalUI(this);
@@ -1348,7 +1573,7 @@ module UI{
 								if(returnValue!=null){
 									if(returnValue.mode==="save"){
 										//保存
-										doc.type=returnValue.doc.clothType;
+										doc.type=returnValue.doc.type;
 										doc.patterns=returnValue.doc.patterns;
 										this.saveDoc(doc);
 									}
@@ -1395,6 +1620,11 @@ module UI{
 					if(doc.status==="washer"){
 						section.appendChild(el("p",(p)=>{
 							p.textContent="洗濯中";
+						}));
+					}
+					if(doc.lastuse){
+						section.appendChild(el("p",(p)=>{
+							p.textContent="最後に使用した日付:"+doc.lastuse.getFullYear()+"年"+(doc.lastuse.getMonth()+1)+"月"+doc.lastuse.getDate()+"日";
 						}));
 					}
 				}));
@@ -1965,7 +2195,7 @@ module UI{
 				div.classList.add("selection");
 				//アイコン
 				var cloth=Cloth.importCloth({
-					clothType:doc.type,
+					type:doc.type,
 					patterns:doc.patterns,
 				});
 				div.appendChild(cloth.getSVG("32px","32px"));
@@ -1983,6 +2213,15 @@ module UI{
 	//util
 	function empty(el:Element):void{
 		while(el.firstChild)el.removeChild(el.firstChild);
+	}
+	function zeroDate(d:Date):Date{
+		//時刻セット
+		var result=new Date(d.getTime());
+		result.setHours(0);
+		result.setMinutes(0);
+		result.setSeconds(0);
+		result.setMilliseconds(0);
+		return result;
 	}
 }
 class Cloth{
@@ -2019,11 +2258,17 @@ class Cloth{
 		}
 	];
 	//JSON的なobjから作る
-	importCloth(obj:any):void{
-		this.clothType = obj.clothType || null;
+	importCloth(obj:{
+		type:string;
+		patterns:PatternObj[];
+	}):void{
+		this.clothType = obj.type || null;
 		this.patterns = Array.isArray(obj.patterns) ? obj.patterns : [];
 	}
-	static importCloth(obj:any):Cloth{
+	static importCloth(obj:{
+		type:string;
+		patterns:PatternObj[];
+	}):Cloth{
 		var c=new Cloth();
 		c.importCloth(obj);
 		return c;
@@ -2031,7 +2276,7 @@ class Cloth{
 	//出す
 	exportCloth():any{
 		return {
-			clothType:this.clothType,
+			type:this.clothType,
 			patterns:this.patterns,
 		};
 	}

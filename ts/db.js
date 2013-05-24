@@ -352,7 +352,7 @@ var DB = (function () {
             }, 0);
         });
         req.addEventListener("error", function (e) {
-            console.error("getCloth error:", req.error);
+            console.error("setCloth error:", req.error);
             callback(null);
         });
         delete req;
@@ -386,6 +386,21 @@ var DB = (function () {
         });
         req.addEventListener("error", function (e) {
             console.error("eachCloth error:", req.error);
+            callback(null);
+        });
+        delete req;
+    };
+    DB.prototype.setLog = function (doc, callback) {
+        var tr = this.db.transaction("log", "readwrite");
+        var log = tr.objectStore("log");
+        var req = log.put(doc);
+        req.addEventListener("success", function (e) {
+            setTimeout(function () {
+                callback(req.result);
+            }, 0);
+        });
+        req.addEventListener("error", function (e) {
+            console.error("setLog error:", req.error);
             callback(null);
         });
         delete req;
@@ -431,6 +446,52 @@ var DB = (function () {
         });
         req.addEventListener("error", function (e) {
             console.error("eachLog error:", req.error);
+            callback(null);
+        });
+        delete req;
+    };
+    DB.prototype.addupLog = function (doc, callback) {
+        var tr = this.db.transaction([
+            "cloth", 
+            "log"
+        ], "readwrite");
+        var cloth = tr.objectStore("cloth"), log = tr.objectStore("log");
+        var req = log.put(doc);
+        req.addEventListener("success", function (e) {
+            var count = 0;
+            doc.cloth.forEach(function (cid) {
+                var req2 = cloth.get(cid);
+                req2.addEventListener("success", function (e) {
+                    var cdoc = req2.result;
+                    cdoc.used++;
+                    if(!cdoc.lastuse || cdoc.lastuse.getTime() < doc.date.getTime()) {
+                        cdoc.lastuse = doc.date;
+                    }
+                    var req3 = cloth.put(cdoc);
+                    req3.addEventListener("success", function (e) {
+                        count++;
+                        if(count >= doc.cloth.length) {
+                            setTimeout(function () {
+                                callback(req.result);
+                            }, 0);
+                        }
+                    });
+                    req3.addEventListener("error", function (e) {
+                        console.error("addupLog error:", req3.error);
+                        tr.abort();
+                        callback(null);
+                    });
+                });
+                req2.addEventListener("error", function (e) {
+                    console.error("addupLog error:", req2.error);
+                    tr.abort();
+                    callback(null);
+                });
+            });
+        });
+        req.addEventListener("error", function (e) {
+            console.error("addupLog error:", req.error);
+            tr.abort();
             callback(null);
         });
         delete req;

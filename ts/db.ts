@@ -427,7 +427,7 @@ class DB{
 			},0);
 		});
 		req.addEventListener("error",(e)=>{
-			console.error("getCloth error:",req.error);
+			console.error("setCloth error:",req.error);
 			callback(null);
 		});
 		delete req;
@@ -475,6 +475,21 @@ class DB{
 		delete req;
 	}
 	//cloth log
+	setLog(doc:LogDoc,callback:(result:number)=>void):void{
+		var tr=this.db.transaction("log","readwrite");
+		var log=tr.objectStore("log");
+		var req:IDBRequest=log.put(doc);
+		req.addEventListener("success",(e)=>{
+			setTimeout(()=>{
+				callback(req.result);
+			},0);
+		});
+		req.addEventListener("error",(e)=>{
+			console.error("setLog error:",req.error);
+			callback(null);
+		});
+		delete req;
+	}
 	eachLog(cond:{
 		keyrange?:any;
 		scheduler?:number;	//scheduler id
@@ -522,6 +537,56 @@ class DB{
 		});
 		req.addEventListener("error",(e)=>{
 			console.error("eachLog error:",req.error);
+			callback(null);
+		});
+		delete req;
+	}
+	//log utility
+	addupLog(doc:LogDoc,callback:(result:number)=>void):void{
+		var tr=this.db.transaction(["cloth","log"],"readwrite");
+		var cloth=tr.objectStore("cloth"), log=tr.objectStore("log");
+		var req:IDBRequest=log.put(doc);
+		req.addEventListener("success",(e)=>{
+			//まずログを入れた。服の使用回数更新
+			var count=0;
+			//全部リクエスト
+			doc.cloth.forEach((cid:number)=>{
+				var req2:IDBRequest=cloth.get(cid);
+				req2.addEventListener("success",(e)=>{
+					var cdoc=<ClothDoc>req2.result;
+					//かきかえ
+					cdoc.used++;
+					//新しければ日付も
+					if(!cdoc.lastuse || cdoc.lastuse.getTime()<doc.date.getTime()){
+						cdoc.lastuse=doc.date;
+					}
+					var req3:IDBRequest=cloth.put(cdoc);
+					req3.addEventListener("success",(e)=>{
+						//かきかえできた
+						count++;
+						if(count>=doc.cloth.length){
+							//全部書き換え完了!
+							setTimeout(()=>{
+								callback(req.result);
+							},0);
+						}
+					});
+					req3.addEventListener("error",(e)=>{
+						console.error("addupLog error:",req3.error);
+						tr.abort();
+						callback(null);
+					});
+				});
+				req2.addEventListener("error",(e)=>{
+					console.error("addupLog error:",req2.error);
+					tr.abort();
+					callback(null);
+				});
+			});
+		});
+		req.addEventListener("error",(e)=>{
+			console.error("addupLog error:",req.error);
+			tr.abort();
 			callback(null);
 		});
 		delete req;
