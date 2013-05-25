@@ -703,6 +703,7 @@ module UI{
 					}
 				});
 				empty(c);
+				c.classList.add("limit-width");
 				c.appendChild(el("h1",(h1)=>{
 					h1.textContent=(d.getMonth()+1)+"月"+d.getDate()+"日の服を選択";
 				}));
@@ -2095,6 +2096,7 @@ module UI{
 		constructor(){
 			super();
 			var c=this.getContent();
+			c.classList.add("menu");
 			c.textContent="メニュー:";
 			//各種ボタン
 			c.appendChild(el("button",(button)=>{

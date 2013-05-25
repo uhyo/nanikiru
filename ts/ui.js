@@ -607,6 +607,7 @@ var UI;
                     }
                 });
                 empty(c);
+                c.classList.add("limit-width");
                 c.appendChild(el("h1", function (h1) {
                     h1.textContent = (d.getMonth() + 1) + "月" + d.getDate() + "日の服を選択";
                 }));
@@ -1909,6 +1910,7 @@ var UI;
             var _this = this;
                 _super.call(this);
             var c = this.getContent();
+            c.classList.add("menu");
             c.textContent = "メニュー:";
             c.appendChild(el("button", function (button) {
                 button.textContent = "トップ";

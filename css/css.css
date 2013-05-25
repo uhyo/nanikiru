@@ -1,3 +1,47 @@
+/* 全体 */
+body{
+	margin:0;
+}
+body > header{
+	madgin:0;
+	padding:0.2ex;
+	background-color:#eeeeee;
+}
+body > header h1{
+	font-family:fantasy;
+	font-size:1.8rem;
+	margin:0;
+	color:#333333;
+}
+main#main{
+	margin:6px;
+}
+.menu{
+	background-color:#f6f6f6;
+	margin:-6px -6px 4px -6px;
+}
+section{
+	border:1px solid #bbbbbb;
+	margin:0.3ex;
+	padding:0.3ex;
+}
+section h1{
+	margin:0.2ex;
+	font-size: 1.5rem;
+	color:#444444;
+	border-bottom: 1px dashed #cccccc;
+}
+section section h1{
+	font-size:1.25rem;
+}
+/* sccon */
+.scheduler-container{
+	/* dirty prefix */
+	/*display:-webkit-box;
+	display:-moz-box;
+	display:box;*/
+}
+
 /* カレンダー */
 table.calender{
 	border-collapse:collapse;
@@ -31,13 +75,6 @@ table.calender td div.dailylog{
 table.calender td:hover{
 	background-color:#f4f4f4;
 }
-/* sccon */
-.scheduler-container{
-	/* dirty prefix */
-	display:-webkit-box;
-	display:-moz-box;
-	display:box;
-}
 /* dayvision */
 table.dayvision-table{
 	border-collapse:collapse;
@@ -66,6 +103,7 @@ div.cloth-option{
 	border:1px #dddddd solid;
 	text-align:center;
 	padding:0.5ex;
+	display:inline-block;
 }
 div.cloth-option:hover{
 	background-color:#eeffff;
