@@ -50,7 +50,7 @@ table.dayvision-table td, table.dayvision-table th{
 	background-color:#eeeeee;	/* えらべない感じ */
 }
 table.dayvision-table td.unavailable{
-	background-color:#ffeeee !important;
+	background-color:#ffdddd !important;
 }
 table.dayvision-table td.cloth-option{
 	background-color:#ffffff;
