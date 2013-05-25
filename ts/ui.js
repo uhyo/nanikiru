@@ -449,25 +449,6 @@ var UI;
         return SchedulerConfig;
     })(UISection);
     UI.SchedulerConfig = SchedulerConfig;    
-    var DateIndicator = (function (_super) {
-        __extends(DateIndicator, _super);
-        function DateIndicator(scheduler) {
-                _super.call(this);
-            this.scheduler = scheduler;
-            var date = scheduler.date;
-            var c = this.getContent();
-            c.classList.add("dateindicator");
-            c.appendChild(el("h1", function (h1) {
-                h1.appendChild(el("time", function (t) {
-                    var time = t;
-                    time.dateTime = date.toJSON();
-                    time.textContent = (date.getMonth() + 1) + "/" + date.getDate();
-                }));
-            }));
-        }
-        return DateIndicator;
-    })(UISection);
-    UI.DateIndicator = DateIndicator;    
     var DayVision = (function (_super) {
         __extends(DayVision, _super);
         function DayVision(db, scheduler) {
@@ -617,6 +598,40 @@ var UI;
                     }
                 }while(node = node.parentNode);
             }, false);
+            c.appendChild(el("section", function (section) {
+                console.log(clothScores);
+                var combs = Object.keys(clothScores);
+                if(combs.length > 0) {
+                    combs.sort(function (a, b) {
+                        return clothScores[b] - clothScores[a];
+                    });
+                    combs = combs.filter(function (x) {
+                        return x === combs[0];
+                    });
+                    var osusume = JSON.parse(combs[Math.floor(combs.length * Math.random())]);
+                    section.appendChild(el("h1", function (h1) {
+                        h1.textContent = "おすすめの組み合わせ";
+                    }));
+                    section.appendChild(el("div", function (div) {
+                        div.classList.add("cloth-option");
+                        db.getClothes(osusume, function (cdocs) {
+                            cdocs.forEach(function (cdoc) {
+                                div.appendChild(Cloth.importCloth(cdoc).getSVG("32px", "32px"));
+                            });
+                        });
+                        div.addEventListener("click", function (e) {
+                            var modal = new ModalUI(_this);
+                            var ddc = new DayDecision(db, scheduler);
+                            ddc.open(d, osusume);
+                            modal.slide("simple", ddc, function (returnValue) {
+                                if(returnValue) {
+                                    _this.close(returnValue);
+                                }
+                            });
+                        }, false);
+                    }));
+                }
+            }));
         };
         return DayVision;
     })(UISection);
@@ -820,8 +835,6 @@ var UI;
                             _this.close("scheduler::open:" + _this.id);
                         });
                     }
-                    var datewin = new DateIndicator(result);
-                    c.appendChild(datewin.getContent());
                 } else {
                     c.appendChild(el("p", function (p) {
                         p.textContent = "スケジューラがありません。";

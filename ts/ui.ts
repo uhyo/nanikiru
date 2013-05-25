@@ -526,23 +526,6 @@ module UI{
 			});
 		}
 	}
-	//日付表示
-	export class DateIndicator extends UISection{
-		constructor(private scheduler:Scheduler){
-			super();
-			var date=scheduler.date;
-			var c=this.getContent();
-			c.classList.add("dateindicator");
-			c.appendChild(el("h1",(h1)=>{
-				h1.appendChild(el("time",(t)=>{
-					var time=<HTMLTimeElement>t;
-					
-					time.dateTime=date.toJSON();
-					time.textContent=(date.getMonth()+1)+"/"+date.getDate();
-				}));
-			}));
-		}
-	}
 	//スケジューラ付随の今日は何着る?画面
 	export class DayVision extends UISection{
 		constructor(private db:DB,private scheduler:Scheduler){
@@ -705,6 +688,45 @@ module UI{
 					}
 				}while(node=<HTMLElement>node.parentNode);
 			},false);
+			//今日のおすすめ!!
+			c.appendChild(el("section",(section)=>{
+				console.log(clothScores);
+				var combs:string[]=Object.keys(clothScores);
+				if(combs.length>0){
+					//スコア順でソート(降順)
+					combs.sort((a,b)=>{
+						return clothScores[b]-clothScores[a];
+					});
+					//一番いいのを取り出す
+					combs=combs.filter((x)=>{
+						return x===combs[0];
+					});
+					//複数あったらランダムで選ぶ
+					var osusume=<number[]>JSON.parse(combs[Math.floor(combs.length*Math.random())]);
+					section.appendChild(el("h1",(h1)=>{
+						h1.textContent="おすすめの組み合わせ";
+					}));
+					section.appendChild(el("div",(div)=>{
+						div.classList.add("cloth-option");
+						db.getClothes(osusume,(cdocs:ClothDoc[])=>{
+							cdocs.forEach((cdoc)=>{
+								div.appendChild(Cloth.importCloth(cdoc).getSVG("32px","32px"));
+							});
+						});
+						div.addEventListener("click",(e)=>{
+							//ひょえーーーー
+							var modal=new ModalUI(this);
+							var ddc=new DayDecision(db,scheduler);
+							ddc.open(d,osusume);
+							modal.slide("simple",ddc,(returnValue:any)=>{
+								if(returnValue){
+									this.close(returnValue);
+								}
+							});
+						},false);
+					}));
+				}
+			}));
 		}
 	}
 	export class DayDecision extends UISection{
@@ -929,9 +951,6 @@ module UI{
 							this.close("scheduler::open:"+this.id);
 						});
 					}
-					//日付部分
-					var datewin=new DateIndicator(result);
-					c.appendChild(datewin.getContent());
 				}else{
 					c.appendChild(el("p",(p)=>{
 						p.textContent="スケジューラがありません。";
