@@ -92,6 +92,12 @@ module Panels{
 						var cl=new ClothPanel(this.host,this.db,Number(result[1]));
 						this.host.setPanel(cl);
 					}
+
+					if(returnValue==="washer::"){
+						//洗濯機を調べますか? → はい
+						var wa=new WasherPanel(this.host,this.db);
+						this.host.setPanel(wa);
+					}
 				}
 			});
 		}
@@ -169,7 +175,16 @@ module Panels{
 			c.appendChild(info.getContent());
 			this.closeManage(info);
 		}
-
+	}
+	export class WasherPanel extends Panel{
+		constructor(private host:AppHost,private db:DB){
+			super(host,db);
+			var c=this.initContainer();
+			var washer=new UI.Washer(db);
+			washer.open();
+			c.appendChild(washer.getContent());
+			this.closeManage(washer);
+		}
 	}
 	function el(name:string,callback?:(e:HTMLElement)=>void):HTMLElement{
 		var result=document.createElement(name);

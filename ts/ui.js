@@ -1647,7 +1647,22 @@ var UI;
                     }));
                     if(doc.status === "washer") {
                         section.appendChild(el("p", function (p) {
-                            p.textContent = "洗濯中";
+                            p.textContent = "洗濯機に入っています";
+                        }));
+                        section.appendChild(el("p", function (p) {
+                            p.appendChild(el("button", function (button) {
+                                button.appendChild(icons.washer({
+                                    width: "28px",
+                                    height: "28px"
+                                }));
+                                button.appendChild(document.createTextNode("洗濯機から出す"));
+                                button.addEventListener("click", function (e) {
+                                    doc.status = "active";
+                                    db.setCloth(doc, function (result) {
+                                        _this.open();
+                                    });
+                                }, false);
+                            }));
                         }));
                     } else {
                         section.appendChild(el("p", function (p) {
@@ -1767,6 +1782,77 @@ var UI;
         return ClothInfo;
     })(UISection);
     UI.ClothInfo = ClothInfo;    
+    var Washer = (function (_super) {
+        __extends(Washer, _super);
+        function Washer(db) {
+                _super.call(this);
+            this.db = db;
+        }
+        Washer.prototype.open = function () {
+            var _this = this;
+            var db = this.db;
+            var c = this.getContent();
+            empty(c);
+            c.appendChild(el("h1", function (h1) {
+                h1.appendChild(icons.washer({
+                    width: "48px",
+                    height: "48px"
+                }));
+                h1.appendChild(document.createTextNode("洗濯機"));
+            }));
+            c.appendChild(el("section", function (section) {
+                section.appendChild(el("h1", function (h1) {
+                    h1.textContent = "洗濯機の中にある服の一覧";
+                }));
+                var count = 0;
+                db.eachCloth({
+                    status: "washer"
+                }, function (cdoc) {
+                    if(cdoc == null) {
+                        if(count === 0) {
+                            section.appendChild(el("p", function (p) {
+                                p.textContent = "服は入っていません。";
+                            }));
+                        } else {
+                            section.appendChild(el("p", function (p) {
+                                p.appendChild(el("button", function (button) {
+                                    button.textContent = "洗う";
+                                    button.title = "洗うと服の使用回数が0回に戻ります。";
+                                    button.addEventListener("click", function (e) {
+                                        var count2 = 0;
+                                        db.eachCloth({
+                                            status: "washer"
+                                        }, function (cdoc) {
+                                            if(cdoc == null) {
+                                                return;
+                                            }
+                                            cdoc.status = "active";
+                                            cdoc.used = 0;
+                                            db.setCloth(cdoc, function (result) {
+                                                count2++;
+                                                if(count === count2) {
+                                                    _this.open();
+                                                }
+                                            });
+                                        });
+                                    }, false);
+                                }));
+                            }));
+                        }
+                        return;
+                    }
+                    section.appendChild(selectbox.cloth(cdoc, {
+                        size: "32px"
+                    }, function (mode) {
+                        _this.close("cloth::" + cdoc.id);
+                    }));
+                    count++;
+                });
+            }));
+        };
+        return Washer;
+    })(UISection);
+    UI.Washer = Washer;    
     var Dialog = (function (_super) {
         __extends(Dialog, _super);
         function Dialog(title, message, buttons) {
@@ -1851,6 +1937,17 @@ var UI;
                 }));
                 button.addEventListener("click", function (e) {
                     _this.close("clothgroup::list:");
+                }, false);
+            }));
+            c.appendChild(el("button", function (button) {
+                button.classList.add("iconbutton");
+                button.title = "洗濯機";
+                button.appendChild(icons.washer({
+                    width: "32px",
+                    height: "32px"
+                }));
+                button.addEventListener("click", function (e) {
+                    _this.close("washer::");
                 }, false);
             }));
         }

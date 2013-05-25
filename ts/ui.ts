@@ -1829,7 +1829,23 @@ module UI{
 					}));
 					if(doc.status==="washer"){
 						section.appendChild(el("p",(p)=>{
-							p.textContent="洗濯中";
+							p.textContent="洗濯機に入っています";
+						}));
+						section.appendChild(el("p",(p)=>{
+							p.appendChild(el("button",(button)=>{
+								button.appendChild(icons.washer({
+									width:"28px",
+									height:"28px",
+								}));
+								button.appendChild(document.createTextNode("洗濯機から出す"));
+								button.addEventListener("click",(e)=>{
+									//おせんたくするぞ!
+									doc.status="active";
+									db.setCloth(doc,(result:number)=>{
+										this.open();
+									});
+								},false);
+							}));
 						}));
 					}else{
 						section.appendChild(el("p",(p)=>{
@@ -1958,6 +1974,74 @@ module UI{
 			});
 		}
 	}
+	//洗濯機
+	export class Washer extends UISection{
+		constructor(private db:DB){
+			super();
+		}
+		open():void{
+			var db=this.db;
+			var c=this.getContent();
+			empty(c);
+			c.appendChild(el("h1",(h1)=>{
+				h1.appendChild(icons.washer({
+					width:"48px",
+					height:"48px",
+				}));
+				h1.appendChild(document.createTextNode("洗濯機"));
+			}));
+			c.appendChild(el("section",(section)=>{
+				section.appendChild(el("h1",(h1)=>{
+					h1.textContent="洗濯機の中にある服の一覧";
+				}));
+				var count:number=0;
+				db.eachCloth({
+					status:"washer",
+				},(cdoc:ClothDoc)=>{
+					if(cdoc==null){
+						//もうない
+						if(count===0){
+							section.appendChild(el("p",(p)=>{
+								p.textContent="服は入っていません。";
+							}));
+						}else{
+							//洗う
+							section.appendChild(el("p",(p)=>{
+								p.appendChild(el("button",(button)=>{
+									button.textContent="洗う";
+									button.title="洗うと服の使用回数が0回に戻ります。";
+									button.addEventListener("click",(e)=>{
+										var count2:number=0;
+										db.eachCloth({
+											status:"washer",
+										},(cdoc)=>{
+											if(cdoc==null)return;
+											cdoc.status="active";
+											cdoc.used=0;
+											db.setCloth(cdoc,(result:number)=>{
+												count2++;
+												if(count===count2){
+													//全部
+													this.open();
+												}
+											});
+										});
+									},false);
+								}));
+							}));
+						}
+						return;
+					}
+					section.appendChild(selectbox.cloth(cdoc,{
+						size:"32px",
+					},(mode:string)=>{
+						this.close("cloth::"+cdoc.id);
+					}));
+					count++;
+				});
+			}));
+		}
+	}
 	//ダイアログ
 	class Dialog extends UISection{
 		constructor(private title:string,private message:string,private buttons:string[]){
@@ -2040,6 +2124,17 @@ module UI{
 				}));
 				button.addEventListener("click",(e)=>{
 					this.close("clothgroup::list:");
+				},false);
+			}));
+			c.appendChild(el("button",(button)=>{
+				button.classList.add("iconbutton");
+				button.title="洗濯機";
+				button.appendChild(icons.washer({
+					width:"32px",
+					height:"32px",
+				}));
+				button.addEventListener("click",(e)=>{
+					this.close("washer::");
 				},false);
 			}));
 		}

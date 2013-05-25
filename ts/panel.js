@@ -47,9 +47,6 @@ var Panels;
                                 });
                                 break;
                             case "conf":
-                                console.log("hyoe-");
-                                debugger;
-
                                 sc = new SchedulerPanel(_this.host, _this.db, {
                                     schedulerid: result[2] ? Number(result[2]) : null,
                                     conf: true
@@ -63,11 +60,6 @@ var Panels;
                     if(result) {
                         var cgl;
                         switch(result[1]) {
-                            case "scheduler":
-                                cgl = new ClothGroupListPanel(_this.host, _this.db, {
-                                    scheduler: Number(result[2])
-                                });
-                                break;
                             case "list":
                                 cgl = new ClothGroupListPanel(_this.host, _this.db);
                                 break;
@@ -90,6 +82,10 @@ var Panels;
                     if(result) {
                         var cl = new ClothPanel(_this.host, _this.db, Number(result[1]));
                         _this.host.setPanel(cl);
+                    }
+                    if(returnValue === "washer::") {
+                        var wa = new WasherPanel(_this.host, _this.db);
+                        _this.host.setPanel(wa);
                     }
                 }
             });
@@ -155,12 +151,12 @@ var Panels;
     Panels.SchedulerListPanel = SchedulerListPanel;    
     var ClothGroupListPanel = (function (_super) {
         __extends(ClothGroupListPanel, _super);
-        function ClothGroupListPanel(host, db, option) {
+        function ClothGroupListPanel(host, db) {
                 _super.call(this, host, db);
             this.host = host;
             this.db = db;
             var c = this.initContainer();
-            var list = new UI.ClothGroupListContainer(db, option && option.scheduler);
+            var list = new UI.ClothGroupListContainer(db);
             c.appendChild(list.getContent());
             this.closeManage(list);
         }
@@ -195,6 +191,21 @@ var Panels;
         return ClothPanel;
     })(Panel);
     Panels.ClothPanel = ClothPanel;    
+    var WasherPanel = (function (_super) {
+        __extends(WasherPanel, _super);
+        function WasherPanel(host, db) {
+                _super.call(this, host, db);
+            this.host = host;
+            this.db = db;
+            var c = this.initContainer();
+            var washer = new UI.Washer(db);
+            washer.open();
+            c.appendChild(washer.getContent());
+            this.closeManage(washer);
+        }
+        return WasherPanel;
+    })(Panel);
+    Panels.WasherPanel = WasherPanel;    
     function el(name, callback) {
         var result = document.createElement(name);
         if(callback) {
