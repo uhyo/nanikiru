@@ -232,8 +232,8 @@ module UI{
 						}));
 						button.addEventListener("click",(e)=>{
 							//クリックされたら:スケジューラ設定メニュー
-							var setting=new SchedulerConfig(this.db,this);
 							var modal=new ModalUI(this);
+							var setting=new SchedulerConfig(this.db,this);
 							modal.slide("simple",setting);
 							setting.onclose((returnValue:any)=>{
 								//DBを書き換えた
@@ -282,6 +282,23 @@ module UI{
 						}
 					}while(node=<HTMLElement>node.parentNode);
 				},false);
+			});
+			//ヘルプ!
+			help((helpel)=>{
+				helpel.appendChild(el("h1",(h1)=>{
+					h1.textContent="スケジューラ";
+				}));
+				helpel.appendChild(el("p",(p)=>{
+					p.textContent="スケジューラには着た服を記録することができます。カレンダーのマスをクリックしましょう。";
+				}));
+				helpel.appendChild(el("p",(p)=>{
+					p.textContent="まだ服を登録していない場合は、スケジューラの";
+					p.appendChild(icons.gear({
+						width:"18px",
+						height:"18px",
+					}));
+					p.appendChild(document.createTextNode("ボタンをクリックして登録しましょう。"));
+				}));
 			});
 		}
 		//このカレンダーの最初の日付を求める
@@ -556,6 +573,23 @@ module UI{
 				}
 			});
 			c.appendChild(list.getContent());
+			help((helpel)=>{
+				helpel.appendChild(el("h1",(h1)=>{
+					h1.textContent="スケジューラの設定";
+				}));
+				helpel.appendChild(el("p",(p)=>{
+					p.textContent="上部ではスケジューラの名前を変更できます。";
+				}));
+				helpel.appendChild(el("p",(p)=>{
+					p.textContent="服を登録するには、まず服グループを登録してその中に服を登録します。";
+				}));
+				helpel.appendChild(el("p",(p)=>{
+					p.textContent="新しい服グループを追加したら、服グループの設定画面を開いて服を登録しましょう。";
+				}));
+				helpel.appendChild(el("p",(p)=>{
+					p.textContent="服グループは、上と下の2つ作って登録するのがおすすめです。";
+				}));
+			});
 		}
 		save(doc:SchedulerDoc):void{
 			//DBに書き込む
@@ -988,8 +1022,8 @@ module UI{
 					});
 					//設定画面導入
 					if(conf){
-						var setting=new SchedulerConfig(this.db,result);
 						var modal=new ModalUI(result);
+						var setting=new SchedulerConfig(this.db,result);
 						modal.slide("simple",setting,(returnValue:any)=>{
 							//よみ直す
 							this.close("scheduler::open:"+this.id);
@@ -1072,6 +1106,7 @@ module UI{
 					}
 				}));
 			});
+			help();
 		}
 	}
 	//独立系服グループリスト
@@ -1218,11 +1253,11 @@ module UI{
 							button.appendChild(document.createTextNode("既存の服グループを追加"));
 							button.addEventListener("click",(e)=>{
 								//新しいやつを追加したいなあ・・・
+								var modal=new ModalUI(_self);
 								var list2=new ClothGroupList(db,{
 									add:false,
 									del:false,
 								});
-								var modal=new ModalUI(_self);
 								modal.slide("simple",list2,(returnValue?:any)=>{
 									if("string"===typeof returnValue){
 										var result=returnValue.match(/^(\w+);(\d+)$/);
@@ -1252,8 +1287,8 @@ module UI{
 							button.appendChild(document.createTextNode("新しい服グループを作成して追加"));
 							button.addEventListener("click",(e)=>{
 								//新しいやつを追加したいなあ・・・
-								var info=new NewClothGroup(db,option.schedulerid);
 								var modal=new ModalUI(_self);
+								var info=new NewClothGroup(db,option.schedulerid);
 								modal.slide("simple",info,(returnValue?:any)=>{
 									if(returnValue!=null){
 										//伝えたいことがあるんだ
@@ -1308,6 +1343,21 @@ module UI{
 				};
 				useInfo(doc);
 			}
+
+			help((helpel)=>{
+				helpel.appendChild(el("h1",(h1)=>{
+					h1.textContent="服グループの設定";
+				}));
+				helpel.appendChild(el("p",(p)=>{
+					p.textContent="服グループの設定では、名前の変更や所属するスケジューラの確認・服の登録ができます。";
+				}));
+				helpel.appendChild(el("p",(p)=>{
+					p.textContent="服グループを作ったばかりの場合は、まず服を登録しましょう。";
+				}));
+				helpel.appendChild(el("p",(p)=>{
+					p.textContent="服グループを削除する場合は、上部メニューの服グループの一覧から削除して下さい。";
+				}));
+			});
 
 			//ClothGroupDocに近いもの・・・idがないかも
 			function useInfo(doc:ClothGroupDoc):void{
@@ -1454,8 +1504,8 @@ module UI{
 									button.addEventListener("click",(e)=>{
 										//新しいやつを追加したいなあ・・・
 										//服のデザイン選択UI
-										var sel=new ClothSelect(null);
 										var modal=new ModalUI(_self);
+										var sel=new ClothSelect(null);
 										modal.slide("simple",sel,(returnValue?:any)=>{
 											if(returnValue!=null){
 												if(returnValue.mode==="save"){
@@ -1661,6 +1711,24 @@ module UI{
 				};
 			}
 			this.setType();
+
+			help((helpel)=>{
+				helpel.appendChild(el("h1",(h1)=>{
+					h1.textContent="服エディタ";
+				}));
+				helpel.appendChild(el("p",(p)=>{
+					p.textContent="服エディタでは服のデザインを決めることができます。";
+				}));
+				helpel.appendChild(el("p",(p)=>{
+					p.textContent="一番左のメニューから服の種類を決めましょう。決めたら右に大きな服の画像が出現します。";
+				}));
+				helpel.appendChild(el("p",(p)=>{
+					p.textContent="色や模様を変えたいときは、服のその部分をクリックします。一番右に色変更画面が出現するので、色を変更しましょう。";
+				}));
+				helpel.appendChild(el("p",(p)=>{
+					p.textContent="編集が終わったら服を保存ボタンを押します。";
+				}));
+			});
 		}
 		private setType():void{
 			empty(this.previewArea);
@@ -1782,11 +1850,11 @@ module UI{
 						b.textContent="デザインを変更する";
 						b.addEventListener("click",(e)=>{
 							//デザイン変更するぜ!
+							var modal=new ModalUI(this);
 							var sel=new ClothSelect({
 								type:doc.type,
 								patterns:doc.patterns,
 							});
-							var modal=new ModalUI(this);
 							modal.slide("simple",sel,(returnValue?:any)=>{
 								if(returnValue!=null){
 									if(returnValue.mode==="save"){
@@ -1907,8 +1975,8 @@ module UI{
 										del:true,
 									},(mode:string)=>{
 										if(mode==="normal"){
-											var info=new ClothGroupInfo(db,cgdoc.id);
 											var modal=new ModalUI(_self);
+											var info=new ClothGroupInfo(db,cgdoc.id);
 											modal.slide("simple",info,(mode?:string)=>{
 												if(mode!=null){
 													_self.close(mode);
@@ -1940,10 +2008,10 @@ module UI{
 							button.appendChild(document.createTextNode("服グループを追加"));
 							button.addEventListener("click",(e)=>{
 								//新しいやつを追加したいなあ・・・
+								var modal=new ModalUI(this);
 								var list=new ClothGroupList(db,{
 									del:false,
 								});
-								var modal=new ModalUI(this);
 								modal.slide("simple",list,(returnValue?:any)=>{
 									if("string"===typeof returnValue){
 										var result=returnValue.match(/^select;(\d+)$/);
@@ -1961,6 +2029,17 @@ module UI{
 							},false);
 						}));
 					}));
+				}));
+			});
+			help((helpel)=>{
+				helpel.appendChild(el("h1",(h1)=>{
+					h1.textContent="服の設定";
+				}));
+				helpel.appendChild(el("p",(p)=>{
+					p.textContent="服の設定では、服のデザインを変えたり服を洗濯機に入れたりできます。";
+				}));
+				helpel.appendChild(el("p",(p)=>{
+					p.textContent="洗濯機に入れた服は、上のメニューから洗濯機の画面を開くと洗うことができます。洗った服は使用回数が0回に戻ります。";
 				}));
 			});
 		}
@@ -2041,6 +2120,23 @@ module UI{
 					count++;
 				});
 			}));
+			help((helpel)=>{
+				helpel.appendChild(el("h1",(h1)=>{
+					h1.textContent="洗濯機";
+				}));
+				helpel.appendChild(el("p",(p)=>{
+					p.textContent="洗濯機に入っている服は着ることができません。";
+				}));
+				helpel.appendChild(el("p",(p)=>{
+					p.textContent="洗うと服の使用回数が0回に戻ります。";
+				}));
+				helpel.appendChild(el("p",(p)=>{
+					p.textContent="新しい服グループを追加したら、服グループの設定画面を開いて服を登録しましょう。";
+				}));
+				helpel.appendChild(el("p",(p)=>{
+					p.textContent="服グループは、上と下の2つ作って登録するのがおすすめです。";
+				}));
+			});
 		}
 	}
 	//ダイアログ
@@ -2145,20 +2241,31 @@ module UI{
 	class ModalUI{
 		private container:HTMLElement;
 		private returnValue:any=void 0;
+		private helpdf:DocumentFragment=null;
 		private dia:UIObject;
 		constructor(private ui:UIObject){
 			this.container=document.createElement("div");
+			this.container.classList.add("modal-container");
 			var c=ui.getContent();
 			if(c.parentNode){
 				//入れる
 				c.parentNode.replaceChild(this.container,c);
 				this.container.appendChild(c);
 			}
+			//ヘルプ救助
+			var helpco=<HTMLElement>document.getElementsByClassName("helpco")[0];
+			if(helpco.hasChildNodes()){
+				var range:Range=document.createRange();
+				range.selectNodeContents(helpco);
+				this.helpdf=range.extractContents();
+				range.detach();
+			}
 		}
 		//画面割り込み発生!
 		slide(mode:string,dia:UIObject,callback?:(returnValue:any)=>void):void{
 			this.dia=dia;
 			var tc=this.container, bc=this.ui.getContent(), nc=dia.getContent();
+			var helpco=<HTMLElement>document.getElementsByClassName("helpco")[0];
 			if(mode==="simple"){
 				//ただの切り替え
 				bc.style.display="none";
@@ -2179,8 +2286,37 @@ module UI{
 					if(tc.parentNode)tc.parentNode.replaceChild(bc,tc);
 					bc.style.display=null;
 					//クローズ時は?
+					if(this.helpdf){
+						//dfがあれば元に戻す
+						var range=document.createRange();
+						range.selectNodeContents(helpco);
+						range.deleteContents();
+						helpco.appendChild(this.helpdf);
+						range.detach();
+					}
 					if(callback)callback(returnValue);
 				});
+			}
+		}
+	}
+	//ヘルプする
+	function help(callback?:(helpel:HTMLElement)=>void):void{
+		var helpel=<HTMLElement>document.getElementsByClassName("helpco")[0];
+		empty(helpel);
+		if(localStorage.getItem("nohelp")!=="true"){
+			if(callback){
+				callback(helpel);
+				//ヘルプを消すボタン
+				helpel.appendChild(el("p",(p)=>{
+					p.appendChild(el("button",(button)=>{
+						button.textContent="ヘルプを消す";
+						button.title="ヘルプを消します。再びヘルプを見たい場合は設定画面から変更して下さい。";
+						button.addEventListener("click",(e)=>{
+							empty(helpel);
+							localStorage.setItem("nohelp","true");
+						},false);
+					}));
+				}));
 			}
 		}
 	}

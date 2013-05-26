@@ -176,8 +176,8 @@ var UI;
                             anime: "hover"
                         }));
                         button.addEventListener("click", function (e) {
-                            var setting = new SchedulerConfig(_this.db, _this);
                             var modal = new ModalUI(_this);
+                            var setting = new SchedulerConfig(_this.db, _this);
                             modal.slide("simple", setting);
                             setting.onclose(function (returnValue) {
                                 if(returnValue) {
@@ -217,6 +217,22 @@ var UI;
                         }
                     }while(node = node.parentNode);
                 }, false);
+            });
+            help(function (helpel) {
+                helpel.appendChild(el("h1", function (h1) {
+                    h1.textContent = "スケジューラ";
+                }));
+                helpel.appendChild(el("p", function (p) {
+                    p.textContent = "スケジューラには着た服を記録することができます。カレンダーのマスをクリックしましょう。";
+                }));
+                helpel.appendChild(el("p", function (p) {
+                    p.textContent = "まだ服を登録していない場合は、スケジューラの";
+                    p.appendChild(icons.gear({
+                        width: "18px",
+                        height: "18px"
+                    }));
+                    p.appendChild(document.createTextNode("ボタンをクリックして登録しましょう。"));
+                }));
             });
         };
         Calender.prototype.startDate = function (d) {
@@ -468,6 +484,23 @@ var UI;
                 }
             });
             c.appendChild(list.getContent());
+            help(function (helpel) {
+                helpel.appendChild(el("h1", function (h1) {
+                    h1.textContent = "スケジューラの設定";
+                }));
+                helpel.appendChild(el("p", function (p) {
+                    p.textContent = "上部ではスケジューラの名前を変更できます。";
+                }));
+                helpel.appendChild(el("p", function (p) {
+                    p.textContent = "服を登録するには、まず服グループを登録してその中に服を登録します。";
+                }));
+                helpel.appendChild(el("p", function (p) {
+                    p.textContent = "新しい服グループを追加したら、服グループの設定画面を開いて服を登録しましょう。";
+                }));
+                helpel.appendChild(el("p", function (p) {
+                    p.textContent = "服グループは、上と下の2つ作って登録するのがおすすめです。";
+                }));
+            });
         };
         SchedulerConfig.prototype.save = function (doc) {
             var _this = this;
@@ -863,8 +896,8 @@ var UI;
                         _this.close(returnValue);
                     });
                     if(conf) {
-                        var setting = new SchedulerConfig(_this.db, result);
                         var modal = new ModalUI(result);
+                        var setting = new SchedulerConfig(_this.db, result);
                         modal.slide("simple", setting, function (returnValue) {
                             _this.close("scheduler::open:" + _this.id);
                         });
@@ -943,6 +976,7 @@ var UI;
                     }
                 }));
             });
+            help();
         };
         return SchedulerList;
     })(UISection);
@@ -1071,11 +1105,11 @@ var UI;
                             }));
                             button.appendChild(document.createTextNode("既存の服グループを追加"));
                             button.addEventListener("click", function (e) {
+                                var modal = new ModalUI(_self);
                                 var list2 = new ClothGroupList(db, {
                                     add: false,
                                     del: false
                                 });
-                                var modal = new ModalUI(_self);
                                 modal.slide("simple", list2, function (returnValue) {
                                     if("string" === typeof returnValue) {
                                         var result = returnValue.match(/^(\w+);(\d+)$/);
@@ -1103,8 +1137,8 @@ var UI;
                             }));
                             button.appendChild(document.createTextNode("新しい服グループを作成して追加"));
                             button.addEventListener("click", function (e) {
-                                var info = new NewClothGroup(db, option.schedulerid);
                                 var modal = new ModalUI(_self);
+                                var info = new NewClothGroup(db, option.schedulerid);
                                 modal.slide("simple", info, function (returnValue) {
                                     if(returnValue != null) {
                                         if("number" === typeof returnValue) {
@@ -1156,6 +1190,20 @@ var UI;
                 };
                 useInfo(doc);
             }
+            help(function (helpel) {
+                helpel.appendChild(el("h1", function (h1) {
+                    h1.textContent = "服グループの設定";
+                }));
+                helpel.appendChild(el("p", function (p) {
+                    p.textContent = "服グループの設定では、名前の変更や所属するスケジューラの確認・服の登録ができます。";
+                }));
+                helpel.appendChild(el("p", function (p) {
+                    p.textContent = "服グループを作ったばかりの場合は、まず服を登録しましょう。";
+                }));
+                helpel.appendChild(el("p", function (p) {
+                    p.textContent = "服グループを削除する場合は、上部メニューの服グループの一覧から削除して下さい。";
+                }));
+            });
             function useInfo(doc) {
                 c.appendChild(el("h1", function (h1) {
                     h1.appendChild(icons.clothgroup({
@@ -1285,8 +1333,8 @@ var UI;
                                     }));
                                     button.appendChild(document.createTextNode("新しい服を作成して登録"));
                                     button.addEventListener("click", function (e) {
-                                        var sel = new ClothSelect(null);
                                         var modal = new ModalUI(_self);
+                                        var sel = new ClothSelect(null);
                                         modal.slide("simple", sel, function (returnValue) {
                                             if(returnValue != null) {
                                                 if(returnValue.mode === "save") {
@@ -1482,6 +1530,23 @@ var UI;
                 };
             }
             this.setType();
+            help(function (helpel) {
+                helpel.appendChild(el("h1", function (h1) {
+                    h1.textContent = "服エディタ";
+                }));
+                helpel.appendChild(el("p", function (p) {
+                    p.textContent = "服エディタでは服のデザインを決めることができます。";
+                }));
+                helpel.appendChild(el("p", function (p) {
+                    p.textContent = "一番左のメニューから服の種類を決めましょう。決めたら右に大きな服の画像が出現します。";
+                }));
+                helpel.appendChild(el("p", function (p) {
+                    p.textContent = "色や模様を変えたいときは、服のその部分をクリックします。一番右に色変更画面が出現するので、色を変更しましょう。";
+                }));
+                helpel.appendChild(el("p", function (p) {
+                    p.textContent = "編集が終わったら服を保存ボタンを押します。";
+                }));
+            });
         }
         ClothSelect.prototype.setType = function () {
             var _this = this;
@@ -1602,11 +1667,11 @@ var UI;
                     p.appendChild(el("button", function (b) {
                         b.textContent = "デザインを変更する";
                         b.addEventListener("click", function (e) {
+                            var modal = new ModalUI(_this);
                             var sel = new ClothSelect({
                                 type: doc.type,
                                 patterns: doc.patterns
                             });
-                            var modal = new ModalUI(_this);
                             modal.slide("simple", sel, function (returnValue) {
                                 if(returnValue != null) {
                                     if(returnValue.mode === "save") {
@@ -1718,8 +1783,8 @@ var UI;
                                         del: true
                                     }, function (mode) {
                                         if(mode === "normal") {
-                                            var info = new ClothGroupInfo(db, cgdoc.id);
                                             var modal = new ModalUI(_self);
+                                            var info = new ClothGroupInfo(db, cgdoc.id);
                                             modal.slide("simple", info, function (mode) {
                                                 if(mode != null) {
                                                     _self.close(mode);
@@ -1748,10 +1813,10 @@ var UI;
                             }));
                             button.appendChild(document.createTextNode("服グループを追加"));
                             button.addEventListener("click", function (e) {
+                                var modal = new ModalUI(_this);
                                 var list = new ClothGroupList(db, {
                                     del: false
                                 });
-                                var modal = new ModalUI(_this);
                                 modal.slide("simple", list, function (returnValue) {
                                     if("string" === typeof returnValue) {
                                         var result = returnValue.match(/^select;(\d+)$/);
@@ -1767,6 +1832,17 @@ var UI;
                             }, false);
                         }));
                     }));
+                }));
+            });
+            help(function (helpel) {
+                helpel.appendChild(el("h1", function (h1) {
+                    h1.textContent = "服の設定";
+                }));
+                helpel.appendChild(el("p", function (p) {
+                    p.textContent = "服の設定では、服のデザインを変えたり服を洗濯機に入れたりできます。";
+                }));
+                helpel.appendChild(el("p", function (p) {
+                    p.textContent = "洗濯機に入れた服は、上のメニューから洗濯機の画面を開くと洗うことができます。洗った服は使用回数が0回に戻ります。";
                 }));
             });
         };
@@ -1850,6 +1926,23 @@ var UI;
                     count++;
                 });
             }));
+            help(function (helpel) {
+                helpel.appendChild(el("h1", function (h1) {
+                    h1.textContent = "洗濯機";
+                }));
+                helpel.appendChild(el("p", function (p) {
+                    p.textContent = "洗濯機に入っている服は着ることができません。";
+                }));
+                helpel.appendChild(el("p", function (p) {
+                    p.textContent = "洗うと服の使用回数が0回に戻ります。";
+                }));
+                helpel.appendChild(el("p", function (p) {
+                    p.textContent = "新しい服グループを追加したら、服グループの設定画面を開いて服を登録しましょう。";
+                }));
+                helpel.appendChild(el("p", function (p) {
+                    p.textContent = "服グループは、上と下の2つ作って登録するのがおすすめです。";
+                }));
+            });
         };
         return Washer;
     })(UISection);
@@ -1960,16 +2053,27 @@ var UI;
         function ModalUI(ui) {
             this.ui = ui;
             this.returnValue = void 0;
+            this.helpdf = null;
             this.container = document.createElement("div");
+            this.container.classList.add("modal-container");
             var c = ui.getContent();
             if(c.parentNode) {
                 c.parentNode.replaceChild(this.container, c);
                 this.container.appendChild(c);
             }
+            var helpco = document.getElementsByClassName("helpco")[0];
+            if(helpco.hasChildNodes()) {
+                var range = document.createRange();
+                range.selectNodeContents(helpco);
+                this.helpdf = range.extractContents();
+                range.detach();
+            }
         }
         ModalUI.prototype.slide = function (mode, dia, callback) {
+            var _this = this;
             this.dia = dia;
             var tc = this.container, bc = this.ui.getContent(), nc = dia.getContent();
+            var helpco = document.getElementsByClassName("helpco")[0];
             if(mode === "simple") {
                 bc.style.display = "none";
                 tc.appendChild(nc);
@@ -1993,6 +2097,13 @@ var UI;
                         tc.parentNode.replaceChild(bc, tc);
                     }
                     bc.style.display = null;
+                    if(_this.helpdf) {
+                        var range = document.createRange();
+                        range.selectNodeContents(helpco);
+                        range.deleteContents();
+                        helpco.appendChild(_this.helpdf);
+                        range.detach();
+                    }
                     if(callback) {
                         callback(returnValue);
                     }
@@ -2001,6 +2112,25 @@ var UI;
         };
         return ModalUI;
     })();    
+    function help(callback) {
+        var helpel = document.getElementsByClassName("helpco")[0];
+        empty(helpel);
+        if(localStorage.getItem("nohelp") !== "true") {
+            if(callback) {
+                callback(helpel);
+                helpel.appendChild(el("p", function (p) {
+                    p.appendChild(el("button", function (button) {
+                        button.textContent = "ヘルプを消す";
+                        button.title = "ヘルプを消します。再びヘルプを見たい場合は設定画面から変更して下さい。";
+                        button.addEventListener("click", function (e) {
+                            empty(helpel);
+                            localStorage.setItem("nohelp", "true");
+                        }, false);
+                    }));
+                }));
+            }
+        }
+    }
     function vendorPrefix(style, name, value, nameprefix, valueprefix) {
         if(nameprefix) {
             [

@@ -7,12 +7,21 @@ class AppHost{
 	private container:HTMLElement;
 	private menuContent:HTMLElement;
 	private mainContent:HTMLElement;
+	private helpContent:HTMLElement;
+	private concon:HTMLElement;
 	constructor(private db:DB){
 		this.container=document.getElementById('main');
 		this.menuContent=document.createElement("div");
+		this.concon=document.createElement("div");
+		this.concon.classList.add("concon");
 		this.mainContent=document.createElement("div");
+		this.mainContent.classList.add("mainco");
+		this.helpContent=document.createElement("div");
+		this.helpContent.classList.add("helpco");
 		this.container.appendChild(this.menuContent);
-		this.container.appendChild(this.mainContent);
+		this.container.appendChild(this.concon);
+		this.concon.appendChild(this.mainContent);
+		this.concon.appendChild(this.helpContent);
 		//初期化
 		var me=new Panels.MenuPanel(this,db);
 		this.menuContent.appendChild(me.getContent());

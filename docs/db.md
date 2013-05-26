@@ -43,6 +43,8 @@
 # localStorage doc
 ## lastScheduler
 scheduler.id(default one)
+## nohelp
+"true"
 
 # clothPattern doc
   # 一色

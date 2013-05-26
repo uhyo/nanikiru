@@ -34,6 +34,37 @@ section h1{
 section section h1{
 	font-size:1.25rem;
 }
+.modal-container{
+	border:1px dashed #999999;
+	margin:0.3ex;
+	padding:0.3ex;
+}
+/* help! */
+div.concon{
+	/* dirty prefix */
+	display:-webkit-box;
+	display:-moz-box;
+	display:box;
+}
+div.mainco{
+	/* dirty prefix */
+	-webkit-box-flex:1;
+	-moz-box-flex:1;
+	box-flex:1;
+}
+div.helpco:not(:empty){
+	background-color:#ffffdd;
+	color:#444400;
+	border-radius:1rem;
+	padding:1rem;
+	max-width:20%;
+	font-size:smaller;
+}
+div.helpco h1{
+	color:#222200;
+	font-size:1.2rem;
+	margin:0.4rem 0;
+}
 /* sccon */
 .scheduler-container{
 	/* dirty prefix */
