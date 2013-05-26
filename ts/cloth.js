@@ -26,6 +26,10 @@ var Cloth = (function () {
             type: "Y-shirt",
             patternNumber: 4
         }, 
+        {
+            type: "U-shirt",
+            patternNumber: 2
+        }, 
         
     ];
     Cloth.defaultColors = [
@@ -89,6 +93,45 @@ var Cloth = (function () {
                     "L72,246", 
                     "L72,118", 
                     "L40,138", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(0) + ")");
+                }));
+                d = [
+                    "M90,40", 
+                    "A80,70 0 0,0 166,40", 
+                    "A74,250 0 0,1 90,40", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5,
+                    slj: "bevel"
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(1) + ")");
+                }));
+                break;
+            case "U-shirt":
+                d = [
+                    "M70,53", 
+                    "L90,40", 
+                    "A80,70 0 0,0 166,40", 
+                    "L186,53", 
+                    "C226,90 226,180 226,240", 
+                    "L190,240", 
+                    "L184,118", 
+                    "L184,246", 
+                    "L72,246", 
+                    "L72,118", 
+                    "L66,240", 
+                    "L30,240", 
+                    "C30,180 30,90 70,53", 
                     "Z", 
                     
                 ].join(" ");

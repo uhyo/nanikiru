@@ -50,6 +50,10 @@ class Cloth{
 			type:"Y-shirt",
 			patternNumber:4,
 		},
+		{
+			type:"U-shirt",
+			patternNumber:2,
+		},
 	];
 	//服のデフォルト色
 	static defaultColors:string[]=["#666666","#cccccc","#eeeeee","#999999","#333333"];
@@ -129,6 +133,50 @@ class Cloth{
 				"L72,118",	//上へ
 				"L40,138",	//袖口
 				"Z",	//袖口
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(0)+")");
+				}));
+				//Uネックの部分
+				d=[
+				"M90,40",	//襟のところ
+				"A80,70 0 0,0 166,40",//上のえり（重なる）
+				"A74,250 0 0,1 90,40",//下のえり
+				"Z",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+					slj:"bevel",
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(1)+")");
+				}));
+				break;
+			//セーター的な
+			case "U-shirt":
+				//パス:左下から
+				d=[
+				"M70,53",	//袖の端からスタート
+				"L90,40",	//襟のところへ
+				"A80,70 0 0,0 166,40",//襟の上
+				//"L246,90",	//逆の袖の端へ
+				//"L216,138",	//袖口
+				//"L184,118",	//脇
+				"L186,53",
+				"C226,90 226,180 226,240",	//袖
+				"L190,240",	//袖口
+				"L184,118",	//脇
+				"L184,246",	//下へ
+				"L72,246",	//反対側へ
+				"L72,118",	//上へ
+				//"L40,138",	//袖口
+				"L66,240",
+				"L30,240",	//袖口
+				"C30,180 30,90 70,53",	//袖
+				"Z",
 				].join(" ");
 				el.appendChild(path(d,{
 					stroke:"#000000",
