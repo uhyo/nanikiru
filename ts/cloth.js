@@ -66,6 +66,14 @@ var Cloth = (function () {
             type: "Slacks",
             patternNumber: 1
         }, 
+        {
+            type: "B-Slacks",
+            patternNumber: 2
+        }, 
+        {
+            type: "Chino",
+            patternNumber: 1
+        }, 
         
     ];
     Cloth.defaultColors = [
@@ -897,6 +905,86 @@ var Cloth = (function () {
                     sw: 5
                 }, function (path) {
                     path.setAttribute("fill", "url(#" + makePattern(0) + ")");
+                }));
+                break;
+            case "B-Slacks":
+                d = [
+                    "M66,40", 
+                    "L190,40", 
+                    "L200,246", 
+                    "L135,246", 
+                    "L128,101.8", 
+                    "L121,246", 
+                    "L56,246", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(0) + ")");
+                }));
+                d = [
+                    "M65.5,50.3", 
+                    "L190.5,50.3", 
+                    "L191.5,70.9", 
+                    "L64.5,70.9", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(1) + ")");
+                }));
+                break;
+            case "Chino":
+                d = [
+                    "M66,40", 
+                    "L190,40", 
+                    "L200,246", 
+                    "L135,246", 
+                    "L128,101.8", 
+                    "L121,246", 
+                    "L56,246", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(0) + ")");
+                }));
+                d = [
+                    "M193,101.8", 
+                    "L154.6,101.8", 
+                    "L157.6,163.6", 
+                    "L196,163.6", 
+                    "M154.6,101.8", 
+                    "L163.6,122.4", 
+                    "L194,122.4", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }));
+                d = [
+                    "M63,101.8", 
+                    "L102.4,101.8", 
+                    "L99.4,163.6", 
+                    "L60,163.6", 
+                    "M102.4,101.8", 
+                    "L93.4,122.4", 
+                    "L62,122.4", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
                 }));
                 break;
         }
