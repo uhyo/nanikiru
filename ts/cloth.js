@@ -23,12 +23,44 @@ var Cloth = (function () {
             patternNumber: 3
         }, 
         {
-            type: "Y-shirt",
+            type: "YT-shirt",
             patternNumber: 4
         }, 
         {
             type: "U-shirt",
             patternNumber: 2
+        }, 
+        {
+            type: "V-shirt",
+            patternNumber: 2
+        }, 
+        {
+            type: "Tl-shirt",
+            patternNumber: 1
+        }, 
+        {
+            type: "Long-shirt",
+            patternNumber: 3
+        }, 
+        {
+            type: "Yc-shirt",
+            patternNumber: 4
+        }, 
+        {
+            type: "Y-shirt",
+            patternNumber: 4
+        }, 
+        {
+            type: "Tanktop",
+            patternNumber: 1
+        }, 
+        {
+            type: "Camisole",
+            patternNumber: 1
+        }, 
+        {
+            type: "Jacket",
+            patternNumber: 4
         }, 
         
     ];
@@ -192,6 +224,45 @@ var Cloth = (function () {
                     path.setAttribute("fill", "url(#" + makePattern(1) + ")");
                 }));
                 break;
+            case "V-shirt":
+                d = [
+                    "M70,53", 
+                    "L90,40", 
+                    "A80,70 0 0,0 166,40", 
+                    "L186,53", 
+                    "C226,90 226,180 226,240", 
+                    "L190,240", 
+                    "L184,118", 
+                    "L184,246", 
+                    "L72,246", 
+                    "L72,118", 
+                    "L66,240", 
+                    "L30,240", 
+                    "C30,180 30,90 70,53", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(0) + ")");
+                }));
+                d = [
+                    "M90,40", 
+                    "A80,70 0 0,0 166,40", 
+                    "L128,80", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5,
+                    slj: "bevel"
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(1) + ")");
+                }));
+                break;
             case "TT-shirt":
                 d = [
                     "M10,90", 
@@ -206,6 +277,33 @@ var Cloth = (function () {
                     "L72,246", 
                     "L72,118", 
                     "L40,138", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(0) + ")");
+                }));
+                break;
+            case "Tl-shirt":
+                d = [
+                    "M70,53", 
+                    "L90,40", 
+                    "L90,10", 
+                    "L166,10", 
+                    "L166,40", 
+                    "L186,53", 
+                    "C226,90 226,180 226,240", 
+                    "L190,240", 
+                    "L184,118", 
+                    "L184,246", 
+                    "L72,246", 
+                    "L72,118", 
+                    "L66,240", 
+                    "L30,240", 
+                    "C30,180 30,90 70,53", 
                     "Z", 
                     
                 ].join(" ");
@@ -287,7 +385,164 @@ var Cloth = (function () {
                     path.setAttribute("fill", "url(#" + pt2 + ")");
                 }));
                 break;
-            case "Y-shirt":
+            case "Long-shirt":
+                d = [
+                    "M70,53", 
+                    "L90,40", 
+                    "A80,70 0 0,0 166,40", 
+                    "L186,53", 
+                    "C226,90 226,180 226,240", 
+                    "L190,240", 
+                    "L184,118", 
+                    "L184,246", 
+                    "L72,246", 
+                    "L72,118", 
+                    "L66,240", 
+                    "L30,240", 
+                    "C30,180 30,90 70,53", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(0) + ")");
+                }));
+                d = [
+                    "M90,40", 
+                    "L166,40", 
+                    "L128,60", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5,
+                    slj: "bevel"
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(1) + ")");
+                }));
+                d = [
+                    "M98,20", 
+                    "L158,20", 
+                    "L166,40", 
+                    "L90,40", 
+                    "Z", 
+                    
+                ].join(" ");
+                var pt2 = makePattern(2);
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5,
+                    slj: "bevel"
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + pt2 + ")");
+                }));
+                d = [
+                    "M90,40", 
+                    "L106,80", 
+                    "L128,60", 
+                    "L150,80", 
+                    "L166,40", 
+                    "L158,20", 
+                    "L128,56", 
+                    "L98,20", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5,
+                    slj: "bevel"
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + pt2 + ")");
+                }));
+                break;
+            case "Jacket":
+                d = [
+                    "M70,53", 
+                    "L90,40", 
+                    "A80,70 0 0,0 166,40", 
+                    "L186,53", 
+                    "C226,90 226,180 226,240", 
+                    "L190,240", 
+                    "L184,118", 
+                    "L184,246", 
+                    "L136,252", 
+                    "L136,50", 
+                    "L120,50", 
+                    "L120,252", 
+                    "L72,246", 
+                    "L72,118", 
+                    "L66,240", 
+                    "L30,240", 
+                    "C30,180 30,90 70,53", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(0) + ")");
+                }));
+                d = [
+                    "M90,40", 
+                    "L166,40", 
+                    "L128,60", 
+                    "Z", 
+                    "M120,50", 
+                    "L136,50", 
+                    "L136,246", 
+                    "L120,246", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5,
+                    slj: "bevel"
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(1) + ")");
+                }));
+                d = [
+                    "M98,20", 
+                    "L158,20", 
+                    "L166,40", 
+                    "L90,40", 
+                    "Z", 
+                    
+                ].join(" ");
+                var pt2 = makePattern(2);
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5,
+                    slj: "bevel"
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + pt2 + ")");
+                }));
+                d = [
+                    "M90,40", 
+                    "L106,80", 
+                    "L128,60", 
+                    "L150,80", 
+                    "L166,40", 
+                    "L158,20", 
+                    "L128,56", 
+                    "L98,20", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5,
+                    slj: "bevel"
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + pt2 + ")");
+                }));
+                break;
+            case "YT-shirt":
                 d = [
                     "M10,90", 
                     "L90,40", 
@@ -381,6 +636,245 @@ var Cloth = (function () {
                         line.setAttribute("stroke-width", "2px");
                     }));
                 }
+                break;
+            case "Yc-shirt":
+                d = [
+                    "M70,53", 
+                    "L90,40", 
+                    "A80,70 0 0,0 166,40", 
+                    "L186,53", 
+                    "C226,90 226,180 226,240", 
+                    "L190,240", 
+                    "L184,118", 
+                    "L184,246", 
+                    "L72,246", 
+                    "L72,118", 
+                    "L66,240", 
+                    "L30,240", 
+                    "C30,180 30,90 70,53", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(0) + ")");
+                }));
+                d = [
+                    "M90,40", 
+                    "L166,40", 
+                    "L128,60", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5,
+                    slj: "bevel"
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(1) + ")");
+                }));
+                d = [
+                    "M98,20", 
+                    "L158,20", 
+                    "L166,40", 
+                    "L90,40", 
+                    "Z", 
+                    
+                ].join(" ");
+                var pt2 = makePattern(2);
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5,
+                    slj: "bevel"
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + pt2 + ")");
+                }));
+                d = [
+                    "M90,40", 
+                    "L106,80", 
+                    "L128,60", 
+                    "L150,80", 
+                    "L166,40", 
+                    "L158,20", 
+                    "L128,56", 
+                    "L98,20", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5,
+                    slj: "bevel"
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + pt2 + ")");
+                }));
+                var pt3 = makePattern(3);
+                for(var i = 0; i < 5; i++) {
+                    el.appendChild(svg("circle", function (c) {
+                        var circle = c;
+                        circle.cx.baseVal.valueAsString = "128px";
+                        circle.cy.baseVal.valueAsString = (90 + 30 * i) + "px";
+                        circle.setAttribute("fill", "url(#" + pt3 + ")");
+                        circle.setAttribute("stroke", "#000000");
+                        circle.setAttribute("stroke-width", "1px");
+                        circle.r.baseVal.valueAsString = "5px";
+                    }));
+                }
+                for(var i = 0; i < 2; i++) {
+                    el.appendChild(svg("line", function (l) {
+                        var line = l;
+                        line.x1.baseVal.valueAsString = (128 + (i * 2 - 1) * 8) + "px";
+                        line.x2.baseVal.valueAsString = (128 + (i * 2 - 1) * 8) + "px";
+                        line.y1.baseVal.valueAsString = "70px";
+                        line.y2.baseVal.valueAsString = "240px";
+                        line.setAttribute("stroke", "#000000");
+                        line.setAttribute("opacity", "0.6");
+                        line.setAttribute("stroke-width", "2px");
+                    }));
+                }
+                break;
+            case "Y-shirt":
+                d = [
+                    "M30,77.5", 
+                    "L90,40", 
+                    "A80,70 0 0,0 166,40", 
+                    "L226,77.5", 
+                    "L226,240", 
+                    "L190,240", 
+                    "L184,118", 
+                    "L184,246", 
+                    "L72,246", 
+                    "L72,118", 
+                    "L66,240", 
+                    "L30,240", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(0) + ")");
+                }));
+                d = [
+                    "M90,40", 
+                    "L166,40", 
+                    "L128,60", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5,
+                    slj: "bevel"
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(1) + ")");
+                }));
+                d = [
+                    "M98,20", 
+                    "L158,20", 
+                    "L166,40", 
+                    "L90,40", 
+                    "Z", 
+                    
+                ].join(" ");
+                var pt2 = makePattern(2);
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5,
+                    slj: "bevel"
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + pt2 + ")");
+                }));
+                d = [
+                    "M90,40", 
+                    "L106,80", 
+                    "L128,60", 
+                    "L150,80", 
+                    "L166,40", 
+                    "L158,20", 
+                    "L128,56", 
+                    "L98,20", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5,
+                    slj: "bevel"
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + pt2 + ")");
+                }));
+                var pt3 = makePattern(3);
+                for(var i = 0; i < 5; i++) {
+                    el.appendChild(svg("circle", function (c) {
+                        var circle = c;
+                        circle.cx.baseVal.valueAsString = "128px";
+                        circle.cy.baseVal.valueAsString = (90 + 30 * i) + "px";
+                        circle.setAttribute("fill", "url(#" + pt3 + ")");
+                        circle.setAttribute("stroke", "#000000");
+                        circle.setAttribute("stroke-width", "1px");
+                        circle.r.baseVal.valueAsString = "5px";
+                    }));
+                }
+                for(var i = 0; i < 2; i++) {
+                    el.appendChild(svg("line", function (l) {
+                        var line = l;
+                        line.x1.baseVal.valueAsString = (128 + (i * 2 - 1) * 8) + "px";
+                        line.x2.baseVal.valueAsString = (128 + (i * 2 - 1) * 8) + "px";
+                        line.y1.baseVal.valueAsString = "70px";
+                        line.y2.baseVal.valueAsString = "240px";
+                        line.setAttribute("stroke", "#000000");
+                        line.setAttribute("opacity", "0.6");
+                        line.setAttribute("stroke-width", "2px");
+                    }));
+                }
+                break;
+            case "Tanktop":
+                d = [
+                    "M70,40", 
+                    "L90,40", 
+                    "A48,120 0 0,0 166,40", 
+                    "L186,40", 
+                    "A30,100 0 0,0 216,140", 
+                    "L216,246", 
+                    "L40,246", 
+                    "L40,140", 
+                    "A30,100 0 0,0 70,40", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(0) + ")");
+                }));
+                break;
+            case "Camisole":
+                d = [
+                    "M80,40", 
+                    "L90,40", 
+                    "L90,80", 
+                    "A48,40 0 0,0 166,80", 
+                    "L166,40", 
+                    "L176,40", 
+                    "A40,100 0 0,0 216,140", 
+                    "L216,246", 
+                    "L40,246", 
+                    "L40,140", 
+                    "A40,100 0 0,0 80,40", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(0) + ")");
+                }));
                 break;
         }
         function makePattern(index) {

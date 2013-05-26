@@ -30,6 +30,7 @@ class Cloth{
 		type:string;
 		patternNumber:number;
 	}[]=[
+		//トップス
 		{
 			type:"UT-shirt",
 			patternNumber:2,
@@ -47,12 +48,44 @@ class Cloth{
 			patternNumber:3,
 		},
 		{
-			type:"Y-shirt",
+			type:"YT-shirt",
 			patternNumber:4,
 		},
 		{
 			type:"U-shirt",
 			patternNumber:2,
+		},
+		{
+			type:"V-shirt",
+			patternNumber:2,
+		},
+		{
+			type:"Tl-shirt",
+			patternNumber:1,
+		},
+		{
+			type:"Long-shirt",
+			patternNumber:3,
+		},
+		{
+			type:"Yc-shirt",
+			patternNumber:4,
+		},
+		{
+			type:"Y-shirt",
+			patternNumber:4,
+		},
+		{
+			type:"Tanktop",
+			patternNumber:1,
+		},
+		{
+			type:"Camisole",
+			patternNumber:1,
+		},
+		{
+			type:"Jacket",
+			patternNumber:4,
 		},
 	];
 	//服のデフォルト色
@@ -237,6 +270,47 @@ class Cloth{
 					path.setAttribute("fill","url(#"+makePattern(1)+")");
 				}));
 				break;
+			//Vロング
+			case "V-shirt":
+				//パス:左下から
+				d=[
+				"M70,53",	//袖の端からスタート
+				"L90,40",	//襟のところへ
+				"A80,70 0 0,0 166,40",//襟の上
+				"L186,53",
+				"C226,90 226,180 226,240",	//袖
+				"L190,240",	//袖口
+				"L184,118",	//脇
+				"L184,246",	//下へ
+				"L72,246",	//反対側へ
+				"L72,118",	//上へ
+				"L66,240",
+				"L30,240",	//袖口
+				"C30,180 30,90 70,53",	//袖
+				"Z",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(0)+")");
+				}));
+				//Uネックの部分
+				d=[
+				"M90,40",	//襟のところ
+				"A80,70 0 0,0 166,40",//上のえり（重なる）
+				"L128,80",
+				//"A74,250 0 0,1 90,40",//下のえり
+				"Z",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+					slj:"bevel",
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(1)+")");
+				}));
+				break;
 			//タートルネックのTシャツ
 			case "TT-shirt":
 				//パス:左下から
@@ -254,6 +328,35 @@ class Cloth{
 				"L72,246",	//反対側へ
 				"L72,118",	//上へ
 				"L40,138",	//袖口
+				"Z",	//袖口
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(0)+")");
+				}));
+				break;
+			//タートルネックのロングシャツ
+			case "Tl-shirt":
+				//パス:左下から
+				d=[
+				"M70,53",	//袖の端からスタート
+				"L90,40",	//襟のところへ
+				//"A80,70 0 0,0 166,40",//襟の上
+				"L90,10",	//タートルネック
+				"L166,10",
+				"L166,40",
+				"L186,53",
+				"C226,90 226,180 226,240",	//袖
+				"L190,240",	//袖口
+				"L184,118",	//脇
+				"L184,246",	//下へ
+				"L72,246",	//反対側へ
+				"L72,118",	//上へ
+				"L66,240",
+				"L30,240",	//袖口
+				"C30,180 30,90 70,53",	//袖
 				"Z",	//袖口
 				].join(" ");
 				el.appendChild(path(d,{
@@ -333,7 +436,162 @@ class Cloth{
 					path.setAttribute("fill","url(#"+pt2+")");
 				}));
 				break;
-			case "Y-shirt":
+			case "Long-shirt":
+				d=[
+				"M70,53",	//袖の端からスタート
+				"L90,40",	//襟のところへ
+				"A80,70 0 0,0 166,40",//襟の上
+				"L186,53",
+				"C226,90 226,180 226,240",	//袖
+				"L190,240",	//袖口
+				"L184,118",	//脇
+				"L184,246",	//下へ
+				"L72,246",	//反対側へ
+				"L72,118",	//上へ
+				"L66,240",
+				"L30,240",	//袖口
+				"C30,180 30,90 70,53",	//袖
+				"Z",	//袖口
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(0)+")");
+				}));
+				//中の部分
+				d=[
+				"M90,40",	//襟のところ
+				"L166,40",
+				"L128,60",
+				"Z",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+					slj:"bevel",
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(1)+")");
+				}));
+				//襟1
+				d=[
+				"M98,20",
+				"L158,20",
+				"L166,40",
+				"L90,40",
+				"Z",
+				].join(" ");
+				var pt2=makePattern(2);
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+					slj:"bevel",
+				},(path)=>{
+					path.setAttribute("fill","url(#"+pt2+")");
+				}));
+				//襟2
+				d=[
+				"M90,40",	//襟のところ
+				"L106,80",
+				"L128,60",
+				"L150,80",
+				"L166,40",	//下ここまで
+				"L158,20",
+				"L128,56",
+				"L98,20",
+				"Z",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+					slj:"bevel",
+				},(path)=>{
+					path.setAttribute("fill","url(#"+pt2+")");
+				}));
+				break;
+			case "Jacket":
+				d=[
+				"M70,53",	//袖の端からスタート
+				"L90,40",	//襟のところへ
+				"A80,70 0 0,0 166,40",//襟の上
+				"L186,53",
+				"C226,90 226,180 226,240",	//袖
+				"L190,240",	//袖口
+				"L184,118",	//脇
+				"L184,246",	//下へ
+				"L136,252",	//途中で
+				"L136,50",	//上に隠れる
+				"L120,50",
+				"L120,252",
+				"L72,246",	//反対側へ
+				"L72,118",	//上へ
+				"L66,240",
+				"L30,240",	//袖口
+				"C30,180 30,90 70,53",	//袖
+				"Z",	//袖口
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(0)+")");
+				}));
+				//中の部分
+				d=[
+				"M90,40",	//襟のところ
+				"L166,40",
+				"L128,60",
+				"Z",
+				"M120,50",	//間から見えるところ
+				"L136,50",
+				"L136,246",
+				"L120,246",
+				"Z",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+					slj:"bevel",
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(1)+")");
+				}));
+				//襟1
+				d=[
+				"M98,20",
+				"L158,20",
+				"L166,40",
+				"L90,40",
+				"Z",
+				].join(" ");
+				var pt2=makePattern(2);
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+					slj:"bevel",
+				},(path)=>{
+					path.setAttribute("fill","url(#"+pt2+")");
+				}));
+				//襟2
+				d=[
+				"M90,40",	//襟のところ
+				"L106,80",
+				"L128,60",
+				"L150,80",
+				"L166,40",	//下ここまで
+				"L158,20",
+				"L128,56",
+				"L98,20",
+				"Z",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+					slj:"bevel",
+				},(path)=>{
+					path.setAttribute("fill","url(#"+pt2+")");
+				}));
+				break;
+			case "YT-shirt":
 				d=[
 				"M10,90",	//袖の端からスタート
 				"L90,40",	//襟のところへ
@@ -428,6 +686,250 @@ class Cloth{
 						line.setAttribute("stroke-width","2px");
 					}));
 				}
+				break;
+			case "Yc-shirt":
+				d=[
+				"M70,53",	//袖の端からスタート
+				"L90,40",	//襟のところへ
+				"A80,70 0 0,0 166,40",//襟の上
+				"L186,53",
+				"C226,90 226,180 226,240",	//袖
+				"L190,240",	//袖口
+				"L184,118",	//脇
+				"L184,246",	//下へ
+				"L72,246",	//反対側へ
+				"L72,118",	//上へ
+				"L66,240",
+				"L30,240",	//袖口
+				"C30,180 30,90 70,53",	//袖
+				"Z",	//袖口
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(0)+")");
+				}));
+				//中の部分
+				d=[
+				"M90,40",	//襟のところ
+				"L166,40",
+				"L128,60",
+				"Z",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+					slj:"bevel",
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(1)+")");
+				}));
+				//襟1
+				d=[
+				"M98,20",
+				"L158,20",
+				"L166,40",
+				"L90,40",
+				"Z",
+				].join(" ");
+				var pt2=makePattern(2);
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+					slj:"bevel",
+				},(path)=>{
+					path.setAttribute("fill","url(#"+pt2+")");
+				}));
+				//襟2
+				d=[
+				"M90,40",	//襟のところ
+				"L106,80",
+				"L128,60",
+				"L150,80",
+				"L166,40",	//下ここまで
+				"L158,20",
+				"L128,56",
+				"L98,20",
+				"Z",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+					slj:"bevel",
+				},(path)=>{
+					path.setAttribute("fill","url(#"+pt2+")");
+				}));
+				var pt3=makePattern(3);
+				//ボタン
+				for(var i=0;i<5;i++){
+					el.appendChild(svg("circle",(c)=>{
+						var circle=<SVGCircleElement>c;
+						circle.cx.baseVal.valueAsString="128px";
+						circle.cy.baseVal.valueAsString=(90+30*i)+"px";
+						circle.setAttribute("fill","url(#"+pt3+")");
+						circle.setAttribute("stroke","#000000");
+						circle.setAttribute("stroke-width","1px");
+						circle.r.baseVal.valueAsString="5px";
+					}));
+				}
+				//区切り線
+				for(var i=0;i<2;i++){
+					el.appendChild(svg("line",(l)=>{
+						var line=<SVGLineElement>l;
+						line.x1.baseVal.valueAsString=(128+(i*2-1)*8)+"px";
+						line.x2.baseVal.valueAsString=(128+(i*2-1)*8)+"px";
+						line.y1.baseVal.valueAsString="70px";
+						line.y2.baseVal.valueAsString="240px";
+						line.setAttribute("stroke","#000000");
+						line.setAttribute("opacity","0.6");
+						line.setAttribute("stroke-width","2px");
+					}));
+				}
+				break;
+			case "Y-shirt":
+				d=[
+				"M30,77.5",	//袖の端からスタート
+				"L90,40",	//襟のところへ
+				"A80,70 0 0,0 166,40",//襟の上
+				//"C226,90 226,180 226,240",	//袖
+				"L226,77.5",
+				"L226,240",
+				"L190,240",	//袖口
+				"L184,118",	//脇
+				"L184,246",	//下へ
+				"L72,246",	//反対側へ
+				"L72,118",	//上へ
+				"L66,240",
+				"L30,240",	//袖口
+				//"C30,180 30,90 70,53",	//袖
+				"Z",	//袖口
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(0)+")");
+				}));
+				//中の部分
+				d=[
+				"M90,40",	//襟のところ
+				"L166,40",
+				"L128,60",
+				"Z",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+					slj:"bevel",
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(1)+")");
+				}));
+				//襟1
+				d=[
+				"M98,20",
+				"L158,20",
+				"L166,40",
+				"L90,40",
+				"Z",
+				].join(" ");
+				var pt2=makePattern(2);
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+					slj:"bevel",
+				},(path)=>{
+					path.setAttribute("fill","url(#"+pt2+")");
+				}));
+				//襟2
+				d=[
+				"M90,40",	//襟のところ
+				"L106,80",
+				"L128,60",
+				"L150,80",
+				"L166,40",	//下ここまで
+				"L158,20",
+				"L128,56",
+				"L98,20",
+				"Z",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+					slj:"bevel",
+				},(path)=>{
+					path.setAttribute("fill","url(#"+pt2+")");
+				}));
+				var pt3=makePattern(3);
+				//ボタン
+				for(var i=0;i<5;i++){
+					el.appendChild(svg("circle",(c)=>{
+						var circle=<SVGCircleElement>c;
+						circle.cx.baseVal.valueAsString="128px";
+						circle.cy.baseVal.valueAsString=(90+30*i)+"px";
+						circle.setAttribute("fill","url(#"+pt3+")");
+						circle.setAttribute("stroke","#000000");
+						circle.setAttribute("stroke-width","1px");
+						circle.r.baseVal.valueAsString="5px";
+					}));
+				}
+				//区切り線
+				for(var i=0;i<2;i++){
+					el.appendChild(svg("line",(l)=>{
+						var line=<SVGLineElement>l;
+						line.x1.baseVal.valueAsString=(128+(i*2-1)*8)+"px";
+						line.x2.baseVal.valueAsString=(128+(i*2-1)*8)+"px";
+						line.y1.baseVal.valueAsString="70px";
+						line.y2.baseVal.valueAsString="240px";
+						line.setAttribute("stroke","#000000");
+						line.setAttribute("opacity","0.6");
+						line.setAttribute("stroke-width","2px");
+					}));
+				}
+				break;
+			//タンクトップ
+			case "Tanktop":
+				//パス:左下から
+				d=[
+				"M70,40",	//左上
+				"L90,40",
+				"A48,120 0 0,0 166,40",//襟の上
+				"L186,40",
+				"A30,100 0 0,0 216,140",	//わき?
+				"L216,246",	//下へ
+				"L40,246",	//反対側へ
+				"L40,140",	//上へ
+				"A30,100 0 0,0 70,40",
+				"Z",	//袖口
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(0)+")");
+				}));
+				break;
+			//キャミソール
+			case "Camisole":
+				d=[
+				"M80,40",	//左上
+				"L90,40",
+				"L90,80",
+				"A48,40 0 0,0 166,80",//襟の上
+				"L166,40",
+				"L176,40",
+				"A40,100 0 0,0 216,140",	//わき?
+				"L216,246",	//下へ
+				"L40,246",	//反対側へ
+				"L40,140",	//上へ
+				"A40,100 0 0,0 80,40",
+				"Z",	//袖口
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(0)+")");
+				}));
 				break;
 		}
 
