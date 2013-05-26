@@ -87,6 +87,11 @@ class Cloth{
 			type:"Jacket",
 			patternNumber:4,
 		},
+		/* Bototms */
+		{
+			type:"Slacks",
+			patternNumber:1,
+		},
 	];
 	//服のデフォルト色
 	static defaultColors:string[]=["#666666","#cccccc","#eeeeee","#999999","#333333"];
@@ -923,6 +928,24 @@ class Cloth{
 				"L40,140",	//上へ
 				"A40,100 0 0,0 80,40",
 				"Z",	//袖口
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(0)+")");
+				}));
+				break;
+			case "Slacks":
+				d=[
+					"M66,40",	//上
+					"L190,40",
+					"L200,246",	//足
+					"L135,246",	//すそ
+					"L128,101.8",	//股
+					"L121,246",
+					"L56,246",
+					"Z",
 				].join(" ");
 				el.appendChild(path(d,{
 					stroke:"#000000",

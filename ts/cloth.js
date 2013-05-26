@@ -62,6 +62,10 @@ var Cloth = (function () {
             type: "Jacket",
             patternNumber: 4
         }, 
+        {
+            type: "Slacks",
+            patternNumber: 1
+        }, 
         
     ];
     Cloth.defaultColors = [
@@ -866,6 +870,25 @@ var Cloth = (function () {
                     "L40,246", 
                     "L40,140", 
                     "A40,100 0 0,0 80,40", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(0) + ")");
+                }));
+                break;
+            case "Slacks":
+                d = [
+                    "M66,40", 
+                    "L190,40", 
+                    "L200,246", 
+                    "L135,246", 
+                    "L128,101.8", 
+                    "L121,246", 
+                    "L56,246", 
                     "Z", 
                     
                 ].join(" ");
