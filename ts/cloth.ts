@@ -100,6 +100,35 @@ class Cloth{
 			type:"Chino",
 			patternNumber:1,
 		},
+		{
+			type:"Halfpants",
+			patternNumber:1,
+		},
+		{
+			type:"Hotpants",
+			patternNumber:1,
+		},
+		{
+			type:"M-Skirt",
+			patternNumber:1,
+		},
+		{
+			type:"Skirt",
+			patternNumber:1,
+		},
+		{
+			type:"L-Skirt",
+			patternNumber:1,
+		},
+		/* overall */
+		{
+			type:"Suit",
+			patternNumber:2,
+		},
+		{
+			type:"Onepiece",
+			patternNumber:2,
+		},
 	];
 	//服のデフォルト色
 	static defaultColors:string[]=["#666666","#cccccc","#eeeeee","#999999","#333333"];
@@ -1038,6 +1067,182 @@ class Cloth{
 				el.appendChild(path(d,{
 					stroke:"#000000",
 					sw:5,
+				}));
+				break;
+			case "Halfpants":
+				d=[
+					"M66,40",	//上
+					"L190,40",
+					"L196,163.6",	//足
+					"L131,163.6",	//すそ
+					"L128,101.8",	//股
+					"L125,163.6",
+					"L60,163.6",
+					"Z",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(0)+")");
+				}));
+				break;
+			case "Hotpants":
+				d=[
+					"M66,40",	//上
+					"L190,40",
+					"L194,122.4",	//足
+					"L129,122.4",	//すそ
+					"L128,101.8",	//股
+					"L127,122.4",
+					"L62,122.4",
+					"Z",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(0)+")");
+				}));
+				break;
+			case "Skirt":
+				d=[
+					"M81,40",	//上
+					"L175,40",
+					"L206,163.6",	//足
+					"L46,163.6",
+					"Z",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(0)+")");
+				}));
+				break;
+			case "M-Skirt":
+				d=[
+					"M81,40",	//上
+					"L175,40",
+					"L206,103",	//足
+					"L46,103",
+					"Z",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(0)+")");
+				}));
+				break;
+			case "L-Skirt":
+				d=[
+					"M81,40",	//上
+					"L175,40",
+					"L206,240",	//足
+					"L46,240",
+					"Z",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(0)+")");
+				}));
+				break;
+			case "Suit":
+				d=[
+				//左
+				"M70,53",	//袖の端からスタート
+				"L90,40",	//襟のところへ
+				//"A80,70 0 0,0 166,40",//襟の上
+				"L128,160",
+				"L128,252",
+				"L72,246",	//反対側へ
+				"L72,118",	//上へ
+				"L66,240",
+				"L30,240",	//袖口
+				"C30,180 30,90 70,53",	//袖
+				"Z",	//袖口
+				//右
+				"M166,40",
+				"L186,53",
+				"C226,90 226,180 226,240",	//袖
+				"L190,240",	//袖口
+				"L184,118",	//脇
+				"L184,246",	//下へ
+				"L128,252",	//途中で
+				"L128,160",
+				"Z",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(0)+")");
+				}));
+				//襟
+				d=[
+				//左側
+				"M70,53",	//袖の端からスタート
+				"L90,40",	//襟のところへ
+				"L128,160",
+				"L70,80",
+				"L84,60",
+				"L74,54",
+				"Z",
+				//右
+				"M186,53",
+				"L166,40",
+				"L128,160",
+				"L186,80",
+				"L172,60",
+				"L182,54",
+				"Z",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(0)+")");
+				}));
+				//中の部分
+				d=[
+				"M90,40",
+				"L166,40",
+				"L128,160",
+				"Z",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+					slj:"bevel",
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(1)+")");
+				}));
+				break;
+			case "Onepiece":
+				d=[
+				"M10,60",	//袖の端からスタート
+				"L90,10",	//襟のところへ
+				"A74,250 0 0,0 166,10",//下のえり
+				"L246,60",	//逆の袖の端へ
+				"L216,108",	//袖口
+				"L184,88",	//脇
+				"L184,126",	//下へ
+				//下の部分
+				"L226,246",
+				"L30,246",
+				"L72,126",	//反対側へ
+				"L72,88",	//上へ
+				"L40,108",	//袖口
+				"Z",	//袖口
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(0)+")");
 				}));
 				break;
 		}

@@ -74,6 +74,34 @@ var Cloth = (function () {
             type: "Chino",
             patternNumber: 1
         }, 
+        {
+            type: "Halfpants",
+            patternNumber: 1
+        }, 
+        {
+            type: "Hotpants",
+            patternNumber: 1
+        }, 
+        {
+            type: "M-Skirt",
+            patternNumber: 1
+        }, 
+        {
+            type: "Skirt",
+            patternNumber: 1
+        }, 
+        {
+            type: "L-Skirt",
+            patternNumber: 1
+        }, 
+        {
+            type: "Suit",
+            patternNumber: 2
+        }, 
+        {
+            type: "Onepiece",
+            patternNumber: 2
+        }, 
         
     ];
     Cloth.defaultColors = [
@@ -985,6 +1013,183 @@ var Cloth = (function () {
                 el.appendChild(path(d, {
                     stroke: "#000000",
                     sw: 5
+                }));
+                break;
+            case "Halfpants":
+                d = [
+                    "M66,40", 
+                    "L190,40", 
+                    "L196,163.6", 
+                    "L131,163.6", 
+                    "L128,101.8", 
+                    "L125,163.6", 
+                    "L60,163.6", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(0) + ")");
+                }));
+                break;
+            case "Hotpants":
+                d = [
+                    "M66,40", 
+                    "L190,40", 
+                    "L194,122.4", 
+                    "L129,122.4", 
+                    "L128,101.8", 
+                    "L127,122.4", 
+                    "L62,122.4", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(0) + ")");
+                }));
+                break;
+            case "Skirt":
+                d = [
+                    "M81,40", 
+                    "L175,40", 
+                    "L206,163.6", 
+                    "L46,163.6", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(0) + ")");
+                }));
+                break;
+            case "M-Skirt":
+                d = [
+                    "M81,40", 
+                    "L175,40", 
+                    "L206,103", 
+                    "L46,103", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(0) + ")");
+                }));
+                break;
+            case "L-Skirt":
+                d = [
+                    "M81,40", 
+                    "L175,40", 
+                    "L206,240", 
+                    "L46,240", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(0) + ")");
+                }));
+                break;
+            case "Suit":
+                d = [
+                    "M70,53", 
+                    "L90,40", 
+                    "L128,160", 
+                    "L128,252", 
+                    "L72,246", 
+                    "L72,118", 
+                    "L66,240", 
+                    "L30,240", 
+                    "C30,180 30,90 70,53", 
+                    "Z", 
+                    "M166,40", 
+                    "L186,53", 
+                    "C226,90 226,180 226,240", 
+                    "L190,240", 
+                    "L184,118", 
+                    "L184,246", 
+                    "L128,252", 
+                    "L128,160", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(0) + ")");
+                }));
+                d = [
+                    "M70,53", 
+                    "L90,40", 
+                    "L128,160", 
+                    "L70,80", 
+                    "L84,60", 
+                    "L74,54", 
+                    "Z", 
+                    "M186,53", 
+                    "L166,40", 
+                    "L128,160", 
+                    "L186,80", 
+                    "L172,60", 
+                    "L182,54", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(0) + ")");
+                }));
+                d = [
+                    "M90,40", 
+                    "L166,40", 
+                    "L128,160", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5,
+                    slj: "bevel"
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(1) + ")");
+                }));
+                break;
+            case "Onepiece":
+                d = [
+                    "M10,60", 
+                    "L90,10", 
+                    "A74,250 0 0,0 166,10", 
+                    "L246,60", 
+                    "L216,108", 
+                    "L184,88", 
+                    "L184,126", 
+                    "L226,246", 
+                    "L30,246", 
+                    "L72,126", 
+                    "L72,88", 
+                    "L40,108", 
+                    "Z", 
+                    
+                ].join(" ");
+                el.appendChild(path(d, {
+                    stroke: "#000000",
+                    sw: 5
+                }, function (path) {
+                    path.setAttribute("fill", "url(#" + makePattern(0) + ")");
                 }));
                 break;
         }
