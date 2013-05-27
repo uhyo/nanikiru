@@ -129,6 +129,28 @@ class Cloth{
 			type:"Onepiece",
 			patternNumber:2,
 		},
+		/* socks */
+		{
+			type:"Socks",
+			patternNumber:1,
+		},
+		{
+			type:"L-Socks",
+			patternNumber:1,
+		},
+		{
+			type:"S-Socks",
+			patternNumber:1,
+		},
+		/* neckties */
+		{
+			type:"Necktie",
+			patternNumber:1,
+		},
+		{
+			type:"B-Necktie",
+			patternNumber:1,
+		},
 	];
 	//服のデフォルト色
 	static defaultColors:string[]=["#666666","#cccccc","#eeeeee","#999999","#333333"];
@@ -1243,6 +1265,151 @@ class Cloth{
 					sw:5,
 				},(path)=>{
 					path.setAttribute("fill","url(#"+makePattern(0)+")");
+				}));
+				break;
+			case "Socks":
+				/*d=[
+					"M100,40",
+					"L140,40",
+					"L140,120",
+					"L120,140",
+					"A40,20 -45 0,1 91.6,111.6",
+					"L100,103.2",
+					"Z",
+				].join(" ");*/
+				d=[
+					"M100,40",
+					"L160,40",
+					"L160,160",
+					"L130,190",
+					"A60,30 -45 0,1 87.4,147.4",
+					"L100,134.8",
+					"Z",
+				].join(" ");
+				el.appendChild(svg("g",(g)=>{
+					g.appendChild(path(d,{
+						stroke:"#000000",
+						sw:5,
+					},(path)=>{
+						path.setAttribute("fill","url(#"+makePattern(0)+")");
+					}));
+				}));
+				el.appendChild(svg("g",(g)=>{
+					g.setAttribute("transform","translate(50,20)");
+					g.appendChild(path(d,{
+						stroke:"#000000",
+						sw:5,
+					},(path)=>{
+						path.setAttribute("fill","url(#"+makePattern(0)+")");
+					}));
+				}));
+				break;
+			case "L-Socks":
+				d=[
+					"M100,40",
+					"L140,40",
+					"L140,170",
+					"L120,190",
+					"A40,20 -45 0,1 91.6,161.6",
+					"L100,153.2",
+					"Z",
+				].join(" ");
+				el.appendChild(svg("g",(g)=>{
+					g.appendChild(path(d,{
+						stroke:"#000000",
+						sw:5,
+					},(path)=>{
+						path.setAttribute("fill","url(#"+makePattern(0)+")");
+					}));
+				}));
+				el.appendChild(svg("g",(g)=>{
+					g.setAttribute("transform","translate(30,20)");
+					g.appendChild(path(d,{
+						stroke:"#000000",
+						sw:5,
+					},(path)=>{
+						path.setAttribute("fill","url(#"+makePattern(0)+")");
+					}));
+				}));
+				break;
+			case "S-Socks":
+				d=[
+					"M100,120",
+					"L160,120",
+					"L160,160",
+					"L130,190",
+					"A60,30 -45 0,1 87.4,147.4",
+					"L100,134.8",
+					"Z",
+				].join(" ");
+				el.appendChild(svg("g",(g)=>{
+					g.appendChild(path(d,{
+						stroke:"#000000",
+						sw:5,
+					},(path)=>{
+						path.setAttribute("fill","url(#"+makePattern(0)+")");
+					}));
+				}));
+				el.appendChild(svg("g",(g)=>{
+					g.setAttribute("transform","translate(50,20)");
+					g.appendChild(path(d,{
+						stroke:"#000000",
+						sw:5,
+					},(path)=>{
+						path.setAttribute("fill","url(#"+makePattern(0)+")");
+					}));
+				}));
+				break;
+			case "Necktie":
+				d=[
+					//結び目
+					"M90,40",
+					"L166,40",
+					"L148,70",
+					"L108,70",
+					"Z",
+					"M148,70",
+					"L166,220",
+					"L128,252",
+					"L90,220",
+					"L108,70",
+					"Z",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(0)+")");
+				}));
+				break;
+			case "B-Necktie":
+				d=[
+					"M100,100",
+					"L156,100",
+					"L200,70",
+					"L200,186",
+					"L156,156",
+					"L100,156",
+					"L56,186",
+					"L56,70",
+					"Z",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
+				},(path)=>{
+					path.setAttribute("fill","url(#"+makePattern(0)+")");
+				}));
+				//丸い部分
+				d=[
+					"M156,100",
+					"A80,100 0 0,1 156,156",
+					"M100,100",
+					"A80,100 0 0,0 100,156",
+				].join(" ");
+				el.appendChild(path(d,{
+					stroke:"#000000",
+					sw:5,
 				}));
 				break;
 		}
