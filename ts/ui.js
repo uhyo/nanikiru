@@ -315,6 +315,9 @@ var UI;
                     if(cdoc != null) {
                         var keyarrstr = "[" + cdoc.id + "]";
                         var score = cdoc.status !== "active" ? -Infinity : clothscores[cdoc.id] || 0;
+                        if(cdoc.used) {
+                            score -= cdoc.used;
+                        }
                         if(cs[keyarrstr] == null) {
                             cs[keyarrstr] = score;
                         } else {
@@ -335,6 +338,12 @@ var UI;
                         cloths1.push(cdoc.id);
                         if(cdoc.status !== "active") {
                             clothscores[cdoc.id] = -Infinity;
+                        } else if(cdoc.used) {
+                            if(clothscores[cdoc.id] != null) {
+                                clothscores[cdoc.id] -= cdoc.used;
+                            } else {
+                                clothscores[cdoc.id] = -cdoc.used;
+                            }
                         }
                     } else {
                         var cloths2 = [];
@@ -345,6 +354,12 @@ var UI;
                                 cloths2.push(cdoc.id);
                                 if(cdoc.status !== "active") {
                                     clothscores[cdoc.id] = -Infinity;
+                                } else if(cdoc.used) {
+                                    if(clothscores[cdoc.id] != null) {
+                                        clothscores[cdoc.id] -= cdoc.used;
+                                    } else {
+                                        clothscores[cdoc.id] = -cdoc.used;
+                                    }
                                 }
                             } else {
                                 cloths1.forEach(function (cid1) {
@@ -408,25 +423,6 @@ var UI;
             c.appendChild(el("form", function (form) {
                 form.appendChild(el("dl", function (dl) {
                     dl.appendChild(el("dt", function (dt) {
-                        dt.textContent = "種類";
-                    }));
-                    dl.appendChild(el("dd", function (dd) {
-                        dd.appendChild(el("select", function (s) {
-                            var select = s;
-                            select.name = "type";
-                            for(var key in Scheduler.types) {
-                                select.add(el("option", function (o) {
-                                    var option = o;
-                                    option.value = key;
-                                    option.text = Scheduler.types[key];
-                                    if(key === doc.type) {
-                                        option.selected = true;
-                                    }
-                                }));
-                            }
-                        }));
-                    }));
-                    dl.appendChild(el("dt", function (dt) {
                         dt.textContent = "名前";
                     }));
                     dl.appendChild(el("input", function (i) {
@@ -446,7 +442,6 @@ var UI;
                 }));
                 form.addEventListener("submit", function (e) {
                     e.preventDefault();
-                    doc.type = ((form).elements["type"]).value;
                     doc.name = ((form).elements["name"]).value;
                     _this.save(doc);
                 }, false);
@@ -980,6 +975,7 @@ var UI;
                                 _this.close("scheduler::conf:" + id);
                             });
                         }, false);
+                        count++;
                     }));
                     return;
                 }
@@ -2047,7 +2043,7 @@ var UI;
                         return;
                     }
                     section.appendChild(selectbox.cloth(cdoc, {
-                        size: "32px"
+                        size: "64px"
                     }, function (mode) {
                         _this.close("cloth::" + cdoc.id);
                     }));
@@ -2062,13 +2058,7 @@ var UI;
                     p.textContent = "洗濯機に入っている服は着ることができません。";
                 }));
                 helpel.appendChild(el("p", function (p) {
-                    p.textContent = "洗うと服の使用回数が0回に戻ります。";
-                }));
-                helpel.appendChild(el("p", function (p) {
-                    p.textContent = "新しい服グループを追加したら、服グループの設定画面を開いて服を登録しましょう。";
-                }));
-                helpel.appendChild(el("p", function (p) {
-                    p.textContent = "服グループは、上と下の2つ作って登録するのがおすすめです。";
+                    p.textContent = "洗うと服の使用回数が0回に戻ります。使用回数が少ない服のほうがおすすめされやすくなります。";
                 }));
             });
         };

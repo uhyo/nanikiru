@@ -393,6 +393,10 @@ module UI{
 					if(cdoc!=null){
 						var keyarrstr="["+cdoc.id+"]";
 						var score=cdoc.status!=="active" ? -Infinity : clothscores[cdoc.id] || 0;
+						//使用回数に応じた減点
+						if(cdoc.used){
+							score-=cdoc.used;
+						}
 						if(cs[keyarrstr]==null){
 							cs[keyarrstr]=score;
 						}else{
@@ -414,6 +418,12 @@ module UI{
 						cloths1.push(cdoc.id);
 						if(cdoc.status!=="active"){
 							clothscores[cdoc.id]=-Infinity;
+						}else if(cdoc.used){
+							if(clothscores[cdoc.id]!=null){
+								clothscores[cdoc.id]-=cdoc.used;
+							}else{
+								clothscores[cdoc.id]=-cdoc.used;
+							}
 						}
 					}else{
 						//もうない! 2つ目
@@ -425,6 +435,12 @@ module UI{
 								cloths2.push(cdoc.id);
 								if(cdoc.status!=="active"){
 									clothscores[cdoc.id]=-Infinity;
+								}else if(cdoc.used){
+									if(clothscores[cdoc.id]!=null){
+										clothscores[cdoc.id]-=cdoc.used;
+									}else{
+										clothscores[cdoc.id]=-cdoc.used;
+									}
 								}
 							}else{
 								//全部調べた!
@@ -485,7 +501,7 @@ module UI{
 			}));
 			c.appendChild(el("form",(form)=>{
 				form.appendChild(el("dl",(dl)=>{
-					dl.appendChild(el("dt",(dt)=>{
+					/*dl.appendChild(el("dt",(dt)=>{
 						dt.textContent="種類";
 					}));
 					dl.appendChild(el("dd",(dd)=>{
@@ -504,7 +520,7 @@ module UI{
 								}));
 							}
 						}));
-					}));
+					}));*/
 					dl.appendChild(el("dt",(dt)=>{
 						dt.textContent="名前";
 					}));
@@ -526,7 +542,7 @@ module UI{
 				form.addEventListener("submit",(e)=>{
 					//変更をセーブしたい
 					e.preventDefault();
-					doc.type=(<HTMLInputElement>(<HTMLFormElement>form).elements["type"]).value;
+					//doc.type=(<HTMLInputElement>(<HTMLFormElement>form).elements["type"]).value;
 					doc.name=(<HTMLInputElement>(<HTMLFormElement>form).elements["name"]).value;
 					//save & close
 					this.save(doc);
@@ -1103,6 +1119,7 @@ module UI{
 								this.close("scheduler::conf:"+id);
 							});
 						},false);
+						count++;
 					}));
 					return;
 				}
@@ -2249,7 +2266,7 @@ module UI{
 						return;
 					}
 					section.appendChild(selectbox.cloth(cdoc,{
-						size:"32px",
+						size:"64px",
 					},(mode:string)=>{
 						this.close("cloth::"+cdoc.id);
 					}));
@@ -2264,13 +2281,7 @@ module UI{
 					p.textContent="洗濯機に入っている服は着ることができません。";
 				}));
 				helpel.appendChild(el("p",(p)=>{
-					p.textContent="洗うと服の使用回数が0回に戻ります。";
-				}));
-				helpel.appendChild(el("p",(p)=>{
-					p.textContent="新しい服グループを追加したら、服グループの設定画面を開いて服を登録しましょう。";
-				}));
-				helpel.appendChild(el("p",(p)=>{
-					p.textContent="服グループは、上と下の2つ作って登録するのがおすすめです。";
+					p.textContent="洗うと服の使用回数が0回に戻ります。使用回数が少ない服のほうがおすすめされやすくなります。";
 				}));
 			});
 		}
