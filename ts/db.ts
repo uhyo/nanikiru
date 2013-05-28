@@ -1,3 +1,4 @@
+///<reference path="def.ts"/>
 /*addition*/
 interface IDBObjectStore{
 	delete:(key:any)=>IDBRequest;
@@ -11,12 +12,6 @@ interface IDBObjectStore{
 declare var IDBKeyRange:{
 	bound:(key1:any,key2:any)=>IDBKeyRange;
 }*/
-//DB-Object
-interface PatternObj{
-	type:string;
-	size:number;
-	colors:string[];
-}
 interface ClothDoc{
 	id:number;
 	name:string;

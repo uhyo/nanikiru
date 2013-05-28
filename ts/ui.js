@@ -1536,6 +1536,59 @@ var UI;
                     _this.mainArea = div;
                     div.textContent = "服をクリック/タップして服の模様を編集して下さい。";
                 }));
+                div.appendChild(el("div", function (div) {
+                    div.classList.add("clothselect-patternselect");
+                    Cloth.patternTypes.forEach(function (obj, i) {
+                        div.appendChild(el("div", function (div) {
+                            div.classList.add("clothselect-patternbox");
+                            div.dataset.type = obj.type;
+                            div.appendChild(svg("svg", function (v) {
+                                var vg = v;
+                                vg.setAttribute("version", "1.1");
+                                vg.width.baseVal.valueAsString = "48px";
+                                vg.height.baseVal.valueAsString = "48px";
+                                vg.viewBox.baseVal.x = 0 , vg.viewBox.baseVal.y = 0 , vg.viewBox.baseVal.width = 256 , vg.viewBox.baseVal.height = 256;
+                                var patt = Cloth.makePattern({
+                                    type: obj.type,
+                                    size: obj.defaultSize,
+                                    colors: Cloth.defaultColors.slice(0, obj.colorNumber)
+                                });
+                                patt.id = "patternbox" + i + "-pattern";
+                                vg.appendChild(patt);
+                                vg.appendChild(svg("rect", function (r) {
+                                    var rect = r;
+                                    rect.setAttribute("stroke", "#000000");
+                                    rect.setAttribute("stroke-width", "2px");
+                                    rect.x.baseVal.valueAsString = "0px";
+                                    rect.y.baseVal.valueAsString = "0px";
+                                    rect.width.baseVal.valueAsString = "256px";
+                                    rect.height.baseVal.valueAsString = "256px";
+                                    rect.setAttribute("fill", "url(#patternbox" + i + "-pattern)");
+                                }));
+                            }));
+                        }));
+                    });
+                    div.addEventListener("click", function (e) {
+                        var node = e.target;
+                        do {
+                            if(node.classList && node.classList.contains("clothselect-patternbox")) {
+                                var patype = node.dataset.type;
+                                var pato = Cloth.patternTypes.filter(function (x) {
+                                    return x.type === patype;
+                                })[0];
+                                var pat = _this.doc.patterns[_this.editingIndex];
+                                pat.type = patype;
+                                pat.colors = pat.colors.slice(0, pato.colorNumber);
+                                while(pat.colors.length < pato.colorNumber) {
+                                    pat.colors[pat.colors.length] = Cloth.defaultColors[pat.colors.length];
+                                }
+                                pat.size = pato.defaultSize;
+                                _this.changePattern(_this.editingIndex, pat);
+                                _this.editPattern(_this.editingIndex);
+                            }
+                        }while(node = node.parentNode);
+                    }, false);
+                }));
             }));
             c.appendChild(el("p", function (p) {
                 p.appendChild(el("button", function (b) {
@@ -1570,7 +1623,7 @@ var UI;
                     h1.textContent = "服エディタ";
                 }));
                 helpel.appendChild(el("p", function (p) {
-                    p.textContent = "服エディタでは服のデザインを決めることができます。";
+                    p.textContent = "服エディタでは服のデザインを決めることができます。実際の服に近いデザインにするとわかりやすくなります。";
                 }));
                 helpel.appendChild(el("p", function (p) {
                     p.textContent = "一番左のメニューから服の種類を決めましょう。決めたら右に大きな服の画像が出現します。";
@@ -1595,6 +1648,7 @@ var UI;
                 pats[pats.length] = {
                     type: "simple",
                     size: 0,
+                    deg: 0,
                     colors: [
                         Cloth.defaultColors[pats.length]
                     ]
@@ -1617,6 +1671,7 @@ var UI;
         };
         ClothSelect.prototype.editPattern = function (index) {
             var _this = this;
+            this.editingIndex = index;
             var main = this.mainArea;
             empty(main);
             var pat = this.doc.patterns[index];
@@ -1649,6 +1704,44 @@ var UI;
             main.appendChild(el("div", function (div) {
                 div.appendChild(preview);
             }));
+            if(tytyty.requiresSize) {
+                main.appendChild(el("div", function (div) {
+                    div.textContent = "サイズ:";
+                    div.appendChild(el("input", function (i) {
+                        var input = i;
+                        input.type = "range";
+                        input.min = "1";
+                        input.max = "256";
+                        input.step = "1";
+                        input.value = String(pat.size);
+                        (function (input) {
+                            input.addEventListener("change", function (e) {
+                                pat.size = Number(input.value);
+                                _this.changePattern(index, pat);
+                            }, false);
+                        })(input);
+                    }));
+                }));
+            }
+            if(tytyty.requiresDeg) {
+                main.appendChild(el("div", function (div) {
+                    div.textContent = "角度:";
+                    div.appendChild(el("input", function (i) {
+                        var input = i;
+                        input.type = "range";
+                        input.min = "0";
+                        input.max = "180";
+                        input.step = "1";
+                        input.value = String(pat.deg || 0);
+                        (function (input) {
+                            input.addEventListener("change", function (e) {
+                                pat.deg = Number(input.value);
+                                _this.changePattern(index, pat);
+                            }, false);
+                        })(input);
+                    }));
+                }));
+            }
             for(var i = 0; i < tytyty.colorNumber; i++) {
                 main.appendChild(el("div", function (div) {
                     var input;

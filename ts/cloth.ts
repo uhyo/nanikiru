@@ -1,16 +1,5 @@
+///<reference path="def.ts"/>
 /* ui.tsから */
-//分離してる的な!
-interface PatternObj{
-	type:string;
-	size:number;
-	colors:string[];
-}
-interface _SVGSomeBox extends SVGElement{
-	x:SVGAnimatedLength;
-	y:SVGAnimatedLength;
-	width:SVGAnimatedLength;
-	height:SVGAnimatedLength;
-}
 declare function svg(name:string,callback?:(g:SVGElement)=>void):SVGElement;
 declare function path(d:string,v:{
 	fill?:string;
@@ -158,15 +147,24 @@ class Cloth{
 	static patternTypes:{
 		type:string;	//パターン名
 		requiresSize:bool;
+		requiresDeg:bool;
 		defaultSize:number;
 		colorNumber:number;
 	}[]=[
 		{
 			type:"simple",
 			requiresSize:false,
+			requiresDeg:false,
 			defaultSize:0,
 			colorNumber:1,
-		}
+		},
+		{
+			type:"2-check",
+			requiresSize:true,
+			requiresDeg:true,
+			defaultSize:20,
+			colorNumber:2,
+		},
 	];
 	//JSON的なobjから作る
 	importCloth(obj:{
@@ -1416,16 +1414,13 @@ class Cloth{
 
 		function makePattern(index:number):string{
 			//パターンを作ってあげる idを返す
-			var pat:{
-				type:string;
-				size:number;
-				colors:string[];
-			}=patterns[index];
+			var pat:PatternObj=patterns[index];
 			if(!pat){
 				//足りない!!!!!!!!
 				pat={
 					type:"simple",
 					size:0,
+					deg:0,
 					colors:[Cloth.defaultColors[index]],
 				};
 			}
@@ -1437,6 +1432,8 @@ class Cloth{
 	}
 	static makePattern(pat:PatternObj):SVGPatternElement{
 		var pattern=<SVGPatternElement>document.createElementNS(Cloth.svgNS,"pattern");
+		pattern.setAttribute("patternUnits","userSpaceOnUse");
+		var size=pat.size;
 		//タイプごと
 		switch(pat.type){
 			case "simple":
@@ -1444,13 +1441,42 @@ class Cloth{
 				setwh(pattern,0,0,256,256);
 				setvb(pattern.viewBox,0,0,256,256);
 				//その色でうめる
-				pattern.setAttribute("patternUnits","userSpaceOnUse");
 				pattern.appendChild(svg("rect",(r)=>{
 					var rect=<SVGRectElement>r;
 					setwh(rect,0,0,256,256);
 					rect.setAttribute("fill",pat.colors[0]);
 				}));
 				break;
+			case "2-check":
+				//2色チェック
+				setwh(pattern,0,0,size*2,size*2);
+				setvb(pattern.viewBox,0,0,size*2,size*2);
+				//2色交互
+				pattern.appendChild(svg("rect",(r)=>{
+					var rect=<SVGRectElement>r;
+					setwh(rect,0,0,size,size);
+					rect.setAttribute("fill",pat.colors[0]);
+				}));
+				pattern.appendChild(svg("rect",(r)=>{
+					var rect=<SVGRectElement>r;
+					setwh(rect,size,size,size,size);
+					rect.setAttribute("fill",pat.colors[0]);
+				}));
+				pattern.appendChild(svg("rect",(r)=>{
+					var rect=<SVGRectElement>r;
+					setwh(rect,size,0,size,size);
+					rect.setAttribute("fill",pat.colors[1]);
+				}));
+				pattern.appendChild(svg("rect",(r)=>{
+					var rect=<SVGRectElement>r;
+					setwh(rect,0,size,size,size);
+					rect.setAttribute("fill",pat.colors[1]);
+				}));
+				break;
+		}
+		//角度調整
+		if(pat.deg){
+			pattern.setAttribute("patternTransform","rotate("+pat.deg+")");
 		}
 		return pattern;
 		function setwh(pattern:_SVGSomeBox,x:number,y:number,width:number,height:number):void{

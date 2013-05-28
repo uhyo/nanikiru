@@ -135,9 +135,18 @@ var Cloth = (function () {
         {
             type: "simple",
             requiresSize: false,
+            requiresDeg: false,
             defaultSize: 0,
             colorNumber: 1
-        }
+        }, 
+        {
+            type: "2-check",
+            requiresSize: true,
+            requiresDeg: true,
+            defaultSize: 20,
+            colorNumber: 2
+        }, 
+        
     ];
     Cloth.prototype.importCloth = function (obj) {
         this.clothType = obj.type || null;
@@ -1359,6 +1368,7 @@ var Cloth = (function () {
                 pat = {
                     type: "simple",
                     size: 0,
+                    deg: 0,
                     colors: [
                         Cloth.defaultColors[index]
                     ]
@@ -1372,17 +1382,45 @@ var Cloth = (function () {
     };
     Cloth.makePattern = function makePattern(pat) {
         var pattern = document.createElementNS(Cloth.svgNS, "pattern");
+        pattern.setAttribute("patternUnits", "userSpaceOnUse");
+        var size = pat.size;
         switch(pat.type) {
             case "simple":
                 setwh(pattern, 0, 0, 256, 256);
                 setvb(pattern.viewBox, 0, 0, 256, 256);
-                pattern.setAttribute("patternUnits", "userSpaceOnUse");
                 pattern.appendChild(svg("rect", function (r) {
                     var rect = r;
                     setwh(rect, 0, 0, 256, 256);
                     rect.setAttribute("fill", pat.colors[0]);
                 }));
                 break;
+            case "2-check":
+                setwh(pattern, 0, 0, size * 2, size * 2);
+                setvb(pattern.viewBox, 0, 0, size * 2, size * 2);
+                pattern.appendChild(svg("rect", function (r) {
+                    var rect = r;
+                    setwh(rect, 0, 0, size, size);
+                    rect.setAttribute("fill", pat.colors[0]);
+                }));
+                pattern.appendChild(svg("rect", function (r) {
+                    var rect = r;
+                    setwh(rect, size, size, size, size);
+                    rect.setAttribute("fill", pat.colors[0]);
+                }));
+                pattern.appendChild(svg("rect", function (r) {
+                    var rect = r;
+                    setwh(rect, size, 0, size, size);
+                    rect.setAttribute("fill", pat.colors[1]);
+                }));
+                pattern.appendChild(svg("rect", function (r) {
+                    var rect = r;
+                    setwh(rect, 0, size, size, size);
+                    rect.setAttribute("fill", pat.colors[1]);
+                }));
+                break;
+        }
+        if(pat.deg) {
+            pattern.setAttribute("patternTransform", "rotate(" + pat.deg + ")");
         }
         return pattern;
         function setwh(pattern, x, y, width, height) {

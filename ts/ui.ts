@@ -1,5 +1,6 @@
 ///<reference path="db.ts"/>
 ///<reference path="cloth.ts"/>
+///<reference path="def.ts"/>
 //additional definition
 interface HTMLElement{
 	hidden:bool;
@@ -40,13 +41,6 @@ interface XPathNSResolver{
 	loopupNamespaceURI:(prefix:string)=>string;
 }
 interface Document extends XPathEvaluator{
-}
-/* 便宜的にあってほしいやつ ダックタイピング最高 */
-interface _SVGSomeBox extends SVGElement{
-	x:SVGAnimatedLength;
-	y:SVGAnimatedLength;
-	width:SVGAnimatedLength;
-	height:SVGAnimatedLength;
 }
 
 module UI{
@@ -1646,6 +1640,7 @@ module UI{
 		private previewArea:HTMLElement;
 		private mainArea:HTMLElement;
 		private cloth:Cloth;	//現在編集中のやつ
+		private editingIndex:number;	//現在編集中のパターン番号
 		constructor(private doc:{
 			type:string;
 			patterns:PatternObj[];
@@ -1717,6 +1712,63 @@ module UI{
 					//初期値
 					div.textContent="服をクリック/タップして服の模様を編集して下さい。";
 				}));
+				div.appendChild(el("div",(div)=>{
+					div.classList.add("clothselect-patternselect");
+					//最初から全部列挙
+					Cloth.patternTypes.forEach((obj,i)=>{
+						div.appendChild(el("div",(div)=>{
+							div.classList.add("clothselect-patternbox");
+							div.dataset.type=obj.type;
+							div.appendChild(svg("svg",(v)=>{
+								var vg=<SVGSVGElement>v;
+								vg.setAttribute("version","1.1");
+								vg.width.baseVal.valueAsString="48px";
+								vg.height.baseVal.valueAsString="48px";
+								vg.viewBox.baseVal.x=0, vg.viewBox.baseVal.y=0, vg.viewBox.baseVal.width=256, vg.viewBox.baseVal.height=256;
+								var patt=<SVGPatternElement>Cloth.makePattern({
+									type:obj.type,
+									size:obj.defaultSize,
+									colors:Cloth.defaultColors.slice(0,obj.colorNumber),
+								});
+								patt.id="patternbox"+i+"-pattern";
+								vg.appendChild(patt);
+								vg.appendChild(svg("rect",(r)=>{
+									var rect=<SVGRectElement>r;
+									rect.setAttribute("stroke","#000000");
+									rect.setAttribute("stroke-width","2px");
+									rect.x.baseVal.valueAsString="0px";
+									rect.y.baseVal.valueAsString="0px";
+									rect.width.baseVal.valueAsString="256px";
+									rect.height.baseVal.valueAsString="256px";
+									rect.setAttribute("fill","url(#patternbox"+i+"-pattern)");
+								}));
+							}));
+						}));
+					});
+					div.addEventListener("click",(e)=>{
+						var node:HTMLElement=<HTMLElement>e.target;
+						do{
+							if(node.classList && node.classList.contains("clothselect-patternbox")){
+								var patype:string=node.dataset.type;
+								var pato=Cloth.patternTypes.filter((x)=>{
+									return x.type===patype;
+								})[0];
+								var pat=this.doc.patterns[this.editingIndex];
+								pat.type=patype;
+								pat.colors=pat.colors.slice(0,pato.colorNumber);
+								//色足りない
+								while(pat.colors.length<pato.colorNumber){
+									pat.colors[pat.colors.length]=Cloth.defaultColors[pat.colors.length];
+								}
+								//サイズ調整
+								pat.size=pato.defaultSize;
+								//できたらOK!
+								this.changePattern(this.editingIndex,pat);
+								this.editPattern(this.editingIndex);
+							}
+						}while(node=<HTMLElement>node.parentNode);
+					},false);
+				}));
 			}));
 			//登録ボタン
 			c.appendChild(el("p",(p)=>{
@@ -1754,7 +1806,7 @@ module UI{
 					h1.textContent="服エディタ";
 				}));
 				helpel.appendChild(el("p",(p)=>{
-					p.textContent="服エディタでは服のデザインを決めることができます。";
+					p.textContent="服エディタでは服のデザインを決めることができます。実際の服に近いデザインにするとわかりやすくなります。";
 				}));
 				helpel.appendChild(el("p",(p)=>{
 					p.textContent="一番左のメニューから服の種類を決めましょう。決めたら右に大きな服の画像が出現します。";
@@ -1777,6 +1829,7 @@ module UI{
 				pats[pats.length]={
 					type:"simple",
 					size:0,
+					deg:0,
 					colors:[Cloth.defaultColors[pats.length]],
 				};
 			}
@@ -1797,6 +1850,7 @@ module UI{
 		}
 		private editPattern(index:number):void{
 			//このパターンをeditする
+			this.editingIndex=index;
 			var main=this.mainArea;
 			empty(main);
 			var pat=this.doc.patterns[index];
@@ -1829,6 +1883,50 @@ module UI{
 			main.appendChild(el("div",(div)=>{
 				div.appendChild(preview);
 			}));
+			if(tytyty.requiresSize){
+				//サイズ必要
+				main.appendChild(el("div",(div)=>{
+					div.textContent="サイズ:";
+					div.appendChild(el("input",(i)=>{
+						var input=<HTMLInputElement>i;
+						input.type="range";
+						input.min="1";
+						input.max="256";
+						input.step="1";
+						input.value=String(pat.size);
+					((input)=>{
+						input.addEventListener("change",(e)=>{
+							//変更された
+							pat.size=Number(input.value);
+							//変更反映
+							this.changePattern(index,pat);
+						},false);
+					})(input);
+					}));
+				}));
+			}
+			if(tytyty.requiresDeg){
+				//角度必要
+				main.appendChild(el("div",(div)=>{
+					div.textContent="角度:";
+					div.appendChild(el("input",(i)=>{
+						var input=<HTMLInputElement>i;
+						input.type="range";
+						input.min="0";
+						input.max="180";
+						input.step="1";
+						input.value=String(pat.deg || 0);
+					((input)=>{
+						input.addEventListener("change",(e)=>{
+							//変更された
+							pat.deg=Number(input.value);
+							//変更反映
+							this.changePattern(index,pat);
+						},false);
+					})(input);
+					}));
+				}));
+			}
 			//各色を設定する
 			for(var i=0;i<tytyty.colorNumber;i++){
 				main.appendChild(el("div",(div)=>{

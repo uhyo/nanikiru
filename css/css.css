@@ -169,12 +169,16 @@ ul.choosecloth-field li{
 	display:-moz-box;
 	display:box;
 }
-.clothselect-typeselect{
+.clothselect-typeselect, .clothselect-patternselect{
 	max-height:200px;
 	overflow-y:scroll;
 }
 .clothselect-typebox{
 	border:3px double #aaaaaa;
+	width:48px;
+	height:48px;
+}
+.clothselect-patternbox{
 	width:48px;
 	height:48px;
 }
