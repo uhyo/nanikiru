@@ -26,8 +26,14 @@ class AppHost{
 		var me=new Panels.MenuPanel(this,db);
 		this.menuContent.appendChild(me.getContent());
 
-		var tp=new Panels.SchedulerPanel(this,db);
-		this.setPanel(tp);
+		if(localStorage.getItem("startup")==="done"){
+			//ようこそ画面は出さない
+			var tp=new Panels.SchedulerPanel(this,db);
+			this.setPanel(tp);
+		}else{
+			var st=new Panels.StartupPanel(this,db);
+			this.setPanel(st);
+		}
 	}
 	//パネルを
 	setPanel(p:Panels.Panel):void{

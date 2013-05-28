@@ -2065,6 +2065,58 @@ var UI;
         return Washer;
     })(UISection);
     UI.Washer = Washer;    
+    var Startup = (function (_super) {
+        __extends(Startup, _super);
+        function Startup() {
+            var _this = this;
+                _super.call(this);
+            var c = this.getContent();
+            c.appendChild(el("h1", function (h1) {
+                h1.textContent = "nanikiruへようこそ!";
+            }));
+            c.appendChild(el("p", function (p) {
+                p.textContent = "nanikiruは服装管理アプリケーションです。服を登録して毎日の服を記録管理でき、今日のおすすめの服も教えてくれます。";
+            }));
+            c.appendChild(el("section", function (section) {
+                section.appendChild(el("h1", function (h1) {
+                    h1.textContent = "自己アピール（人となり）";
+                }));
+                section.appendChild(el("p", function (p) {
+                    p.innerHTML = "nanikiruを使って<strong>少ないリソース（服）を有効利用</strong>できる人です。今日はどの服を着るか迷う必要もなく<strong>時間も節約</strong>できる人です。";
+                }));
+                section.appendChild(el("p", function (p) {
+                    p.innerHTML = "またnanikiruには<strong>他人と服を共有する機能はありません</strong>。これは<strong>他人に流されず自分の意見をしっかり持つ人</strong>ということを表しているのです。";
+                }));
+            }));
+            c.appendChild(el("section", function (section) {
+                section.appendChild(el("h1", function (h1) {
+                    h1.textContent = "自己アピール（スキル）";
+                }));
+                section.appendChild(el("p", function (p) {
+                    p.innerHTML = "画像を一切使わずに、多様な服アイコンを作成可能。服アイコンは<b>SVG</b>で表しています。データは<b>IndexedDB</b>で保存。";
+                }));
+            }));
+            c.appendChild(el("section", function (section) {
+                section.appendChild(el("h1", function (h1) {
+                    h1.textContent = "動作環境";
+                }));
+                section.appendChild(el("p", function (p) {
+                    p.innerHTML = "nanikiruは、<strong>モダンブラウザ</strong>なら動きます。モダンブラウザとは、ここではHTML5をはじめとする各種技術に十分対応したブラウザとします。スマートフォン・タブレットでも、モダンブラウザ搭載なら動きます。";
+                }));
+            }));
+            c.appendChild(el("p", function (p) {
+                p.appendChild(el("button", function (button) {
+                    button.textContent = "nanikiruを利用開始する";
+                    button.addEventListener("click", function (e) {
+                        localStorage.setItem("startup", "done");
+                        _this.close("scheduler::open:");
+                    }, false);
+                }));
+            }));
+        }
+        return Startup;
+    })(UISection);
+    UI.Startup = Startup;    
     var Dialog = (function (_super) {
         __extends(Dialog, _super);
         function Dialog(title, message, buttons) {

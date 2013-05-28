@@ -16,8 +16,13 @@ var AppHost = (function () {
         this.concon.appendChild(this.helpContent);
         var me = new Panels.MenuPanel(this, db);
         this.menuContent.appendChild(me.getContent());
-        var tp = new Panels.SchedulerPanel(this, db);
-        this.setPanel(tp);
+        if(localStorage.getItem("startup") === "done") {
+            var tp = new Panels.SchedulerPanel(this, db);
+            this.setPanel(tp);
+        } else {
+            var st = new Panels.StartupPanel(this, db);
+            this.setPanel(st);
+        }
     }
     AppHost.prototype.setPanel = function (p) {
         this.now = p;

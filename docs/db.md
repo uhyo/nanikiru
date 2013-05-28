@@ -45,10 +45,5 @@
 scheduler.id(default one)
 ## nohelp
 "true"
-
-# clothPattern doc
-  # 一色
-  {
-    "type":"single",
-    "color":["color1"],
-  }
+## startup
+"done"

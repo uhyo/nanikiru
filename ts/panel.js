@@ -206,6 +206,20 @@ var Panels;
         return WasherPanel;
     })(Panel);
     Panels.WasherPanel = WasherPanel;    
+    var StartupPanel = (function (_super) {
+        __extends(StartupPanel, _super);
+        function StartupPanel(host, db) {
+                _super.call(this, host, db);
+            this.host = host;
+            this.db = db;
+            var c = this.initContainer();
+            var str = new UI.Startup();
+            c.appendChild(str.getContent());
+            this.closeManage(str);
+        }
+        return StartupPanel;
+    })(Panel);
+    Panels.StartupPanel = StartupPanel;    
     function el(name, callback) {
         var result = document.createElement(name);
         if(callback) {

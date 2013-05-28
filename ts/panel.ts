@@ -186,6 +186,15 @@ module Panels{
 			this.closeManage(washer);
 		}
 	}
+	export class StartupPanel extends Panel{
+		constructor(private host:AppHost,private db:DB){
+			super(host,db);
+			var c=this.initContainer();
+			var str=new UI.Startup();
+			c.appendChild(str.getContent());
+			this.closeManage(str);
+		}
+	}
 	function el(name:string,callback?:(e:HTMLElement)=>void):HTMLElement{
 		var result=document.createElement(name);
 		if(callback)callback(result);

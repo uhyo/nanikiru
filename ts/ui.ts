@@ -2286,6 +2286,54 @@ module UI{
 			});
 		}
 	}
+	export class Startup extends UISection{
+		constructor(){
+			super();
+			var c=this.getContent();
+			c.appendChild(el("h1",(h1)=>{
+				h1.textContent="nanikiruへようこそ!";
+			}));
+			c.appendChild(el("p",(p)=>{
+				p.textContent="nanikiruは服装管理アプリケーションです。服を登録して毎日の服を記録管理でき、今日のおすすめの服も教えてくれます。";
+			}));
+			c.appendChild(el("section",(section)=>{
+				section.appendChild(el("h1",(h1)=>{
+					h1.textContent="自己アピール（人となり）";
+				}));
+				section.appendChild(el("p",(p)=>{
+					p.innerHTML="nanikiruを使って<strong>少ないリソース（服）を有効利用</strong>できる人です。今日はどの服を着るか迷う必要もなく<strong>時間も節約</strong>できる人です。";
+				}));
+				section.appendChild(el("p",(p)=>{
+					p.innerHTML="またnanikiruには<strong>他人と服を共有する機能はありません</strong>。これは<strong>他人に流されず自分の意見をしっかり持つ人</strong>ということを表しているのです。";
+				}));
+			}));
+			c.appendChild(el("section",(section)=>{
+				section.appendChild(el("h1",(h1)=>{
+					h1.textContent="自己アピール（スキル）";
+				}));
+				section.appendChild(el("p",(p)=>{
+					p.innerHTML="画像を一切使わずに、多様な服アイコンを作成可能。服アイコンは<b>SVG</b>で表しています。データは<b>IndexedDB</b>で保存。";
+				}));
+			}));
+			c.appendChild(el("section",(section)=>{
+				section.appendChild(el("h1",(h1)=>{
+					h1.textContent="動作環境";
+				}));
+				section.appendChild(el("p",(p)=>{
+					p.innerHTML="nanikiruは、<strong>モダンブラウザ</strong>なら動きます。モダンブラウザとは、ここではHTML5をはじめとする各種技術に十分対応したブラウザとします。スマートフォン・タブレットでも、モダンブラウザ搭載なら動きます。";
+				}));
+			}));
+			c.appendChild(el("p",(p)=>{
+				p.appendChild(el("button",(button)=>{
+					button.textContent="nanikiruを利用開始する";
+					button.addEventListener("click",(e)=>{
+						localStorage.setItem("startup","done");
+						this.close("scheduler::open:");
+					},false);
+				}));
+			}));
+		}
+	}
 	//ダイアログ
 	class Dialog extends UISection{
 		constructor(private title:string,private message:string,private buttons:string[]){
