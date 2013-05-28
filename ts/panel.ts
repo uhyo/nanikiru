@@ -91,12 +91,19 @@ module Panels{
 						//服を開きたい
 						var cl=new ClothPanel(this.host,this.db,Number(result[1]));
 						this.host.setPanel(cl);
+						return;
 					}
 
 					if(returnValue==="washer::"){
 						//洗濯機を調べますか? → はい
 						var wa=new WasherPanel(this.host,this.db);
 						this.host.setPanel(wa);
+						return;
+					}
+					if(returnValue==="config::"){
+						//設定
+						var co=new ConfigPanel(this.host,this.db);
+						this.host.setPanel(co);
 					}
 				}
 			});
@@ -193,6 +200,16 @@ module Panels{
 			var str=new UI.Startup();
 			c.appendChild(str.getContent());
 			this.closeManage(str);
+		}
+	}
+	export class ConfigPanel extends Panel{
+		constructor(private host:AppHost,private db:DB){
+			super(host,db);
+			var c=this.initContainer();
+			var co=new UI.Config(db);
+			co.open();
+			c.appendChild(co.getContent());
+			this.closeManage(co);
 		}
 	}
 	function el(name:string,callback?:(e:HTMLElement)=>void):HTMLElement{

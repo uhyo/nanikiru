@@ -82,10 +82,16 @@ var Panels;
                     if(result) {
                         var cl = new ClothPanel(_this.host, _this.db, Number(result[1]));
                         _this.host.setPanel(cl);
+                        return;
                     }
                     if(returnValue === "washer::") {
                         var wa = new WasherPanel(_this.host, _this.db);
                         _this.host.setPanel(wa);
+                        return;
+                    }
+                    if(returnValue === "config::") {
+                        var co = new ConfigPanel(_this.host, _this.db);
+                        _this.host.setPanel(co);
                     }
                 }
             });
@@ -220,6 +226,21 @@ var Panels;
         return StartupPanel;
     })(Panel);
     Panels.StartupPanel = StartupPanel;    
+    var ConfigPanel = (function (_super) {
+        __extends(ConfigPanel, _super);
+        function ConfigPanel(host, db) {
+                _super.call(this, host, db);
+            this.host = host;
+            this.db = db;
+            var c = this.initContainer();
+            var co = new UI.Config(db);
+            co.open();
+            c.appendChild(co.getContent());
+            this.closeManage(co);
+        }
+        return ConfigPanel;
+    })(Panel);
+    Panels.ConfigPanel = ConfigPanel;    
     function el(name, callback) {
         var result = document.createElement(name);
         if(callback) {

@@ -546,5 +546,110 @@ var DB = (function () {
         });
         delete req;
     };
+    DB.prototype.exportData = function (callback) {
+        var stores = [
+            "cloth", 
+            "clothgroup", 
+            "scheduler", 
+            "log"
+        ];
+        var tr = this.db.transaction(stores, "readonly");
+        var result = {
+        };
+        var nextStore = function (index) {
+            var storeName = stores[index];
+            if(storeName == null) {
+                callback(result);
+                return;
+            }
+            var arr = result[storeName] = [];
+            var store = tr.objectStore(storeName);
+            var req = store.openCursor(null, "next");
+            if(req == null) {
+                nextStore(index + 1);
+                return;
+            }
+            req.addEventListener("success", function (e) {
+                var cursor = req.result;
+                if(!cursor) {
+                    nextStore(index + 1);
+                    return;
+                }
+                arr.push(cursor.value);
+                cursor.advance(1);
+            });
+            req.addEventListener("error", function (e) {
+                console.error("exportData error:", req.error);
+                callback(null);
+            });
+        };
+        nextStore(0);
+    };
+    DB.prototype.importData = function (obj, callback) {
+        var stores = [
+            "cloth", 
+            "clothgroup", 
+            "scheduler", 
+            "log"
+        ];
+        var tr = this.db.transaction(stores, "readwrite");
+        var nextStore = function (index) {
+            var storeName = stores[index];
+            if(storeName == null) {
+                callback(true);
+                return;
+            }
+            var sto = obj[storeName];
+            if(sto == null) {
+                callback(false);
+                return;
+            }
+            var store = tr.objectStore(storeName);
+            var req = store.clear();
+            req.addEventListener("success", function (e) {
+                var nextRecord = function (index2) {
+                    var rec = sto[index2];
+                    if(rec == null) {
+                        nextStore(index + 1);
+                        return;
+                    }
+                    if(storeName === "cloth") {
+                        if(rec.made) {
+                            rec.made = new Date(rec.made);
+                        }
+                        if(rec.lastuse) {
+                            rec.lastuse = new Date(rec.lastuse);
+                        }
+                    }
+                    if(storeName === "clothgroup" || storeName === "scheduler") {
+                        if(rec.made) {
+                            rec.made = new Date(rec.made);
+                        }
+                    }
+                    if(storeName === "log") {
+                        if(rec.date) {
+                            rec.date = new Date(rec.date);
+                        }
+                    }
+                    var req2 = store.add(rec);
+                    req2.addEventListener("success", function (e) {
+                        nextRecord(index2 + 1);
+                    });
+                    req2.addEventListener("error", function (e) {
+                        console.error("importData error:", req2.error);
+                        tr.abort();
+                        callback(false);
+                    });
+                };
+                nextRecord(0);
+            });
+            req.addEventListener("error", function (e) {
+                console.error("importData error:", req.error);
+                tr.abort();
+                callback(false);
+            });
+        };
+        nextStore(0);
+    };
     return DB;
 })();

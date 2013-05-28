@@ -2117,6 +2117,120 @@ var UI;
         return Startup;
     })(UISection);
     UI.Startup = Startup;    
+    var Config = (function (_super) {
+        __extends(Config, _super);
+        function Config(db) {
+                _super.call(this);
+            this.db = db;
+        }
+        Config.prototype.open = function () {
+            var _this = this;
+            var db = this.db;
+            var c = this.getContent();
+            empty(c);
+            c.appendChild(el("h1", function (h1) {
+                h1.textContent = "設定";
+            }));
+            if(localStorage.getItem("nohelp") === "true") {
+                c.appendChild(el("section", function (section) {
+                    section.appendChild(el("h1", function (h1) {
+                        h1.textContent = "ヘルプの復活";
+                    }));
+                    section.appendChild(el("p", function (p) {
+                        p.textContent = "ヘルプを消してしまったが再び見たいという場合は復活ボタンを押して下さい。";
+                    }));
+                    section.appendChild(el("p", function (p) {
+                        p.appendChild(el("button", function (button) {
+                            button.textContent = "復活";
+                            button.addEventListener("click", function (e) {
+                                localStorage.removeItem("nohelp");
+                                _this.open();
+                            }, false);
+                        }));
+                    }));
+                }));
+            }
+            c.appendChild(el("section", function (section) {
+                section.appendChild(el("h1", function (h1) {
+                    h1.textContent = "データインポート・エクスポート";
+                }));
+                section.appendChild(el("p", function (p) {
+                    p.textContent = "他のブラウザにデータを移したい場合は、データをJSONファイルにエクスポートすることが可能です。エクスポートしたデータはインポートすることで復活できます。";
+                }));
+                section.appendChild(el("p", function (p) {
+                    p.textContent = "インポーﾄ・エクスポートには時間がかかる可能性があります。インポートする場合はファイルを選択して下さい。";
+                }));
+                section.appendChild(el("p", function (p) {
+                    p.appendChild(el("button", function (button) {
+                        button.textContent = "エクスポート";
+                        button.addEventListener("click", function (e) {
+                            db.exportData(function (data) {
+                                if(data == null) {
+                                    return;
+                                }
+                                var objstr = JSON.stringify(data);
+                                var a = el("a", function (an) {
+                                    var a = an;
+                                    a.download = "nanikiru.json";
+                                    a.href = "data:application/json;charset=UTF-8," + encodeURIComponent(objstr);
+                                });
+                                a.click();
+                            });
+                        }, false);
+                    }));
+                }));
+                section.appendChild(el("p", function (p) {
+                    var file;
+                    p.appendChild(file = el("input", function (i) {
+                        var input = i;
+                        input.type = "file";
+                        input.required = true;
+                        input.accept = ".json";
+                    }));
+                    p.appendChild(el("button", function (button) {
+                        button.textContent = "インポート";
+                        button.disabled = true;
+                        button.addEventListener("click", function (e) {
+                            var f = file.files[0];
+                            if(!f) {
+                                return;
+                            }
+                            var reader = new FileReader();
+                            reader.onload = function (e) {
+                                console.log(reader.result);
+                                var obj = null;
+                                try  {
+                                    obj = JSON.parse(reader.result);
+                                } catch (e) {
+                                    alert("ファイルがパースできませんでした。ファイルが間違っているか、壊れている可能性があります。");
+                                }
+                                console.log(obj);
+                                db.importData(obj, function (result) {
+                                    if(result === false) {
+                                        alert("データをインポートできませんでした。ファイルが壊れている可能性があります。");
+                                        return;
+                                    }
+                                    section.appendChild(el("p", function (p) {
+                                        p.textContent = "データのインポートに成功しました。";
+                                    }));
+                                });
+                            };
+                            reader.readAsText(f);
+                        }, false);
+                        file.addEventListener("change", function (e) {
+                            if(file.files[0]) {
+                                button.disabled = false;
+                            } else {
+                                button.disabled = true;
+                            }
+                        }, false);
+                    }));
+                }));
+            }));
+        };
+        return Config;
+    })(UISection);
+    UI.Config = Config;    
     var Dialog = (function (_super) {
         __extends(Dialog, _super);
         function Dialog(title, message, buttons) {
@@ -2213,6 +2327,17 @@ var UI;
                 }));
                 button.addEventListener("click", function (e) {
                     _this.close("washer::");
+                }, false);
+            }));
+            c.appendChild(el("button", function (button) {
+                button.classList.add("iconbutton");
+                button.title = "設定";
+                button.appendChild(icons.gear({
+                    width: "32px",
+                    height: "32px"
+                }));
+                button.addEventListener("click", function (e) {
+                    _this.close("config::");
                 }, false);
             }));
         }
