@@ -1547,7 +1547,7 @@ var UI;
                                 vg.setAttribute("version", "1.1");
                                 vg.width.baseVal.valueAsString = "48px";
                                 vg.height.baseVal.valueAsString = "48px";
-                                vg.viewBox.baseVal.x = 0 , vg.viewBox.baseVal.y = 0 , vg.viewBox.baseVal.width = 256 , vg.viewBox.baseVal.height = 256;
+                                vg.viewBox.baseVal.x = 0 , vg.viewBox.baseVal.y = 0 , vg.viewBox.baseVal.width = 96 , vg.viewBox.baseVal.height = 96;
                                 var patt = Cloth.makePattern({
                                     type: obj.type,
                                     size: obj.defaultSize,
@@ -1561,8 +1561,8 @@ var UI;
                                     rect.setAttribute("stroke-width", "2px");
                                     rect.x.baseVal.valueAsString = "0px";
                                     rect.y.baseVal.valueAsString = "0px";
-                                    rect.width.baseVal.valueAsString = "256px";
-                                    rect.height.baseVal.valueAsString = "256px";
+                                    rect.width.baseVal.valueAsString = "96";
+                                    rect.height.baseVal.valueAsString = "96";
                                     rect.setAttribute("fill", "url(#patternbox" + i + "-pattern)");
                                 }));
                             }));
@@ -1578,7 +1578,6 @@ var UI;
                                 })[0];
                                 var pat = _this.doc.patterns[_this.editingIndex];
                                 pat.type = patype;
-                                pat.colors = pat.colors.slice(0, pato.colorNumber);
                                 while(pat.colors.length < pato.colorNumber) {
                                     pat.colors[pat.colors.length] = Cloth.defaultColors[pat.colors.length];
                                 }
@@ -1629,7 +1628,7 @@ var UI;
                     p.textContent = "一番左のメニューから服の種類を決めましょう。決めたら右に大きな服の画像が出現します。";
                 }));
                 helpel.appendChild(el("p", function (p) {
-                    p.textContent = "色や模様を変えたいときは、服のその部分をクリックします。一番右に色変更画面が出現するので、色を変更しましょう。";
+                    p.textContent = "色や模様を変えたいときは、服のその部分をクリックします。右に色選択画面が出現するので、色を変更しましょう。その右には模様選択があります。模様をクリックするとその模様になります。";
                 }));
                 helpel.appendChild(el("p", function (p) {
                     p.textContent = "編集が終わったら服を保存ボタンを押します。";
@@ -1711,7 +1710,7 @@ var UI;
                         var input = i;
                         input.type = "range";
                         input.min = "1";
-                        input.max = "256";
+                        input.max = "128";
                         input.step = "1";
                         input.value = String(pat.size);
                         (function (input) {
@@ -1736,6 +1735,7 @@ var UI;
                         (function (input) {
                             input.addEventListener("change", function (e) {
                                 pat.deg = Number(input.value);
+                                input.title = input.value + "°";
                                 _this.changePattern(index, pat);
                             }, false);
                         })(input);
@@ -2633,7 +2633,7 @@ var UI;
                 };
             }
             if(!option.size) {
-                option.size = "32px";
+                option.size = "64px";
             }
             return el("div", function (div) {
                 div.classList.add("clothbox");

@@ -146,6 +146,41 @@ var Cloth = (function () {
             defaultSize: 20,
             colorNumber: 2
         }, 
+        {
+            type: "4-check",
+            requiresSize: true,
+            requiresDeg: true,
+            defaultSize: 20,
+            colorNumber: 4
+        }, 
+        {
+            type: "2-stripe",
+            requiresSize: true,
+            requiresDeg: true,
+            defaultSize: 20,
+            colorNumber: 2
+        }, 
+        {
+            type: "3-stripe",
+            requiresSize: true,
+            requiresDeg: true,
+            defaultSize: 20,
+            colorNumber: 3
+        }, 
+        {
+            type: "4-stripe",
+            requiresSize: true,
+            requiresDeg: true,
+            defaultSize: 20,
+            colorNumber: 4
+        }, 
+        {
+            type: "2-dot",
+            requiresSize: true,
+            requiresDeg: true,
+            defaultSize: 10,
+            colorNumber: 2
+        }, 
         
     ];
     Cloth.prototype.importCloth = function (obj) {
@@ -1416,6 +1451,110 @@ var Cloth = (function () {
                     var rect = r;
                     setwh(rect, 0, size, size, size);
                     rect.setAttribute("fill", pat.colors[1]);
+                }));
+                break;
+            case "4-check":
+                setwh(pattern, 0, 0, size * 2, size * 2);
+                setvb(pattern.viewBox, 0, 0, size * 2, size * 2);
+                pattern.appendChild(svg("rect", function (r) {
+                    var rect = r;
+                    setwh(rect, 0, 0, size, size);
+                    rect.setAttribute("fill", pat.colors[0]);
+                }));
+                pattern.appendChild(svg("rect", function (r) {
+                    var rect = r;
+                    setwh(rect, size, size, size, size);
+                    rect.setAttribute("fill", pat.colors[2]);
+                }));
+                pattern.appendChild(svg("rect", function (r) {
+                    var rect = r;
+                    setwh(rect, size, 0, size, size);
+                    rect.setAttribute("fill", pat.colors[1]);
+                }));
+                pattern.appendChild(svg("rect", function (r) {
+                    var rect = r;
+                    setwh(rect, 0, size, size, size);
+                    rect.setAttribute("fill", pat.colors[3]);
+                }));
+                break;
+            case "2-stripe":
+                setwh(pattern, 0, 0, 256, size * 2);
+                setvb(pattern.viewBox, 0, 0, 256, size * 2);
+                pattern.appendChild(svg("rect", function (r) {
+                    var rect = r;
+                    setwh(rect, 0, 0, 256, size);
+                    rect.setAttribute("fill", pat.colors[0]);
+                }));
+                pattern.appendChild(svg("rect", function (r) {
+                    var rect = r;
+                    setwh(rect, 0, size, 256, size);
+                    rect.setAttribute("fill", pat.colors[1]);
+                }));
+                break;
+            case "3-stripe":
+                setwh(pattern, 0, 0, 256, size * 3);
+                setvb(pattern.viewBox, 0, 0, 256, size * 3);
+                pattern.appendChild(svg("rect", function (r) {
+                    var rect = r;
+                    setwh(rect, 0, 0, 256, size);
+                    rect.setAttribute("fill", pat.colors[0]);
+                }));
+                pattern.appendChild(svg("rect", function (r) {
+                    var rect = r;
+                    setwh(rect, 0, size, 256, size);
+                    rect.setAttribute("fill", pat.colors[1]);
+                }));
+                pattern.appendChild(svg("rect", function (r) {
+                    var rect = r;
+                    setwh(rect, 0, size * 2, 256, size);
+                    rect.setAttribute("fill", pat.colors[2]);
+                }));
+                break;
+            case "4-stripe":
+                setwh(pattern, 0, 0, 256, size * 4);
+                setvb(pattern.viewBox, 0, 0, 256, size * 4);
+                pattern.appendChild(svg("rect", function (r) {
+                    var rect = r;
+                    setwh(rect, 0, 0, 256, size);
+                    rect.setAttribute("fill", pat.colors[0]);
+                }));
+                pattern.appendChild(svg("rect", function (r) {
+                    var rect = r;
+                    setwh(rect, 0, size, 256, size);
+                    rect.setAttribute("fill", pat.colors[1]);
+                }));
+                pattern.appendChild(svg("rect", function (r) {
+                    var rect = r;
+                    setwh(rect, 0, size * 2, 256, size);
+                    rect.setAttribute("fill", pat.colors[2]);
+                }));
+                pattern.appendChild(svg("rect", function (r) {
+                    var rect = r;
+                    setwh(rect, 0, size * 3, 256, size);
+                    rect.setAttribute("fill", pat.colors[3]);
+                }));
+                break;
+            case "2-dot":
+                setwh(pattern, 0, 0, size * 6, size * 6);
+                setvb(pattern.viewBox, 0, 0, size * 6, size * 6);
+                pattern.appendChild(svg("rect", function (r) {
+                    var rect = r;
+                    setwh(rect, 0, 0, size * 6, size * 6);
+                    rect.setAttribute("fill", pat.colors[0]);
+                }));
+                pattern.appendChild(svg("circle", function (c) {
+                    var circle = c;
+                    circle.setAttribute("cx", String(size * 1.5));
+                    circle.setAttribute("cy", String(size * 1.5));
+                    circle.setAttribute("r", String(size));
+                    circle.setAttribute("fill", pat.colors[1]);
+                }));
+                pattern.appendChild(svg("circle", function (c) {
+                    var circle = c;
+                    circle.setAttribute("cx", String(size * 4.5));
+                    circle.setAttribute("cy", String(size * 4.5));
+                    circle.setAttribute("r", String(size));
+                    circle.setAttribute("fill", pat.colors[1]);
                 }));
                 break;
         }

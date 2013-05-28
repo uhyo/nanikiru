@@ -173,6 +173,9 @@ ul.choosecloth-field li{
 	max-height:200px;
 	overflow-y:scroll;
 }
+.clothselect-patternselect{
+	margin-left:1rem;
+}
 .clothselect-typebox{
 	border:3px double #aaaaaa;
 	width:48px;
